@@ -2,6 +2,8 @@
 
 A unified framework for Vietnamese Text-to-SQL conversion supporting multiple strategies: Zero-shot, Few-shot, Chain-of-Thought (CoT), and Program-Aided Language (PAL).
 
+> **Note**: This framework is optimized for **syllable-level tokenization** which works best with Large Language Models for Vietnamese text processing. Word-level tokenization is also supported but syllable-level is the default and recommended approach.
+
 ## 🚀 Features
 
 - **Multiple Strategies**: Zero-shot, Few-shot, CoT, and PAL approaches
@@ -101,9 +103,10 @@ python vipersql.py --strategy pal --samples 15
 python vipersql.py --model gpt-4o --samples 50
 python vipersql.py --model claude-3-sonnet-20240229 --samples 20
 
-# Different datasets
-python vipersql.py --split train --level word --samples 100
+# Different datasets (syllable-level is default)
+python vipersql.py --split train --samples 100
 python vipersql.py --split test --samples -1  # All samples
+python vipersql.py --split dev --level word --samples 50  # Use word-level if needed
 
 # Custom configuration
 python vipersql.py --config custom.env --strategy few-shot

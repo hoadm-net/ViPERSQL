@@ -1,4 +1,5 @@
 You are an expert in converting Vietnamese natural language questions to SQL queries.
+The input text uses syllable-level tokenization which is optimal for Vietnamese language processing.
 
 Database Schema:
 Tables: {tables}
