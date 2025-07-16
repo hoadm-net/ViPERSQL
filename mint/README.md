@@ -1,49 +1,26 @@
-# MINT - Modern Integration for Natural language Text-to-SQL
+# MINT - Vietnamese Text-to-SQL Evaluation Toolkit
 
-**MINT** is a comprehensive toolkit for evaluating Vietnamese Text-to-SQL models. The package provides functionality from SQLite database creation, SQL query execution, to detailed evaluation metrics calculation.
+A comprehensive toolkit for evaluating Vietnamese Text-to-SQL models, providing database creation, query execution, and detailed evaluation metrics.
 
-## 🚀 Key Features
+## Features
 
-### 1. SQLite Database Builder (`mint.database`)
-- **Automatically create SQLite databases** from JSON metadata
-- **Handle Vietnamese text** and special characters
-- **Check duplicate columns** and validation
-- **Support multiple database versions** (syllable-level, word-level)
+- **SQLite Database Builder**: Automatically create SQLite databases from JSON metadata
+- **SQL Query Executor**: Execute SQL queries safely with timeout protection and result comparison
+- **Evaluation Metrics**: Exact match, component-wise accuracy, execution accuracy, and error analysis
+- **Vietnamese Support**: Proper handling of Vietnamese characters and text
+- **Batch Processing**: Efficient processing of multiple queries and databases
 
-### 2. SQL Query Executor (`mint.executor`) 
-- **Execute SQL queries** safely with timeout protection
-- **Compare execution results** between predicted and gold queries
-- **Batch processing** for multiple queries
-- **Detailed error handling** and statistics
-
-### 3. Evaluation Metrics (`mint.metrics`)
-- **Exact Match Accuracy**: Precise comparison between SQL strings
-- **Component-wise Accuracy**: Evaluate each SQL component (SELECT, FROM, WHERE, etc.)
-- **SQL Similarity**: Similarity based on string matching
-- **Difficulty Breakdown**: Analysis by query difficulty (Easy, Medium, Hard, Extra)
-- **Execution Accuracy**: Evaluation based on execution results
-
-### 4. Utility Functions (`mint.utils`)
-- **SQL normalization** for comparison
-- **Dataset loading and validation**
-- **Query safety checking**
-- **Statistics calculation**
-
-## 📦 Installation
+## Installation
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd Vi_NL2SQL
-
-# Activate virtual environment
+# Activate your virtual environment
 source venv/bin/activate
 
-# Install dependencies
-pip install pandas numpy sqlparse
+# Required dependencies are already installed:
+# pandas, numpy, sqlparse
 ```
 
-## 🔧 Quick Start
+## Quick Start
 
 ### 1. Import MINT modules
 
@@ -78,7 +55,7 @@ dataset = load_dataset("dataset/ViText2SQL/syllable-level/dev.json")
 gold_queries = extract_queries_from_dataset(dataset, query_key='query')
 db_names = extract_database_names_from_dataset(dataset, db_key='db_id')
 
-# Predicted queries from your model
+# Your model's predicted queries
 predicted_queries = [
     "SELECT COUNT(*) FROM students",
     "SELECT name FROM students WHERE age > 20",
@@ -86,7 +63,7 @@ predicted_queries = [
 ]
 ```
 
-### 4. Evaluate with Execution Accuracy
+### 4. Execute and Compare Queries
 
 ```python
 # Initialize executor
@@ -121,7 +98,7 @@ summary = metrics.evaluation_summary(results)
 print(summary)
 ```
 
-## 📊 Example Output
+## Example Output
 
 ```
 === SQL Evaluation Results ===
@@ -140,13 +117,13 @@ ORDER BY: 92.31%
 HAVING: 80.00%
 
 === Difficulty Breakdown ===
-Easy: 78.25% (378 queries, 39.6%)
-Medium: 69.84% (129 queries, 13.5%)
-Hard: 58.73% (340 queries, 35.6%)
-Extra: 45.10% (107 queries, 11.2%)
+Easy: 78.25% (378 queries)
+Medium: 69.84% (129 queries)
+Hard: 58.73% (340 queries)
+Extra: 45.10% (107 queries)
 ```
 
-## 🧪 Advanced Usage
+## Advanced Usage
 
 ### Custom Database Builder
 
@@ -174,18 +151,6 @@ print(f"Success rate: {stats['success_rate']:.2%}")
 print(f"Average execution time: {stats['avg_execution_time']:.3f}s")
 ```
 
-### Custom Difficulty Classification
-
-```python
-from mint.metrics import SQLDifficultyClassifier
-
-classifier = SQLDifficultyClassifier()
-
-query = "SELECT s.name, COUNT(*) FROM students s JOIN courses c ON s.id = c.student_id GROUP BY s.name"
-difficulty = classifier.classify_query(query)
-print(f"Query difficulty: {difficulty}")  # Output: hard
-```
-
 ### SQL Normalization and Validation
 
 ```python
@@ -203,40 +168,7 @@ print(safe_execute_sql(dangerous_query))  # False
 print(safe_execute_sql(safe_query))       # True
 ```
 
-## 🔍 Testing
-
-MINT package comes with comprehensive test suite:
-
-```bash
-# Run all tests
-python -m mint.tests.test_comprehensive
-
-# Test specific module
-python -m unittest mint.tests.test_comprehensive.TestSQLiteBuilder
-```
-
-Test suite includes:
-- **40+ test cases** covering all modules
-- **Edge cases**: Empty queries, invalid databases, error handling
-- **Integration tests**: Complete workflow from database creation to evaluation
-- **Performance tests**: Timeout handling, batch processing
-
-## 🏗️ Architecture
-
-```
-mint/
-├── __init__.py          # Package initialization and exports
-├── database.py          # SQLiteBuilder class
-├── executor.py          # SQLExecutor class  
-├── metrics.py           # EvaluationMetrics and SQLDifficultyClassifier
-├── utils.py             # Utility functions
-├── tests/               # Test suite
-│   ├── __init__.py
-│   └── test_comprehensive.py
-└── README.md            # Documentation
-```
-
-## 📋 API Reference
+## API Reference
 
 ### SQLiteBuilder
 
@@ -270,19 +202,19 @@ class EvaluationMetrics:
     def comprehensive_evaluation(self, predicted_queries: List[str], gold_queries: List[str], execution_results: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]
 ```
 
-## 🚨 Error Handling
+## Error Handling
 
-MINT package handles common errors:
+MINT handles common errors gracefully:
 
-- **File not found**: Graceful handling when dataset or database doesn't exist
+- **File not found**: Clear messages when dataset or database doesn't exist
 - **SQL syntax errors**: Detailed error messages for invalid queries  
 - **Timeout errors**: Protection against long-running queries
 - **Database connection errors**: Robust connection handling
 - **Validation errors**: Input validation with clear error messages
 
-## 🎯 Best Practices
+## Best Practices
 
-### 1. Database Management
+### Database Management
 ```python
 # Create databases once and reuse
 builder = SQLiteBuilder(output_dir="sqlite_dbs")
@@ -292,7 +224,7 @@ builder.build_all_databases()  # Create all databases
 executor = SQLExecutor(db_directory="sqlite_dbs")
 ```
 
-### 2. Memory Management
+### Memory Management
 ```python
 # Use batch processing for large datasets
 batch_size = 100
@@ -302,7 +234,7 @@ for i in range(0, len(queries), batch_size):
     # Process results immediately
 ```
 
-### 3. Error Recovery
+### Error Recovery
 ```python
 # Handle individual query failures
 results = []
@@ -316,24 +248,78 @@ for pred, gold, db_name in zip(predicted_queries, gold_queries, db_names):
         results.append({'both_successful': False, 'error': str(e)})
 ```
 
-## 🤝 Contributing
+## Testing
 
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push branch: `git push origin feature/amazing-feature`
-5. Submit Pull Request
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+python -m mint.tests.test_comprehensive
+
+# Test specific module
+python -m unittest mint.tests.test_comprehensive.TestSQLiteBuilder
+```
+
+The test suite includes:
+- Database creation and validation
+- Query execution and comparison
+- Evaluation metrics calculation
+- Error handling and edge cases
+- Performance and timeout testing
+
+## Project Structure
+
+```
+mint/
+├── __init__.py          # Package initialization and exports
+├── database.py          # SQLiteBuilder class
+├── executor.py          # SQLExecutor class  
+├── metrics.py           # EvaluationMetrics and SQLDifficultyClassifier
+├── utils.py             # Utility functions
+├── tests/               # Test suite
+│   ├── __init__.py
+│   └── test_comprehensive.py
+└── README.md            # This documentation
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Database Creation Fails
+```python
+# Check if tables.json exists and is valid
+import json
+with open("dataset/ViText2SQL/syllable-level/tables.json", 'r') as f:
+    tables = json.load(f)
+print(f"Loaded {len(tables)} table definitions")
+```
+
+#### Query Execution Timeout
+```python
+# Increase timeout for complex queries
+executor = SQLExecutor(db_directory="sqlite_dbs", timeout=60)
+```
+
+#### Memory Issues with Large Datasets
+```python
+# Process in smaller batches
+batch_size = 50  # Reduce if needed
+for i in range(0, len(queries), batch_size):
+    batch = queries[i:i+batch_size]
+    results.extend(process_batch(batch))
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
 
 ### Development Setup
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd Vi_NL2SQL
-
-# Activate virtual environment
-source venv/bin/activate
-
 # Install development dependencies
 pip install -e .
 
@@ -341,25 +327,18 @@ pip install -e .
 python -m mint.tests.test_comprehensive
 ```
 
-## 📝 License
+## License
 
-This project is released under MIT License. See `LICENSE` file for details.
+This project is released under MIT License.
 
-## 🙏 Acknowledgments
+## Support
 
-- **ViText2SQL Dataset**: Vietnamese Text-to-SQL dataset
-- **SQLite**: Lightweight database engine
-- **sqlparse**: SQL parsing library
-- **Python unittest**: Testing framework
-
-## 📞 Support
-
-If you encounter issues or have questions:
-
-1. Check existing [Issues](../../issues)
-2. Create new issue with appropriate template  
-3. Provide complete context and error logs
+For issues and questions:
+- Check existing documentation
+- Review error messages and logs
+- Create GitHub issues with complete context
+- Provide sample data for reproduction
 
 ---
 
-**MINT - Making Text-to-SQL evaluation simple and comprehensive** 🚀 
+**MINT** - Making Vietnamese Text-to-SQL evaluation comprehensive and accessible. 
