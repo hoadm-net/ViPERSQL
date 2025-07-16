@@ -1,16 +1,36 @@
 # ViPERSQL: Vietnamese Text-to-SQL Framework
 
-A comprehensive framework and toolkit for Vietnamese Text-to-SQL conversion, featuring zero-shot generation capabilities and evaluation tools.
+A unified framework for Vietnamese Text-to-SQL conversion supporting multiple strategies: Zero-shot, Few-shot, Chain-of-Thought (CoT), and Program-Aided Language (PAL).
 
-## Features
+## 🚀 Features
 
-- **Zero-shot NL2SQL**: Generate SQL queries from Vietnamese natural language without training
+- **Multiple Strategies**: Zero-shot, Few-shot, CoT, and PAL approaches
+- **Unified CLI**: Single command-line tool for all operations
+- **Configuration Management**: Environment-based configuration with .env support
 - **Multiple LLM Support**: OpenAI GPT-4, Claude, and other language models
 - **MINT Evaluation Toolkit**: Comprehensive evaluation metrics and database management
-- **Sample Viewer**: Interactive dataset exploration tool
+- **Template System**: Flexible prompt template management for each strategy
 - **Vietnamese Language Support**: Optimized for Vietnamese text processing
 
-## Quick Start
+## 🏗️ Architecture
+
+```
+vipersql.py (Unified CLI)
+    ├── Strategy Manager
+    │   ├── Zero-shot Strategy
+    │   ├── Few-shot Strategy
+    │   ├── CoT Strategy
+    │   └── PAL Strategy
+    └── MINT Core
+        ├── Configuration Manager
+        ├── LLM Interface
+        ├── Template Manager
+        ├── Database Manager
+        ├── Evaluation Engine
+        └── Unified Logger
+```
+
+## 📋 Quick Start
 
 ### Prerequisites
 - Python 3.8+
@@ -30,209 +50,323 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install langchain langchain-openai langchain-anthropic python-dotenv sqlparse
-pip install pandas numpy matplotlib seaborn plotly jupyter
 ```
 
-### API Configuration
-Copy the example file and add your API keys:
-```bash
-# Copy the template
-cp .env.example .env
+### Configuration
 
-# Edit .env with your actual API keys
+1. **Copy configuration template:**
+```bash
+cp config.env .env
+```
+
+2. **Edit .env with your API keys:**
+```bash
 # OpenAI API Key
-OPENAI_API_KEY=sk-your-openai-key-here
+OPENAI_API_KEY=sk-your-actual-openai-key
 
-# Anthropic API Key  
-ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+# Anthropic API Key
+ANTHROPIC_API_KEY=sk-ant-your-actual-anthropic-key
+
+# Optional: Customize other settings
+DEFAULT_MODEL=gpt-4o-mini
+DEFAULT_STRATEGY=zero-shot
+DEFAULT_SAMPLES=10
 ```
 
-## Usage
+## 🎯 Usage
 
-### 1. Zero-shot NL2SQL Generation
-
-Generate SQL queries from Vietnamese questions:
+### Basic Commands
 
 ```bash
-# Quick test with 3 samples
-python zeroshot_nl2sql.py
+# List available strategies
+python vipersql.py --list-strategies
 
-# Evaluate with specific model and dataset
-python config_nl2sql.py --model gpt-4o-mini --split dev --samples 10
+# Zero-shot evaluation (default)
+python vipersql.py --samples 10
 
-# Full evaluation
-python config_nl2sql.py --model gpt-4o --split test --samples 50
+# Few-shot with examples  
+python vipersql.py --strategy few-shot --samples 20
+
+# Chain-of-Thought reasoning
+python vipersql.py --strategy cot --samples 5
+
+# Program-Aided Language approach
+python vipersql.py --strategy pal --samples 15
 ```
 
-### 2. Dataset Exploration
-
-View dataset samples and analyze structure:
+### Advanced Usage
 
 ```bash
-# View training sample
-python sample_viewer.py -s train -i 0
+# Different models
+python vipersql.py --model gpt-4o --samples 50
+python vipersql.py --model claude-3-sonnet-20240229 --samples 20
 
-# View with detailed SQL analysis
-python sample_viewer.py -s train -i 0 --show-sql-structure
+# Different datasets
+python vipersql.py --split train --level word --samples 100
+python vipersql.py --split test --samples -1  # All samples
 
-# View development set sample
-python sample_viewer.py -s dev -i 5 -l word
+# Custom configuration
+python vipersql.py --config custom.env --strategy few-shot
+
+# Custom template
+python vipersql.py --template templates/custom_template.txt
 ```
 
-### 3. MINT Evaluation Toolkit
+## 🔧 Configuration Options
 
-Use the evaluation toolkit for comprehensive analysis:
+All configuration can be set via environment variables or .env files:
+
+### API & Model Settings
+```bash
+OPENAI_API_KEY=sk-your-key
+ANTHROPIC_API_KEY=sk-ant-your-key
+DEFAULT_MODEL=gpt-4o-mini
+DEFAULT_TEMPERATURE=0.1
+DEFAULT_MAX_TOKENS=2000
+```
+
+### Strategy Settings
+```bash
+DEFAULT_STRATEGY=zero-shot
+FEW_SHOT_EXAMPLES=3
+COT_REASONING_STEPS=true
+PAL_CODE_EXECUTION=false
+```
+
+### Dataset Settings
+```bash
+DATASET_PATH=dataset/ViText2SQL
+DEFAULT_SPLIT=dev
+DEFAULT_LEVEL=syllable
+DEFAULT_SAMPLES=10
+```
+
+### Output Settings
+```bash
+RESULTS_DIR=results
+LOGS_DIR=logs
+LOG_LEVEL=INFO
+ENABLE_REQUEST_LOGGING=true
+```
+
+## 📊 Available Strategies
+
+### 1. Zero-shot Strategy
+Direct conversion without examples, relying on LLM's pre-trained knowledge.
+
+```bash
+python vipersql.py --strategy zero-shot --samples 10
+```
+
+**Template**: `templates/vietnamese_nl2sql.txt`
+
+### 2. Few-shot Strategy  
+Uses examples to guide the conversion process.
+
+```bash
+python vipersql.py --strategy few-shot --samples 10
+```
+
+**Template**: `templates/few_shot_vietnamese_nl2sql.txt`
+
+### 3. Chain-of-Thought (CoT) Strategy
+Step-by-step reasoning approach for complex queries.
+
+```bash
+python vipersql.py --strategy cot --samples 10
+```
+
+**Template**: `templates/cot_vietnamese_nl2sql.txt`
+
+### 4. Program-Aided Language (PAL) Strategy
+Code-assisted reasoning for enhanced accuracy.
+
+```bash
+python vipersql.py --strategy pal --samples 10
+```
+
+**Template**: `templates/pal_vietnamese_nl2sql.txt`
+
+## 🎨 Template System
+
+### Template Structure
+Templates use LangChain format with variables:
+
+```
+You are an expert in converting Vietnamese natural language questions to SQL queries.
+
+Database Schema:
+Tables: {tables}
+Columns: {columns}
+Foreign Keys: {foreign_keys}
+Primary Keys: {primary_keys}
+
+Vietnamese Question: {question}
+
+SQL Query:
+```
+
+### Template Variables
+- `{tables}`: Comma-separated table names
+- `{columns}`: Comma-separated column names
+- `{foreign_keys}`: Foreign key relationships
+- `{primary_keys}`: Primary key columns
+- `{question}`: Vietnamese natural language question
+- `{examples}`: Few-shot examples (for few-shot, CoT, PAL)
+
+### Custom Templates
+Create custom templates and use them:
+
+```bash
+python vipersql.py --template my_custom_template.txt --strategy zero-shot
+```
+
+## 📈 Evaluation & Results
+
+### Metrics
+- **Exact Match**: Perfect string match after normalization
+- **Execution Accuracy**: Same query results as gold standard
+- **Syntax Validity**: Valid SQL syntax using sqlparse
+- **Component Accuracy**: SELECT, FROM, WHERE, JOIN analysis
+
+### Results Files
+Results are saved to `results/` directory:
+
+```json
+{
+  "config": {
+    "strategy": "zero-shot",
+    "model": "gpt-4o-mini",
+    "split": "dev",
+    "num_samples": 10
+  },
+  "summary": {
+    "exact_match_accuracy": 85.0,
+    "execution_accuracy": 92.0,
+    "syntax_validity": 98.0
+  },
+  "detailed_results": [...]
+}
+```
+
+### Logging
+Comprehensive logging to `logs/vipersql_logs.json`:
+
+```json
+{
+  "request_id": "zero_shot_1234567890",
+  "timestamp": "2024-01-15T10:30:45",
+  "type": "REQUEST",
+  "strategy": "zero-shot",
+  "question": "Có tất cả bao nhiêu kiến trúc sư nữ?",
+  "db_id": "architecture"
+}
+```
+
+## 🛠️ Development
+
+### Adding New Strategies
+
+1. **Create strategy class:**
+```python
+# mint/strategies/my_strategy.py
+from .base import BaseStrategy, StrategyResult
+
+class MyStrategy(BaseStrategy):
+    def _get_strategy_name(self) -> str:
+        return "my-strategy"
+    
+    def generate_sql(self, question, schema_info, db_id, examples=None):
+        # Implementation here
+        pass
+```
+
+2. **Add to strategy manager:**
+```python
+# mint/strategies/__init__.py
+from .my_strategy import MyStrategy
+```
+
+3. **Create template:**
+```
+# templates/my_strategy_template.txt
+Your custom prompt template here...
+```
+
+### Using as Library
 
 ```python
-from mint import SQLiteBuilder, SQLExecutor, EvaluationMetrics
+from mint import create_strategy, ViPERConfig
 
-# Build databases
-builder = SQLiteBuilder()
-builder.build_all_databases("dataset/ViText2SQL")
+# Create configuration
+config = ViPERConfig(
+    strategy="zero-shot",
+    model_name="gpt-4o-mini",
+    samples=10
+)
 
-# Execute and evaluate queries
-executor = SQLExecutor()
-metrics = EvaluationMetrics()
+# Create strategy instance
+strategy = create_strategy("zero-shot", **config.to_dict())
 
-results = metrics.comprehensive_evaluation(predicted_queries, gold_queries)
-print(metrics.evaluation_summary(results))
+# Generate SQL
+result = strategy.generate_sql(
+    question="Có bao nhiêu học sinh?",
+    schema_info=schema_info,
+    db_id="school"
+)
+
+print(f"Generated SQL: {result.sql_query}")
 ```
 
-## Available Models
+## 📚 Documentation
 
-### OpenAI Models
-- `gpt-4o` - Latest and most capable
-- `gpt-4o-mini` - Faster and cost-effective
-- `gpt-4-turbo` - High performance
+- **Setup Guide**: Detailed installation and configuration
+- **Strategy Guide**: In-depth explanation of each strategy
+- **Template Guide**: How to create and customize templates
+- **API Reference**: Complete API documentation for library usage
 
-### Anthropic Models
-- `claude-3-opus-20240229` - Most capable
-- `claude-3-sonnet-20240229` - Balanced performance
-- `claude-3-haiku-20240307` - Fast and efficient
+## 🔄 Migration from v1.x
 
-## Dataset Structure
+### Old vs New Usage
 
-```
-dataset/ViText2SQL/
-├── syllable-level/
-│   ├── train.json         # Training data
-│   ├── dev.json           # Development data
-│   ├── test.json          # Test questions
-│   ├── test_gold.sql      # Test gold SQL queries
-│   └── tables.json        # Database schema metadata
-└── word-level/
-    ├── train.json         # Training data
-    ├── dev.json           # Development data
-    ├── test.json          # Test questions
-    ├── test_gold.sql      # Test gold SQL queries
-    └── tables.json        # Database schema metadata
-```
-
-## Tools and Components
-
-### Zero-shot NL2SQL System
-- **Vietnamese language optimization**: Specialized prompts for Vietnamese
-- **Schema-aware generation**: Uses complete database schema information
-- **Multiple model support**: Works with OpenAI and Anthropic models
-- **Comprehensive logging**: Tracks all requests, responses, and evaluations
-
-### MINT Evaluation Toolkit
-- **Database creation**: Generate SQLite databases from metadata
-- **Query execution**: Safe SQL execution with timeout protection
-- **Evaluation metrics**: Exact match, execution accuracy, component analysis
-- **Error analysis**: Detailed error categorization and debugging
-
-### Sample Viewer
-- **Interactive exploration**: Browse dataset samples with detailed information
-- **SQL structure analysis**: Analyze query complexity and components
-- **Schema visualization**: View database structure and relationships
-- **Tokenization support**: Both syllable-level and word-level views
-
-## Command Examples
-
+**Old (v1.x):**
 ```bash
-# Basic NL2SQL generation
+python config_nl2sql.py --model gpt-4o-mini --split dev --samples 10
 python zeroshot_nl2sql.py
-
-# Model comparison
-python config_nl2sql.py --model gpt-4o --samples 20
-python config_nl2sql.py --model claude-3-sonnet-20240229 --samples 20
-
-# Dataset exploration
-python sample_viewer.py -s train -i 100
-python sample_viewer.py -s test -i 50 --show-sql-structure
-
-# Different tokenization levels
-python config_nl2sql.py --level syllable --samples 10
-python config_nl2sql.py --level word --samples 10
 ```
 
-## Output and Results
-
-### Console Output
-Real-time progress and evaluation results:
-```
-🔄 Running evaluation on dev split with 10 samples
-📊 Model: gpt-4o-mini
-✅ Loaded 10 samples from dev split
-📝 Processing 1/10: architecture
-✅ Exact match!
+**New (v2.x):**
+```bash
+python vipersql.py --model gpt-4o-mini --split dev --samples 10
+python vipersql.py --strategy zero-shot
 ```
 
-### Structured Logs
-Detailed logs saved to `logs/nl2sql_logs.json`:
-- Request tracking with unique IDs
-- LLM response monitoring
-- SQL execution results
-- Error analysis
+### Configuration Migration
+Move from individual settings to unified .env:
 
-### Evaluation Results
-Results saved to `results/` directory with:
-- Configuration details
-- Summary metrics
-- Detailed per-sample results
-- Component-wise accuracy
+**Old:** Various command-line arguments
+**New:** Single .env configuration file
 
-## Documentation
-
-- **Setup Guide**: See `ZEROSHOT_NL2SQL_GUIDE.md` for detailed setup and usage
-- **MINT Toolkit**: See `mint/README.md` for evaluation toolkit documentation
-- **Sample Viewer**: See `SAMPLE_VIEWER_USAGE.md` for dataset exploration guide
-
-## Project Structure
-
-```
-ViPERSQL/
-├── dataset/               # ViText2SQL dataset
-├── sqlite_dbs/           # Generated SQLite databases
-├── mint/                 # MINT evaluation toolkit
-├── logs/                 # System logs
-├── results/              # Evaluation results
-├── zeroshot_nl2sql.py    # Main NL2SQL system
-├── config_nl2sql.py      # Configuration and batch runner
-├── sample_viewer.py      # Dataset exploration tool
-├── mint_example.py       # MINT usage examples
-└── README.md             # This file
-```
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+3. Implement your changes
+4. Add tests for new strategies
+5. Update documentation
+6. Submit a pull request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License.
 
-## Support
+## 🆘 Support
 
 For issues and questions:
 - Create an issue on GitHub
-- Check existing documentation
-- Review example usage
+- Check documentation in `docs/` folder
+- Review example usage in README
 
 ---
 
-**ViPERSQL** - Vietnamese Text-to-SQL made simple and effective.
+**ViPERSQL v2.0** - Vietnamese Text-to-SQL made unified and extensible.

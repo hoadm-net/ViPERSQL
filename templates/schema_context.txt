@@ -1,0 +1,9 @@
+Database: {db_id}
+
+Tables: {table_list}
+
+Columns: {column_list}
+
+Foreign Keys: {foreign_key_list}
+
+Primary Keys: {primary_key_list} 

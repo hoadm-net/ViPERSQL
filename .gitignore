@@ -4,10 +4,11 @@ env/
 .env
 .venv
 
-# API Keys and secrets
+# API Keys and secrets  
 *.key
 *.secret
 api_keys.txt
+config.env
 
 # Logs and results
 logs/
@@ -62,4 +63,22 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST 
+MANIFEST
+
+# ViPERSQL specific
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+temp_*.json
+evaluation_*.json
+vipersql_*.log
+vipersql_*.json
+
+# Model downloads
+models/
+checkpoints/
+
+# Temporary files
+tmp/
+temp/
+.tmp/ 
