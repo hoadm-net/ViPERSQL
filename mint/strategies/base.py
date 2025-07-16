@@ -188,6 +188,18 @@ class BaseStrategy(ABC):
         
         return response
     
+    def _extract_sql_query(self, response: str) -> str:
+        """
+        Extract SQL query from LLM response.
+        
+        Args:
+            response: Raw response from LLM
+            
+        Returns:
+            Extracted and cleaned SQL query
+        """
+        return self.clean_sql_response(response)
+    
     def validate_sql_syntax(self, sql: str) -> bool:
         """
         Validate SQL syntax using sqlparse.
