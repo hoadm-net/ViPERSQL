@@ -332,27 +332,6 @@ print(f"Generated SQL: {result.sql_query}")
 - **Template Guide**: How to create and customize templates
 - **API Reference**: Complete API documentation for library usage
 
-## 🔄 Migration from v1.x
-
-### Old vs New Usage
-
-**Old (v1.x):**
-```bash
-python config_nl2sql.py --model gpt-4o-mini --split dev --samples 10
-python zeroshot_nl2ql.py
-```
-
-**New (v2.x):**
-```bash
-python vipersql.py --model gpt-4o-mini --split dev --samples 10python vipersql.py --strategy zero-shot
-```
-
-### Configuration Migration
-Move from individual settings to unified .env:
-
-**Old:** Various command-line arguments
-**New:** Single .env configuration file
-
 ## 🤝 Contributing
 
 1. Fork the repository
