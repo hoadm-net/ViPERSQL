@@ -117,61 +117,6 @@ class ZeroShotStrategy(BaseStrategy):
             error_msg = f"Zero-shot generation failed: {str(e)}"
             self.logger.log_error(f"Request {request_id}: {error_msg}")
             
-            return StrategyResult(
-                sql_query=f"ERROR: {error_msg}",
-                request_id=request_id,
-                reasoning=f"Error during generation: {str(e)}",
-                confidence_score=0.0,
-                metadata={
-                    'strategy': 'zero-shot',
-                    'error': str(e),
-                    'model': self.config.model_name
-                }
-            )
+            return self.create_error_result(request_id, error_msg, 'zero-shot')
     
-    def generate_batch(
-        self,
-        questions: List[str],
-        schema_infos: List[Dict[str, Any]], 
-        db_ids: List[str]
-    ) -> List[StrategyResult]:
-        """
-        Generate SQL queries for multiple questions in batch.
-        
-        Args:
-            questions: List of Vietnamese questions
-            schema_infos: List of database schema information
-            db_ids: List of database identifiers
-            
-        Returns:
-            List of StrategyResult objects
-        """
-        if not (len(questions) == len(schema_infos) == len(db_ids)):
-            raise ValueError("All input lists must have the same length")
-        
-        results = []
-        total = len(questions)
-        
-        self.logger.log_info(f"Starting zero-shot batch generation for {total} questions")
-        
-        for i, (question, schema_info, db_id) in enumerate(zip(questions, schema_infos, db_ids)):
-            self.logger.log_info(f"Processing {i+1}/{total}: {db_id}")
-            
-            result = self.generate_sql(question, schema_info, db_id)
-            results.append(result)
-            
-            # Log progress
-            if (i + 1) % 10 == 0:
-                success_count = sum(1 for r in results if not r.sql_query.startswith("ERROR"))
-                self.logger.log_info(f"Progress: {i+1}/{total}, Success: {success_count}")
-        
-        # Log final summary
-        success_count = sum(1 for r in results if not r.sql_query.startswith("ERROR"))
-        avg_confidence = sum(r.confidence_score or 0 for r in results) / len(results)
-        
-        self.logger.log_info(
-            f"Zero-shot batch completed: {success_count}/{total} successful, "
-            f"avg confidence: {avg_confidence:.2f}"
-        )
-        
-        return results 
+ 

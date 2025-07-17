@@ -14,6 +14,9 @@ A unified framework for Vietnamese Text-to-SQL conversion supporting multiple st
 - **Template System**: Flexible prompt template management for each strategy
 - **Vietnamese Language Support**: Optimized for Vietnamese text processing
 - **Component-wise F1-score**: Detailed analysis of SQL clause accuracy
+- **Chain-of-Thought Reasoning**: Step-by-step reasoning for complex queries
+- **Batch Processing**: Efficient processing of multiple queries
+- **Comprehensive Logging**: Detailed logging and error tracking
 
 ## 🏗️ Architecture
 
@@ -22,7 +25,7 @@ vipersql.py (Unified CLI)
     ├── Strategy Manager
     │   ├── Zero-shot Strategy
     │   ├── Few-shot Strategy (Random k examples)
-    │   ├── CoT Strategy
+    │   ├── CoT Strategy (Step-by-step reasoning)
     │   └── PAL Strategy
     └── MINT Core
         ├── Configuration Manager
@@ -72,7 +75,8 @@ ANTHROPIC_API_KEY=sk-ant-your-actual-anthropic-key
 # Optional: Customize other settings
 DEFAULT_MODEL=gpt-4o-mini
 DEFAULT_STRATEGY=zero-shot
-DEFAULT_SAMPLES=10```
+DEFAULT_SAMPLES=10
+```
 
 ## 🎯 Usage
 
@@ -83,9 +87,15 @@ DEFAULT_SAMPLES=10```
 python vipersql.py --list-strategies
 
 # Zero-shot evaluation (default)
-python vipersql.py --samples 10shot with examples  
-python vipersql.py --strategy few-shot --samples20# Chain-of-Thought reasoning
-python vipersql.py --strategy cot --samples 5ram-Aided Language approach
+python vipersql.py --samples 10
+
+# Few-shot with examples  
+python vipersql.py --strategy few-shot --samples 20
+
+# Chain-of-Thought reasoning
+python vipersql.py --strategy cot --samples 5
+
+# Program-Aided Language approach
 python vipersql.py --strategy pal --samples 15
 ```
 
@@ -93,10 +103,12 @@ python vipersql.py --strategy pal --samples 15
 
 ```bash
 # Different models
-python vipersql.py --model gpt-4o --samples 50python vipersql.py --model claude-3sonnet-2240229es 20
+python vipersql.py --model gpt-4o --samples 50
+python vipersql.py --model claude-3-sonnet-20240229 --samples 20
 
 # Different datasets (syllable-level is default)
-python vipersql.py --split train --samples10python vipersql.py --split test --samples -1All samples
+python vipersql.py --split train --samples 100
+python vipersql.py --split test --samples -1  # All samples
 python vipersql.py --split dev --level word --samples 50  # Use word-level if needed
 
 # Custom configuration
@@ -115,13 +127,15 @@ All configuration can be set via environment variables or .env files:
 OPENAI_API_KEY=sk-your-key
 ANTHROPIC_API_KEY=sk-ant-your-key
 DEFAULT_MODEL=gpt-4o-mini
-DEFAULT_TEMPERATURE=00.1DEFAULT_MAX_TOKENS=2000
+DEFAULT_TEMPERATURE=0.1
+DEFAULT_MAX_TOKENS=2000
 ```
 
 ### Strategy Settings
 ```bash
 DEFAULT_STRATEGY=zero-shot
-FEW_SHOT_EXAMPLES=3OT_REASONING_STEPS=true
+FEW_SHOT_EXAMPLES=3
+COT_REASONING_STEPS=true
 PAL_CODE_EXECUTION=false
 ```
 
@@ -130,7 +144,10 @@ PAL_CODE_EXECUTION=false
 DATASET_PATH=dataset/ViText2SQL
 DEFAULT_SPLIT=dev
 DEFAULT_LEVEL=syllable
-DEFAULT_SAMPLES=10## Output Settings
+DEFAULT_SAMPLES=10
+```
+
+### Output Settings
 ```bash
 RESULTS_DIR=results
 LOGS_DIR=logs
@@ -144,7 +161,8 @@ ENABLE_REQUEST_LOGGING=true
 Direct conversion without examples, relying on LLM's pre-trained knowledge.
 
 ```bash
-python vipersql.py --strategy zero-shot --samples 10```
+python vipersql.py --strategy zero-shot --samples 10
+```
 
 **Template**: `templates/vietnamese_nl2sql.txt`
 
@@ -152,10 +170,12 @@ python vipersql.py --strategy zero-shot --samples 10```
 Uses k examples from training set to guide the conversion process.
 
 ```bash
-python vipersql.py --strategy few-shot --samples 10``
+python vipersql.py --strategy few-shot --samples 10
+```
 
 **Features:**
-- Random selection of k examples (default: k=3amework for future selection strategies
+- Random selection of k examples (default: k=3)
+- Framework for future selection strategies
 - Automatic loading from training dataset
 - Template-based example formatting
 
@@ -165,7 +185,14 @@ python vipersql.py --strategy few-shot --samples 10``
 Step-by-step reasoning approach for complex queries.
 
 ```bash
-python vipersql.py --strategy cot --samples 10```
+python vipersql.py --strategy cot --samples 10
+```
+
+**Features:**
+- Step-by-step reasoning before SQL generation
+- Automatic extraction of reasoning and SQL from response
+- Support for SQL code blocks in markdown format
+- Optional integration with few-shot examples
 
 **Template**: `templates/cot_vietnamese_nl2sql.txt`
 
@@ -173,7 +200,8 @@ python vipersql.py --strategy cot --samples 10```
 Code-assisted reasoning for enhanced accuracy.
 
 ```bash
-python vipersql.py --strategy pal --samples 10```
+python vipersql.py --strategy pal --samples 10
+```
 
 **Template**: `templates/pal_vietnamese_nl2sql.txt`
 
@@ -186,7 +214,7 @@ Templates use LangChain format with variables:
 You are an expert in converting Vietnamese natural language questions to SQL queries.
 
 Database Schema:
-Tables:[object Object]tables}
+Tables: {tables}
 Columns: {columns}
 Foreign Keys: {foreign_keys}
 Primary Keys: {primary_keys}
@@ -216,7 +244,7 @@ python vipersql.py --template my_custom_template.txt --strategy zero-shot
 ### Evaluation Metrics
 - **Exact Match**: Perfect string match after normalization
 - **Syntax Validity**: Valid SQL syntax using sqlparse
-- **Component F1-score**: Set-based analysis of SQL clauses (SELECT, FROM, WHERE, GROUP BY, ORDER BY, HAVING, KEYWORDS)
+- **Component F1-score**: Set-based analysis of SQL clauses
 
 ### Component Analysis
 The system provides detailed F1-score analysis for each SQL clause:
@@ -228,29 +256,37 @@ The system provides detailed F1-score analysis for each SQL clause:
 - **HAVING**: Aggregate condition accuracy
 - **KEYWORDS**: SQL keyword usage accuracy
 
+### F1-score Calculation
+Component F1-scores are calculated using set-based matching:
+- **Precision**: Intersection of predicted and gold components
+- **Recall**: Coverage of gold components by predictions
+- **F1-score**: Harmonic mean of precision and recall
+
 ### Results Structure
 Results are saved to `results/` directory with comprehensive evaluation data:
 
 ```json
 {
- config:[object Object]
-   strategy": zero-shot,
-  model:gpt-4o-mini",
-  split: ,
-    num_samples": 10
+  "config": {
+    "strategy": "zero-shot",
+    "model": "gpt-4o-mini",
+    "split": "dev",
+    "num_samples": 10
   },
-  summary": [object Object]exact_match_accuracy": 0.0,
-    syntax_validity": 1000,
- component_f1scores: [object Object]
-   SELECT": 0.0,
-      FROM":0.0,
-  WHERE":00
-     GROUP BY":00
-     ORDER BY:00,
-   HAVING:00
-      KEYWORDS": 100}
+  "summary": {
+    "exact_match_accuracy": 0.0,
+    "syntax_validity": 100.0,
+    "component_f1_scores": {
+      "SELECT": 0.0,
+      "FROM": 0.0,
+      "WHERE": 0.0,
+      "GROUP BY": 0.0,
+      "ORDER BY": 0.0,
+      "HAVING": 0.0,
+      "KEYWORDS": 100.0
+    }
   },
- detailed_results": [...]
+  "detailed_results": [...]
 }
 ```
 
@@ -309,7 +345,8 @@ from mint import create_strategy, ViPERConfig
 # Create configuration
 config = ViPERConfig(
     strategy="zero-shot",
-    model_name=gpt-4o-mini,    samples=10
+    model_name="gpt-4o-mini",
+    samples=10
 )
 
 # Create strategy instance
@@ -317,7 +354,7 @@ strategy = create_strategy("zero-shot", **config.to_dict())
 
 # Generate SQL
 result = strategy.generate_sql(
-    question="Có bao nhiêu học sinh?,
+    question="Có bao nhiêu học sinh?",
     schema_info=schema_info,
     db_id="school"
 )
@@ -335,7 +372,8 @@ print(f"Generated SQL: {result.sql_query}")
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch3ement your changes
+2. Create a feature branch
+3. Implement your changes
 4. Add tests for new strategies
 5. Update documentation
 6. Submit a pull request
@@ -353,4 +391,4 @@ For issues and questions:
 
 ---
 
-**ViPERSQL v2 - Vietnamese Text-to-SQL made unified and extensible.
+**ViPERSQL v2** - Vietnamese Text-to-SQL made unified and extensible.

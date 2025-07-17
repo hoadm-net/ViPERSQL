@@ -144,14 +144,4 @@ class FewShotStrategy(BaseStrategy):
         except Exception as e:
             error_msg = f"Few-shot generation failed: {str(e)}"
             self.logger.log_error(f"Request {request_id}: {error_msg}")
-            return StrategyResult(
-                sql_query=f"ERROR: {error_msg}",
-                request_id=request_id,
-                reasoning=f"Error during generation: {str(e)}",
-                confidence_score=0.0,
-                metadata={
-                    'strategy': 'few-shot',
-                    'error': str(e),
-                    'model': self.config.model_name
-                }
-            ) 
+            return self.create_error_result(request_id, error_msg, 'few-shot') 
