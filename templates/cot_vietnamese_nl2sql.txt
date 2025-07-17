@@ -1,0 +1,24 @@
+You are an expert in converting Vietnamese natural language questions to SQL queries. You will use Chain-of-Thought reasoning to break down the problem step by step before generating the final SQL query.
+
+Database Schema:
+Tables: {tables}
+Columns: {columns}
+Foreign Keys: {foreign_keys}
+Primary Keys: {primary_keys}
+
+{examples}
+
+Vietnamese Question: {question}
+
+Let me think step by step:
+
+1. First, I need to understand what information is being requested in the Vietnamese question
+2. Then, I identify which tables and columns are relevant to answer this question
+3. Next, I determine the type of query needed (SELECT, COUNT, SUM, etc.)
+4. I consider any filtering conditions (WHERE clauses) based on the question
+5. I think about any grouping or ordering requirements
+6. Finally, I construct the SQL query with proper syntax
+
+Based on my reasoning above, here is the SQL query:
+
+SQL: 
