@@ -56,8 +56,7 @@ class ViPERConfig:
     cot_template: str = field(default="cot_vietnamese_nl2sql.txt")
     
     # Program-Aided Language Settings
-    pal_code_execution: bool = field(default=False)
-    pal_template: str = field(default="pal_vietnamese_nl2sql.txt")
+
     
     # Output Settings
     results_dir: str = field(default="results")
@@ -130,9 +129,7 @@ class ViPERConfig:
             'cot_reasoning_steps': 'COT_REASONING_STEPS',
             'cot_template': 'COT_TEMPLATE',
             
-            # PAL Settings
-            'pal_code_execution': 'PAL_CODE_EXECUTION',
-            'pal_template': 'PAL_TEMPLATE',
+            
             
             # Output Settings
             'results_dir': 'RESULTS_DIR',
@@ -190,7 +187,7 @@ class ViPERConfig:
     def _validate_config(self):
         """Validate configuration values."""
         # Validate strategy
-        valid_strategies = ['zero-shot', 'few-shot', 'cot', 'pal']
+        valid_strategies = ['zero-shot', 'few-shot', 'cot']
         if self.strategy not in valid_strategies:
             raise ValueError(f"Invalid strategy: {self.strategy}. Must be one of {valid_strategies}")
         
@@ -224,7 +221,7 @@ class ViPERConfig:
             'zero-shot': self.template_name,
             'few-shot': self.few_shot_template,
             'cot': self.cot_template,
-            'pal': self.pal_template
+
         }
         template_file = template_map.get(self.strategy, self.template_name)
         return str(Path(self.template_dir) / template_file)

@@ -1,12 +1,12 @@
 # ViPERSQL: Vietnamese Text-to-SQL Framework
 
-A unified framework for Vietnamese Text-to-SQL conversion supporting multiple strategies: Zero-shot, Few-shot, Chain-of-Thought (CoT), and Program-Aided Language (PAL).
+A unified framework for Vietnamese Text-to-SQL conversion supporting multiple strategies: Zero-shot, Few-shot, and Chain-of-Thought (CoT).
 
 > **Note**: This framework is optimized for **syllable-level tokenization** which works best with Large Language Models for Vietnamese text processing. Word-level tokenization is also supported but syllable-level is the default and recommended approach.
 
 ## 🚀 Features
 
-- **Multiple Strategies**: Zero-shot, Few-shot, CoT, and PAL approaches
+- **Multiple Strategies**: Zero-shot, Few-shot, and CoT approaches
 - **Unified CLI**: Single command-line tool for all operations
 - **Configuration Management**: Environment-based configuration with .env support
 - **Multiple LLM Support**: OpenAI GPT-4, Claude, and other language models
@@ -25,8 +25,7 @@ vipersql.py (Unified CLI)
     ├── Strategy Manager
     │   ├── Zero-shot Strategy
     │   ├── Few-shot Strategy (Random k examples)
-    │   ├── CoT Strategy (Step-by-step reasoning)
-    │   └── PAL Strategy
+    │   └── CoT Strategy (Step-by-step reasoning)
     └── MINT Core
         ├── Configuration Manager
         ├── LLM Interface
@@ -95,8 +94,7 @@ python vipersql.py --strategy few-shot --samples 20
 # Chain-of-Thought reasoning
 python vipersql.py --strategy cot --samples 5
 
-# Program-Aided Language approach
-python vipersql.py --strategy pal --samples 15
+
 ```
 
 ### Advanced Usage
@@ -136,7 +134,6 @@ DEFAULT_MAX_TOKENS=2000
 DEFAULT_STRATEGY=zero-shot
 FEW_SHOT_EXAMPLES=3
 COT_REASONING_STEPS=true
-PAL_CODE_EXECUTION=false
 ```
 
 ### Dataset Settings
@@ -196,14 +193,7 @@ python vipersql.py --strategy cot --samples 10
 
 **Template**: `templates/cot_vietnamese_nl2sql.txt`
 
-### 4. Program-Aided Language (PAL) Strategy
-Code-assisted reasoning for enhanced accuracy.
 
-```bash
-python vipersql.py --strategy pal --samples 10
-```
-
-**Template**: `templates/pal_vietnamese_nl2sql.txt`
 
 ## 🎨 Template System
 
@@ -230,7 +220,7 @@ SQL Query:
 - `{foreign_keys}`: Foreign key relationships
 - `{primary_keys}`: Primary key columns
 - `{question}`: Vietnamese natural language question
-- `{examples}`: Few-shot examples (for few-shot, CoT, PAL)
+- `{examples}`: Few-shot examples (for few-shot, CoT)
 
 ### Custom Templates
 Create custom templates and use them:

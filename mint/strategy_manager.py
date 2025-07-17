@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional
 from .config import ViPERConfig
 from .strategies import (
     BaseStrategy, ZeroShotStrategy, FewShotStrategy,
-    CoTStrategy, PALStrategy
+    CoTStrategy
 )
 
 
@@ -29,8 +29,7 @@ class StrategyManager:
         strategy_classes = {
             'zero-shot': ZeroShotStrategy,
             'few-shot': FewShotStrategy,
-            'cot': CoTStrategy,
-            'pal': PALStrategy
+            'cot': CoTStrategy
         }
         
         for name, strategy_class in strategy_classes.items():

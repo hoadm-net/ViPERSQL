@@ -2,7 +2,7 @@
 MINT - Modern Integration for Natural language Text-to-SQL
 
 A comprehensive toolkit for Vietnamese Text-to-SQL conversion with support for
-multiple strategies: Zero-shot, Few-shot, Chain-of-Thought (CoT), and Program-Aided Language (PAL).
+multiple strategies: Zero-shot, Few-shot, and Chain-of-Thought (CoT).
 
 Core Components:
 - Strategy Manager: Orchestrates different NL2SQL approaches
@@ -27,8 +27,7 @@ try:
     from .strategies import (
         ZeroShotStrategy,
         FewShotStrategy, 
-        CoTStrategy,
-        PALStrategy
+        CoTStrategy
     )
     
     # Evaluation and logging
@@ -58,8 +57,7 @@ __all__ = [
     # Strategy implementations
     "ZeroShotStrategy",
     "FewShotStrategy",
-    "CoTStrategy", 
-    "PALStrategy",
+    "CoTStrategy",
     
     # Evaluation and logging
     "ViPERLogger",
@@ -72,7 +70,7 @@ def create_strategy(strategy_name: str = None, **kwargs):
     Factory function to create strategy instances.
     
     Args:
-        strategy_name: 'zero-shot', 'few-shot', 'cot', or 'pal'
+        strategy_name: 'zero-shot', 'few-shot', or 'cot'
         **kwargs: Additional configuration parameters
         
     Returns:
@@ -84,8 +82,7 @@ def create_strategy(strategy_name: str = None, **kwargs):
     strategy_map = {
         'zero-shot': ZeroShotStrategy,
         'few-shot': FewShotStrategy,
-        'cot': CoTStrategy,
-        'pal': PALStrategy
+        'cot': CoTStrategy
     }
     
     if strategy_name not in strategy_map:

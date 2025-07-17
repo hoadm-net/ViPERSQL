@@ -5,7 +5,7 @@ ViPERSQL - Unified Vietnamese Text-to-SQL CLI Tool
 
 A unified command-line interface for Vietnamese Text-to-SQL conversion
 supporting multiple strategies: Zero-shot, Few-shot, Chain-of-Thought (CoT), 
-and Program-Aided Language (PAL).
+and Chain-of-Thought (CoT).
 
 Usage:
     # Zero-shot strategy (default)
@@ -21,7 +21,7 @@ Usage:
     python vipersql.py --model claude-3-sonnet --split test --samples 20
     
     # Custom configuration
-    python vipersql.py --config custom.env --strategy pal
+    python vipersql.py --config custom.env --strategy cot
 """
 
 import argparse
@@ -256,14 +256,14 @@ Examples:
   python vipersql.py --model claude-3-sonnet --split test --samples 50
   
   # Custom configuration file
-  python vipersql.py --config custom.env --strategy pal
+  python vipersql.py --config custom.env --strategy cot
         """
     )
     
     # Strategy selection
     parser.add_argument(
         "--strategy", "-s",
-        choices=["zero-shot", "few-shot", "cot", "pal"],
+        choices=["zero-shot", "few-shot", "cot"],
         help="Strategy to use for NL2SQL conversion"
     )
     
@@ -347,7 +347,7 @@ def main():
         print("  zero-shot: Direct conversion without examples")
         print("  few-shot:  Uses examples to guide conversion")
         print("  cot:       Chain-of-Thought reasoning approach")
-        print("  pal:       Program-Aided Language approach")
+
         return
     
     try:

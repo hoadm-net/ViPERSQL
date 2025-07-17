@@ -25,7 +25,7 @@ class TemplateManager:
             'zero-shot': self.config.template_name,
             'few-shot': self.config.few_shot_template,
             'cot': self.config.cot_template,
-            'pal': self.config.pal_template
+
         }
         
         for strategy, template_file in template_mapping.items():
@@ -58,7 +58,7 @@ class TemplateManager:
         """Get input variables for a strategy."""
         base_variables = ['tables', 'columns', 'foreign_keys', 'primary_keys', 'question']
         
-        if strategy in ['few-shot', 'cot', 'pal']:
+        if strategy in ['few-shot', 'cot']:
             base_variables.append('examples')
         
         return base_variables
@@ -94,7 +94,7 @@ Vietnamese Question: {question}
 
 SQL Query:"""
         
-        else:  # cot, pal
+        else:  # cot
             template_content = """You are an expert in converting Vietnamese natural language questions to SQL queries.
 
 Database Schema:
