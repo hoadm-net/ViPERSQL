@@ -29,9 +29,13 @@ class UnifiedEvaluator:
         exact_match = self._exact_match(predicted_sql, gold_sql)
         syntax_valid = self._validate_syntax(predicted_sql)
         
+        # Component-wise F1e for single query
+        component_f1 = self.metrics.component_wise_f1_score([predicted_sql], [gold_sql])
+        
         result = {
             'exact_match': exact_match,
             'syntax_valid': syntax_valid,
+            'component_f1_scores': component_f1,
             'request_id': request_id
         }
         
@@ -64,14 +68,16 @@ class UnifiedEvaluator:
         # Component F1-score
         predicted_queries = [r['predicted_sql'] for r in valid_results]
         gold_queries = [r['gold_sql'] for r in valid_results]
-        component_scores = self.metrics.component_wise_accuracy(predicted_queries, gold_queries)
-        component_f1 = sum(component_scores.values()) / len(component_scores) if component_scores else 0.0
+        component_f1_scores = self.metrics.component_wise_f1_score(predicted_queries, gold_queries)
         
+        # Calculate average F1oss all components
+        avg_component_f1 = sum(component_f1_scores.values()) / len(component_f1_scores) if component_f1_scores else 0.0  
         summary = {
             'total_samples': len(results),
             'valid_results': total,
             'exact_match_accuracy': (exact_matches / total) * 100,
-            'component_f1_score': component_f1 * 100,
+            'component_f1_scores': component_f1_scores,
+            'avg_component_f1_score': avg_component_f1 * 100,
             'syntax_validity': (syntax_valid / total) * 100,
             'errors': len(results) - total
         }

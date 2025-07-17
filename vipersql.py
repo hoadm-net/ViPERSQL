@@ -217,18 +217,20 @@ class ViPERSQLCLI:
         print(f"Strategy: {self.config.strategy.upper()}")
         print(f"Total samples: {summary.get('total_samples', 0)}")
         print(f"Exact Match: {summary.get('exact_match_accuracy', 0):.1f}%")
-        print(f"Execution Accuracy: {summary.get('execution_accuracy', 0):.1f}%")
         print(f"Syntax Validity: {summary.get('syntax_validity', 0):.1f}%")
+        print(f"Average Component F1: {summary.get('avg_component_f1core', 0):.1f}%")
         
         if 'confidence_stats' in summary:
             conf_stats = summary['confidence_stats']
             print(f"Average Confidence: {conf_stats.get('mean', 0):.2f}")
             print(f"Confidence Range: {conf_stats.get('min', 0):.2f} - {conf_stats.get('max', 0):.2f}")
         
-        if 'component_accuracy' in summary:
-            print(f"\nComponent Accuracy:")
-            for component, accuracy in summary['component_accuracy'].items():
-                print(f"  {component}: {accuracy:.1f}%")
+        # Display detailed F1-scores for each SQL clause
+        if 'component_f1_scores' in summary:
+            print("\n🔍 COMPONENT F1-SCORES:")
+            print("-" * 40)
+            for component, f1score in summary['component_f1_scores'].items():
+                print(f"  {component}: {f1score*100:.1f}%")
         
         if 'errors' in summary and summary['errors'] > 0:
             print(f"\n⚠️  Errors: {summary['errors']}")

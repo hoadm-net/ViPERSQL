@@ -51,6 +51,114 @@ class EvaluationMetrics:
         
         return exact_matches / len(predicted_queries)
     
+    def component_wise_f1_score(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, float]:
+        """
+        Calculate F1-score for SQL clauses using set-based component matching.
+        
+        For each SQL clause (SELECT, WHERE, ORDER BY, GROUP BY, KEYWORDS):
+        - Extract components as sets
+        - Calculate Precision = |Predicted ∩ Gold| / |Predicted|
+        - Calculate Recall = |Predicted ∩ Gold| / |Gold|
+        - F1 = 2× (P × R) / (P + R)
+        
+        Args:
+            predicted_queries (List[str]): List of predicted SQL queries
+            gold_queries (List[str]): List of gold/reference SQL queries
+            
+        Returns:
+            Dict[str, float]: F1-score for each SQL clause
+        """
+        if len(predicted_queries) != len(gold_queries):
+            raise ValueError("Predicted and gold query lists must have the same length")
+        
+        # Define all SQL clauses to evaluate
+        clauses = ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'KEYWORDS']
+        clause_stats = {clause: {'tp': 0, 'fp': 0, 'fn': 0} for clause in clauses}
+        
+        for pred, gold in zip(predicted_queries, gold_queries):
+            # Extract components as sets for each clause
+            pred_components = self._extract_components_as_sets(pred)
+            gold_components = self._extract_components_as_sets(gold)
+            
+            # Evaluate each clause using set-based matching
+            for clause in clauses:
+                pred_set = pred_components.get(clause, set())
+                gold_set = gold_components.get(clause, set())
+                
+                # Calculate intersection
+                intersection = pred_set & gold_set
+                
+                # Calculate precision and recall
+                precision = len(intersection) / len(pred_set) if len(pred_set) > 0 else 0.0
+                recall = len(intersection) / len(gold_set) if len(gold_set) > 0 else 0.0
+                
+                # Calculate F1-score for this query
+                f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+                
+                # Accumulate for overall statistics
+                if len(gold_set) > 0:  # Only count if gold has this clause
+                    if f1_score > 0:
+                        clause_stats[clause]['tp'] += 1
+                    else:
+                        clause_stats[clause]['fn'] += 1
+                
+                if len(pred_set) > 0 and len(gold_set) == 0:  # Extra clause
+                    clause_stats[clause]['fp'] += 1        
+        # Calculate overall F1-score for each clause
+        f1_scores = {}
+        for clause, stats in clause_stats.items():
+            precision = stats['tp'] / (stats['tp'] + stats['fp']) if (stats['tp'] + stats['fp']) > 0 else 0.0
+            recall = stats['tp'] / (stats['tp'] + stats['fn']) if (stats['tp'] + stats['fn']) > 0 else 0.0
+            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+            f1_scores[clause] = f1_score
+        
+        return f1_scores
+    
+    def _extract_keywords(self, query: str) -> List[str]:
+        """
+        Extract SQL keywords from a query.
+        
+        Args:
+            query (str): SQL query string
+            
+        Returns:
+            List[str]: List of SQL keywords found in the query
+        """
+        query_upper = query.upper()
+        keywords = []
+        
+        # Common SQL keywords
+        sql_keywords = [
+            'SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING',
+            'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'OUTER JOIN',
+            'UNION', 'INTERSECT', 'EXCEPT', 'WITH', 'AS INCT',
+            'COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'CASE', 'WHEN', 'THEN', 'END',
+            'AND', 'OR', 'NOT', 'IN', 'EXISTS', 'LIKE', 'BETWEEN', 'IS NULL', 'NULL',
+            'ASC', 'DESC', 'LIMIT', 'OFFSET'
+        ]
+        
+        for keyword in sql_keywords:
+            if keyword in query_upper:
+                keywords.append(keyword)
+        
+        return keywords
+    
+    def _normalize_component(self, component: str) -> str:
+        """
+        Normalize a SQL component for comparison.
+        
+        Args:
+            component (str): SQL component string
+            
+        Returns:
+            str: Normalized component
+        """
+        if not component:
+            return ""
+        # Remove extra whitespace and convert to lowercase
+        normalized = " ".join(component.split()).lower()
+        return normalized
+
     def component_wise_accuracy(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, float]:
         """
         Calculate component-wise accuracy for SQL clauses.
@@ -78,16 +186,15 @@ class EvaluationMetrics:
                     component_totals[component] += 1
                     
                     if (component in pred_components and 
-                        normalize_sql(pred_components[component]) == normalize_sql(gold_components[component])):
-                        component_matches[component] += 1
-        
+                        self._normalize_component(pred_components[component]) == self._normalize_component(gold_components[component])):
+                        component_matches[component] += 1        
         # Calculate accuracy for each component
         accuracies = {}
         for component in components:
             if component_totals[component] > 0:
                 accuracies[component] = component_matches[component] / component_totals[component]
             else:
-                accuracies[component] = 1.0  # Perfect score if component never appears
+                accuracies[component] = 1.0 # Perfect score if component never appears
         
         return accuracies
     
@@ -215,6 +322,168 @@ class EvaluationMetrics:
             
         except Exception:
             return {}
+    
+    def _extract_components_as_sets(self, query: str) -> Dict[str, set]:
+        """
+        Extract SQL components as sets of individual elements.
+        
+        Args:
+            query (str): SQL query string
+            
+        Returns:
+            Dict[str, set]: Dictionary mapping clause names to sets of components
+        """
+        components = {}
+        query_upper = query.upper()
+        
+        # Extract SELECT components (columns)
+        select_match = re.search(r'SELECT\s+(.*?)\s+FROM', query_upper, re.DOTALL)
+        if select_match:
+            select_clause = select_match.group(1).strip()
+            select_components = self._parse_select_clause(select_clause)
+            components['SELECT'] = select_components
+        
+        # Extract FROM components (tables)
+        from_match = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
+        if from_match:
+            from_clause = from_match.group(1).strip()
+            from_components = self._parse_from_clause(from_clause)
+            components['FROM'] = from_components
+        
+        # Extract WHERE components (conditions)
+        where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP|\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
+        if where_match:
+            where_clause = where_match.group(1).strip()
+            where_components = self._parse_where_clause(where_clause)
+            components['WHERE'] = where_components
+        
+        # Extract GROUP BY components
+        group_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
+        if group_match:
+            group_clause = group_match.group(1).strip()
+            group_components = self._parse_group_by_clause(group_clause)
+            components['GROUP BY'] = group_components
+        
+        # Extract ORDER BY components
+        order_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+HAVING|$)', query_upper, re.DOTALL)
+        if order_match:
+            order_clause = order_match.group(1).strip()
+            order_components = self._parse_order_by_clause(order_clause)
+            components['ORDER BY'] = order_components
+        
+        # Extract HAVING components
+        having_match = re.search(r'HAVING\s+(.*?)$', query_upper, re.DOTALL)
+        if having_match:
+            having_clause = having_match.group(1).strip()
+            having_components = self._parse_having_clause(having_clause)
+            components['HAVING'] = having_components
+        
+        # Extract KEYWORDS
+        keywords = self._extract_keywords(query)
+        components['KEYWORDS'] = set(keywords)
+        
+        return components
+    
+    def _parse_select_clause(self, clause: str) -> set:
+        """
+        Parse SELECT clause into set of column identifiers.
+        """
+        components = set()
+        # Split by comma and clean up
+        parts = [part.strip() for part in clause.split(',')]
+        for part in parts:
+            # Remove AS aliases
+            if ' AS ' in part.upper():
+                part = part.split(' AS ')[0].strip()
+            # Remove function calls, keep column names
+            if '(' in part and ')' in part:
+                # Extract column name from function calls like COUNT(*), SUM(column)
+                match = re.search(r'\(([^)]+)\)', part)
+                if match:
+                    components.add(match.group(1).strip())
+            else:
+                components.add(part)
+        return components
+    
+    def _parse_from_clause(self, clause: str) -> set:
+        """
+        Parse FROM clause into set of table identifiers.
+        """
+        components = set()
+        # Split by JOIN, LEFT JOIN, etc.
+        parts = re.split(r'\b(?:JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN)\b', clause, flags=re.IGNORECASE)
+        for part in parts:
+            part = part.strip()
+            if part:
+                # Extract table name (remove alias)
+                if ' AS ' in part.upper():
+                    table_name = part.split(' AS ')[0].strip()
+                elif part and not part.startswith('ON'):
+                    table_name = part.split()[0].strip()
+                else:
+                    table_name = part
+                components.add(table_name)
+        return components
+    
+    def _parse_where_clause(self, clause: str) -> set:
+        """
+        Parse WHERE clause into set of condition identifiers.
+        """
+        components = set()
+        # Split by AND, OR
+        parts = re.split(r'\b(?:AND|OR)\b', clause, flags=re.IGNORECASE)
+        for part in parts:
+            part = part.strip()
+            if part:
+                # Extract column names from conditions
+                # Pattern: column operator value
+                match = re.search(r'(\w+(?:\.\w+)?)\s*[=<>!]+\s*', part)
+                if match:
+                    components.add(match.group(1).strip())
+        return components
+    
+    def _parse_group_by_clause(self, clause: str) -> set:
+        """
+        Parse GROUP BY clause into set of column identifiers.
+        """
+        components = set()
+        parts = [part.strip() for part in clause.split(',')]
+        for part in parts:
+            components.add(part)
+        return components
+    
+    def _parse_order_by_clause(self, clause: str) -> set:
+        """
+        Parse ORDER BY clause into set of column identifiers.
+        """
+        components = set()
+        parts = [part.strip() for part in clause.split(',')]
+        for part in parts:
+            # Remove ASC/DESC
+            if ' ASC' in part.upper() or ' DESC' in part.upper():
+                part = re.sub(r'(?:ASC|DESC)\b', '', part, flags=re.IGNORECASE)
+            components.add(part)
+        return components
+    
+    def _parse_having_clause(self, clause: str) -> set:
+        """
+        Parse HAVING clause into set of condition identifiers.
+        """
+        components = set()
+        # Split by AND, OR
+        parts = re.split(r'\b(?:AND|OR)\b', clause, flags=re.IGNORECASE)
+        for part in parts:
+            part = part.strip()
+            if part:
+                # Extract aggregate functions and conditions
+                if 'COUNT' in part.upper() or 'SUM' in part.upper() or 'AVG' in part.upper():
+                    components.add(part)
+                else:
+                    # Extract column names from conditions
+                    match = re.search(r'(\w+(?:\.\w+)?)\s*[=<>!]+\s*', part)
+                    if match:
+                        components.add(match.group(1).strip())
+        return components
     
     def comprehensive_evaluation(self, predicted_queries: List[str], gold_queries: List[str], 
                                execution_results: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
