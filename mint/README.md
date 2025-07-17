@@ -6,9 +6,10 @@ A comprehensive toolkit for evaluating Vietnamese Text-to-SQL models, providing 
 
 - **SQLite Database Builder**: Automatically create SQLite databases from JSON metadata
 - **SQL Query Executor**: Execute SQL queries safely with timeout protection and result comparison
-- **Evaluation Metrics**: Exact match, component-wise accuracy, execution accuracy, and error analysis
+- **Evaluation Metrics**: Exact match, component-wise F1-score, syntax validity, and error analysis
 - **Vietnamese Support**: Proper handling of Vietnamese characters and text
 - **Batch Processing**: Efficient processing of multiple queries and databases
+- **Component Analysis**: Detailed F1-score analysis for SQL clauses (SELECT, FROM, WHERE, GROUP BY, ORDER BY, HAVING, KEYWORDS)
 
 ## Installation
 
@@ -98,30 +99,28 @@ summary = metrics.evaluation_summary(results)
 print(summary)
 ```
 
-## Example Output
+## Evaluation Metrics
 
-```
-=== SQL Evaluation Results ===
-Total queries: 954
-Exact Match Accuracy: 67.50%
-Average SQL Similarity: 84.32%
-Execution Accuracy: 71.25%
-Execution Success Rate: 89.62%
+### Core Metrics
+- **Exact Match**: Perfect string match after normalization
+- **Syntax Validity**: Valid SQL syntax using sqlparse
+- **Component F1-score**: Set-based analysis of SQL clauses
 
-=== Component-wise Accuracy ===
-SELECT: 89.45%
-FROM: 94.38%
-WHERE: 78.23%
-GROUP BY: 85.71%
-ORDER BY: 92.31%
-HAVING: 80.00%
+### Component Analysis
+The system provides detailed F1-score analysis for each SQL clause:
+- **SELECT**: Column selection accuracy
+- **FROM**: Table selection accuracy  
+- **WHERE**: Condition accuracy
+- **GROUP BY**: Grouping clause accuracy
+- **ORDER BY**: Sorting clause accuracy
+- **HAVING**: Aggregate condition accuracy
+- **KEYWORDS**: SQL keyword usage accuracy
 
-=== Difficulty Breakdown ===
-Easy: 78.25% (378 queries)
-Medium: 69.84% (129 queries)
-Hard: 58.73% (340 queries)
-Extra: 45.10% (107 queries)
-```
+### F1-score Calculation
+Component F1-scores are calculated using set-based matching:
+- **Precision**: Intersection of predicted and gold components
+- **Recall**: Coverage of gold components by predictions
+- **F1-score**: Harmonic mean of precision and recall
 
 ## Advanced Usage
 
@@ -196,9 +195,8 @@ class SQLExecutor:
 ```python
 class EvaluationMetrics:
     def exact_match_accuracy(self, predicted_queries: List[str], gold_queries: List[str]) -> float
-    def component_wise_accuracy(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, float]
-    def sql_similarity(self, predicted_queries: List[str], gold_queries: List[str]) -> List[float]
-    def difficulty_breakdown_accuracy(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, Dict[str, Any]]
+    def component_wise_f1_score(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, float]
+    def syntax_validity(self, queries: List[str]) -> List[bool]
     def comprehensive_evaluation(self, predicted_queries: List[str], gold_queries: List[str], execution_results: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]
 ```
 
@@ -274,7 +272,7 @@ mint/
 ├── __init__.py          # Package initialization and exports
 ├── database.py          # SQLiteBuilder class
 ├── executor.py          # SQLExecutor class  
-├── metrics.py           # EvaluationMetrics and SQLDifficultyClassifier
+├── metrics.py           # EvaluationMetrics and component analysis
 ├── utils.py             # Utility functions
 ├── tests/               # Test suite
 │   ├── __init__.py
