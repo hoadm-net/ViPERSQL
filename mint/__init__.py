@@ -13,8 +13,6 @@ Core Components:
 """
 
 # Core components
-from .database import SQLiteBuilder
-from .executor import SQLExecutor  
 from .metrics import EvaluationMetrics
 from .utils import load_dataset, normalize_sql
 
@@ -47,8 +45,6 @@ __author__ = "ViPERSQL Research Team"
 
 __all__ = [
     # Legacy components (for backward compatibility)
-    "SQLiteBuilder",
-    "SQLExecutor", 
     "EvaluationMetrics",
     "load_dataset",
     "normalize_sql",

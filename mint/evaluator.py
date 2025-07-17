@@ -35,12 +35,6 @@ class UnifiedEvaluator:
             'request_id': request_id
         }
         
-        # Add execution accuracy if enabled
-        if self.config.enable_execution_accuracy:
-            result['execution_accuracy'] = self._execution_accuracy(
-                predicted_sql, gold_sql, db_id
-            )
-        
         return result
     
     def calculate_summary(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -67,20 +61,20 @@ class UnifiedEvaluator:
             if r.get('evaluation', {}).get('syntax_valid', False)
         )
         
+        # Component F1-score
+        predicted_queries = [r['predicted_sql'] for r in valid_results]
+        gold_queries = [r['gold_sql'] for r in valid_results]
+        component_scores = self.metrics.component_wise_accuracy(predicted_queries, gold_queries)
+        component_f1 = sum(component_scores.values()) / len(component_scores) if component_scores else 0.0
+        
         summary = {
             'total_samples': len(results),
             'valid_results': total,
             'exact_match_accuracy': (exact_matches / total) * 100,
+            'component_f1_score': component_f1 * 100,
             'syntax_validity': (syntax_valid / total) * 100,
             'errors': len(results) - total
         }
-        
-        # Add execution accuracy if available
-        execution_accurate = sum(
-            1 for r in valid_results
-            if r.get('evaluation', {}).get('execution_accuracy', False)
-        )
-        summary['execution_accuracy'] = (execution_accurate / total) * 100
         
         return summary
     
@@ -100,10 +94,4 @@ class UnifiedEvaluator:
             parsed = sqlparse.parse(sql)
             return len(parsed) > 0
         except:
-            return False
-    
-    def _execution_accuracy(self, predicted: str, gold: str, db_id: str) -> bool:
-        """Check execution accuracy (simplified)."""
-        # This would require database execution
-        # For now, return False as placeholder
-        return False 
+            return False 
