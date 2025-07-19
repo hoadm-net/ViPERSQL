@@ -223,14 +223,4 @@ def validate_dataset(self, data: List[Dict]) -> bool:
 2. Tạo feature branch
 3. Thêm normalization rules mới
 4. Test với subset dữ liệu ViText2SQL
-5. Submit pull request
-
-*Lưu ý: ViText2SQL dataset thuộc về VinAI Research. Chúng ta chỉ sử dụng và chuẩn hóa dữ liệu cho hệ thống đánh giá ViPERSQL.*
-
-## 📄 License
-
-MIT License - Xem file LICENSE để biết thêm chi tiết.
-
----
-
-**ViPERSQL Dataset Processing** - Hệ thống chuẩn hóa dữ liệu ViText2SQL cho đánh giá Text-to-SQL tiếng Việt! 🚀 
+5. Submit pull request 
