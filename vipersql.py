@@ -282,8 +282,8 @@ Examples:
     
     parser.add_argument(
         "--level", "-l",
-        choices=["syllable", "word"],
-        help="Tokenization level (default: syllable, recommended for LLMs)"
+        choices=["syllable", "word", "std"],
+        help="Tokenization level (default: std, recommended for LLMs)"
     )
     
     parser.add_argument(

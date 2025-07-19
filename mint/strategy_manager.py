@@ -11,6 +11,10 @@ from .strategies import (
     CoTStrategy
 )
 
+# Nếu có đường dẫn mặc định cho schema/dataset, chuyển sang std-level
+DEFAULT_SCHEMA_PATH = 'dataset/ViText2SQL/std-level/tables.json'
+DEFAULT_DATASET_PATH = 'dataset/ViText2SQL/std-level'
+
 
 class StrategyManager:
     """Manages and orchestrates different NL2SQL strategies."""

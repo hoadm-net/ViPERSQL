@@ -11,6 +11,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from difflib import SequenceMatcher
 from collections import defaultdict
 from .utils import normalize_sql, load_dataset
+import unicodedata
 
 class EvaluationMetrics:
     """
@@ -51,67 +52,44 @@ class EvaluationMetrics:
         
         return exact_matches / len(predicted_queries)
     
-    def component_wise_f1_score(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, float]:
+    def component_wise_f1_score(self, predicted_queries: List[str], gold_queries: List[str], db_ids: List[str], schema_path: str) -> Dict[str, float]:
         """
-        Calculate F1-score for SQL clauses using set-based component matching.
-        
-        For each SQL clause (SELECT, WHERE, ORDER BY, GROUP BY, KEYWORDS):
-        - Extract components as sets
-        - Calculate Precision = |Predicted ∩ Gold| / |Predicted|
-        - Calculate Recall = |Predicted ∩ Gold| / |Gold|
-        - F1 = 2× (P × R) / (P + R)
-        
+        Calculate F1-score for SQL clauses using set-based component matching, schema-aware.
         Args:
             predicted_queries (List[str]): List of predicted SQL queries
             gold_queries (List[str]): List of gold/reference SQL queries
-            
+            db_ids (List[str]): List of db_id for each query
+            schema_path (str): Path to tables.json
         Returns:
             Dict[str, float]: F1-score for each SQL clause
         """
-        if len(predicted_queries) != len(gold_queries):
-            raise ValueError("Predicted and gold query lists must have the same length")
-        
-        # Define all SQL clauses to evaluate
+        if len(predicted_queries) != len(gold_queries) or len(predicted_queries) != len(db_ids):
+            raise ValueError("Predicted, gold query lists, and db_ids must have the same length")
         clauses = ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'KEYWORDS']
         clause_stats = {clause: {'tp': 0, 'fp': 0, 'fn': 0} for clause in clauses}
-        
-        for pred, gold in zip(predicted_queries, gold_queries):
-            # Extract components as sets for each clause
-            pred_components = self._extract_components_as_sets(pred)
-            gold_components = self._extract_components_as_sets(gold)
-            
-            # Evaluate each clause using set-based matching
+        for pred, gold, db_id in zip(predicted_queries, gold_queries, db_ids):
+            schema = self.load_schema(db_id, schema_path)
+            schema_tables, schema_columns = self.get_table_and_column_sets(schema)
+            pred_components = self.extract_components_as_sets(pred, schema_tables, schema_columns)
+            gold_components = self.extract_components_as_sets(gold, schema_tables, schema_columns)
             for clause in clauses:
                 pred_set = pred_components.get(clause, set())
                 gold_set = gold_components.get(clause, set())
-                
-                # Calculate intersection
-                intersection = pred_set & gold_set
-                
-                # Calculate precision and recall
-                precision = len(intersection) / len(pred_set) if len(pred_set) > 0 else 0.0
-                recall = len(intersection) / len(gold_set) if len(gold_set) > 0 else 0.0
-                
-                # Calculate F1-score for this query
-                f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-                
-                # Accumulate for overall statistics
-                if len(gold_set) > 0:  # Only count if gold has this clause
-                    if f1_score > 0:
-                        clause_stats[clause]['tp'] += 1
-                    else:
-                        clause_stats[clause]['fn'] += 1
-                
-                if len(pred_set) > 0 and len(gold_set) == 0:  # Extra clause
-                    clause_stats[clause]['fp'] += 1        
-        # Calculate overall F1-score for each clause
+                tp = len(pred_set & gold_set)
+                fp = len(pred_set - gold_set)
+                fn = len(gold_set - pred_set)
+                clause_stats[clause]['tp'] += tp
+                clause_stats[clause]['fp'] += fp
+                clause_stats[clause]['fn'] += fn
         f1_scores = {}
-        for clause, stats in clause_stats.items():
-            precision = stats['tp'] / (stats['tp'] + stats['fp']) if (stats['tp'] + stats['fp']) > 0 else 0.0
-            recall = stats['tp'] / (stats['tp'] + stats['fn']) if (stats['tp'] + stats['fn']) > 0 else 0.0
-            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-            f1_scores[clause] = f1_score
-        
+        for clause in clauses:
+            tp = clause_stats[clause]['tp']
+            fp = clause_stats[clause]['fp']
+            fn = clause_stats[clause]['fn']
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+            f1_scores[clause] = f1
         return f1_scores
     
     def _extract_keywords(self, query: str) -> List[str]:
@@ -159,43 +137,39 @@ class EvaluationMetrics:
         normalized = " ".join(component.split()).lower()
         return normalized
 
-    def component_wise_accuracy(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, float]:
+    def component_wise_accuracy(self, predicted_queries: List[str], gold_queries: List[str], db_ids: List[str], schema_path: str) -> Dict[str, float]:
         """
-        Calculate component-wise accuracy for SQL clauses.
-        
+        Calculate component-wise accuracy for SQL clauses, schema-aware.
         Args:
             predicted_queries (List[str]): List of predicted SQL queries
             gold_queries (List[str]): List of gold/reference SQL queries
-            
+            db_ids (List[str]): List of db_id for each query
+            schema_path (str): Path to tables.json
         Returns:
             Dict[str, float]: Component-wise accuracy scores
         """
-        if len(predicted_queries) != len(gold_queries):
-            raise ValueError("Predicted and gold query lists must have the same length")
-        
+        if len(predicted_queries) != len(gold_queries) or len(predicted_queries) != len(db_ids):
+            raise ValueError("Predicted, gold query lists, and db_ids must have the same length")
         components = ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING']
         component_matches = {comp: 0 for comp in components}
         component_totals = {comp: 0 for comp in components}
-        
-        for pred, gold in zip(predicted_queries, gold_queries):
-            pred_components = self._extract_sql_components(pred)
-            gold_components = self._extract_sql_components(gold)
-            
+        for pred, gold, db_id in zip(predicted_queries, gold_queries, db_ids):
+            schema = self.load_schema(db_id, schema_path)
+            schema_tables, schema_columns = self.get_table_and_column_sets(schema)
+            pred_components = self.extract_components_as_sets(pred, schema_tables, schema_columns)
+            gold_components = self.extract_components_as_sets(gold, schema_tables, schema_columns)
             for component in components:
                 if component in gold_components:
                     component_totals[component] += 1
-                    
                     if (component in pred_components and 
-                        self._normalize_component(pred_components[component]) == self._normalize_component(gold_components[component])):
-                        component_matches[component] += 1        
-        # Calculate accuracy for each component
+                        self._normalize_component(' '.join(pred_components[component])) == self._normalize_component(' '.join(gold_components[component]))):
+                        component_matches[component] += 1
         accuracies = {}
         for component in components:
             if component_totals[component] > 0:
                 accuracies[component] = component_matches[component] / component_totals[component]
             else:
-                accuracies[component] = 1.0 # Perfect score if component never appears
-        
+                accuracies[component] = 1.0
         return accuracies
     
     def sql_similarity(self, predicted_queries: List[str], gold_queries: List[str]) -> List[float]:
@@ -323,124 +297,202 @@ class EvaluationMetrics:
         except Exception:
             return {}
     
-    def _extract_components_as_sets(self, query: str) -> Dict[str, set]:
+    def load_schema(self, db_id: str, schema_path: str) -> dict:
         """
-        Extract SQL components as sets of individual elements.
-        
-        Args:
-            query (str): SQL query string
-            
-        Returns:
-            Dict[str, set]: Dictionary mapping clause names to sets of components
+        Load schema for a given db_id from tables.json.
+        """
+        with open(schema_path, 'r', encoding='utf-8') as f:
+            schemas = json.load(f)
+        for schema in schemas:
+            if schema['db_id'] == db_id:
+                return schema
+        return {}
+
+    def get_table_and_column_sets(self, schema: dict) -> (set, set):
+        """
+        Get set of table names and set of full column names (table.column) from schema.
+        """
+        tables = set(schema.get('table_names', []))
+        columns = set()
+        table_names = schema.get('table_names', [])
+        for idx, col in schema.get('column_names', []):
+            if idx >= 0 and idx < len(table_names):
+                columns.add(f"{table_names[idx]}.{col}")
+        return tables, columns
+
+    def extract_components_as_sets(self, query: str, schema_tables: set, schema_columns: set) -> Dict[str, set]:
+        """
+        Extract SQL components from a query as sets of normalized strings.
+        Luôn chuẩn hóa alias về tên bảng gốc trước khi tách trường/điều kiện.
         """
         components = {}
         query_upper = query.upper()
-        
-        # Extract SELECT components (columns)
-        select_match = re.search(r'SELECT\s+(.*?)\s+FROM', query_upper, re.DOTALL)
+        # Parse alias mapping từ FROM/JOIN
+        alias_map = self._extract_alias_mapping(query)
+        # Helper: thay alias về tên bảng gốc trong toàn bộ query
+        def replace_alias_all(sql, alias_map):
+            for alias, table in alias_map.items():
+                sql = re.sub(rf'\b{re.escape(alias)}\.', f'{table}.', sql)
+            return sql
+        query_no_alias = replace_alias_all(query, alias_map)
+        # SELECT
+        select_match = re.search(r'SELECT\s+(.*?)\s+FROM', query_no_alias, re.DOTALL | re.IGNORECASE)
         if select_match:
             select_clause = select_match.group(1).strip()
-            select_components = self._parse_select_clause(select_clause)
-            components['SELECT'] = select_components
-        
-        # Extract FROM components (tables)
-        from_match = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
+            fields = [self._normalize_token(f.split(' AS ')[0]) for f in select_clause.split(',')]
+            components['SELECT'] = set(fields)
+        # FROM
+        from_match = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if from_match:
             from_clause = from_match.group(1).strip()
-            from_components = self._parse_from_clause(from_clause)
-            components['FROM'] = from_components
-        
-        # Extract WHERE components (conditions)
-        where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP|\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
+            tables = [self._normalize_token(t.split()[0]) for t in from_clause.split(',')]
+            components['FROM'] = set(tables)
+        # WHERE
+        where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP|\s+ORDER|\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if where_match:
             where_clause = where_match.group(1).strip()
-            where_components = self._parse_where_clause(where_clause)
-            components['WHERE'] = where_components
-        
-        # Extract GROUP BY components
-        group_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
+            # Tách điều kiện theo AND/OR
+            conds = re.split(r'\b(?:AND|OR)\b', where_clause, flags=re.IGNORECASE)
+            conds = [self._normalize_token(c) for c in conds if c.strip()]
+            components['WHERE'] = set(conds)
+        # GROUP BY
+        group_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER|\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if group_match:
-            group_clause = group_match.group(1).strip()
-            group_components = self._parse_group_by_clause(group_clause)
-            components['GROUP BY'] = group_components
-        
-        # Extract ORDER BY components
-        order_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+HAVING|$)', query_upper, re.DOTALL)
+            group_by_clause = group_match.group(1).strip()
+            fields = [self._normalize_token(f) for f in group_by_clause.split(',')]
+            components['GROUP BY'] = set(fields)
+        # ORDER BY
+        order_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if order_match:
-            order_clause = order_match.group(1).strip()
-            order_components = self._parse_order_by_clause(order_clause)
-            components['ORDER BY'] = order_components
-        
-        # Extract HAVING components
-        having_match = re.search(r'HAVING\s+(.*?)$', query_upper, re.DOTALL)
+            order_by_clause = order_match.group(1).strip()
+            fields = [self._normalize_token(f.split()[0]) for f in order_by_clause.split(',')]
+            components['ORDER BY'] = set(fields)
+        # HAVING
+        having_match = re.search(r'HAVING\s+(.*?)$', query_no_alias, re.DOTALL | re.IGNORECASE)
         if having_match:
             having_clause = having_match.group(1).strip()
-            having_components = self._parse_having_clause(having_clause)
-            components['HAVING'] = having_components
-        
-        # Extract KEYWORDS
+            conds = re.split(r'\b(?:AND|OR)\b', having_clause, flags=re.IGNORECASE)
+            conds = [self._normalize_token(c) for c in conds if c.strip()]
+            components['HAVING'] = set(conds)
+        # KEYWORDS
         keywords = self._extract_keywords(query)
         components['KEYWORDS'] = set(keywords)
-        
+        # Cảnh báo nếu alias không mapping được
+        for m in re.finditer(r'\b(\w+)\.', query):
+            alias = m.group(1)
+            if alias not in alias_map and not self._normalize_token(alias) in schema_tables:
+                print(f"[WARNING] Alias '{alias}' không mapping được trong query: {query}")
         return components
-    
-    def _parse_select_clause(self, clause: str) -> set:
+
+    def _extract_alias_mapping(self, query: str) -> dict:
         """
-        Parse SELECT clause into set of column identifiers.
+        Parse FROM/JOIN để lấy mapping alias -> table.
+        Luôn normalize alias và tên bảng về lowercase, strip, thay underscore thành dấu cách, unicode NFC.
         """
+        alias_map = {}
+        from_join_pattern = re.compile(r'(FROM|JOIN)\s+([\w\s]+?)(?:\s+AS)?\s+(\w+)', re.IGNORECASE)
+        for match in from_join_pattern.finditer(query):
+            table_part = match.group(2).strip()
+            alias = match.group(3).strip()
+            # Normalize alias và table_name
+            alias_norm = self._normalize_token(alias)
+            table_name = table_part.split()[0]
+            table_name_norm = self._normalize_token(table_name)
+            alias_map[alias_norm] = table_name_norm
+        return alias_map
+
+    def _normalize_token(self, token: str) -> str:
+        """
+        Chuẩn hóa token: lowercase, strip, unicode NFC, nhiều space->1, rồi thay toàn bộ space thành _
+        """
+        token = token.lower().strip()
+        token = ' '.join(token.split())
+        token = unicodedata.normalize('NFC', token)
+        token = token.replace(' ', '_')
+        return token
+
+    def _parse_select_clause_with_alias(self, clause: str, schema_columns: set, alias_map: dict) -> set:
         components = set()
-        # Split by comma and clean up
         parts = [part.strip() for part in clause.split(',')]
         for part in parts:
-            # Remove AS aliases
+            # Remove AS alias
             if ' AS ' in part.upper():
                 part = part.split(' AS ')[0].strip()
             # Remove function calls, keep column names
             if '(' in part and ')' in part:
-                # Extract column name from function calls like COUNT(*), SUM(column)
                 match = re.search(r'\(([^)]+)\)', part)
                 if match:
-                    components.add(match.group(1).strip())
+                    col = match.group(1).strip()
+                    col = self._normalize_column_alias(col, alias_map)
+                    for schema_col in schema_columns:
+                        # DEBUG: In ra cặp so sánh
+                        print(f"[DEBUG SELECT FUNC] Compare: '{col}' <-> '{schema_col}'")
+                        if col == schema_col or schema_col.endswith(f'.{col}'):
+                            components.add(schema_col)
             else:
-                components.add(part)
+                col = self._normalize_column_alias(part, alias_map)
+                for schema_col in schema_columns:
+                    # DEBUG: In ra cặp so sánh
+                    print(f"[DEBUG SELECT] Compare: '{col}' <-> '{schema_col}'")
+                    if col == schema_col or schema_col.endswith(f'.{col}'):
+                        components.add(schema_col)
         return components
-    
-    def _parse_from_clause(self, clause: str) -> set:
-        """
-        Parse FROM clause into set of table identifiers.
-        """
+
+    def _parse_from_clause_with_alias(self, clause: str, schema_tables: set, alias_map: dict) -> set:
         components = set()
-        # Split by JOIN, LEFT JOIN, etc.
         parts = re.split(r'\b(?:JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN)\b', clause, flags=re.IGNORECASE)
         for part in parts:
             part = part.strip()
             if part:
-                # Extract table name (remove alias)
-                if ' AS ' in part.upper():
-                    table_name = part.split(' AS ')[0].strip()
-                elif part and not part.startswith('ON'):
-                    table_name = part.split()[0].strip()
-                else:
-                    table_name = part
-                components.add(table_name)
+                tokens = part.split()
+                if len(tokens) >= 1:
+                    table_name = tokens[0]
+                    # Nếu là alias, map về bảng gốc
+                    if table_name in alias_map:
+                        table_name = alias_map[table_name]
+                    if table_name in schema_tables:
+                        components.add(table_name)
         return components
-    
-    def _parse_where_clause(self, clause: str) -> set:
-        """
-        Parse WHERE clause into set of condition identifiers.
-        """
+
+    def _parse_where_clause_with_alias(self, clause: str, schema_columns: set, alias_map: dict) -> set:
         components = set()
-        # Split by AND, OR
         parts = re.split(r'\b(?:AND|OR)\b', clause, flags=re.IGNORECASE)
         for part in parts:
             part = part.strip()
             if part:
-                # Extract column names from conditions
-                # Pattern: column operator value
-                match = re.search(r'(\w+(?:\.\w+)?)\s*[=<>!]+\s*', part)
+                match = re.search(r'(\w+)(?:\.(\w+))?\s*[=<>!]+\s*', part)
                 if match:
-                    components.add(match.group(1).strip())
+                    prefix = match.group(1)
+                    col = match.group(2) if match.group(2) else prefix
+                    # Nếu prefix là alias, map về bảng gốc
+                    if prefix in alias_map:
+                        col_full = f"{alias_map[prefix]}.{col}"
+                    else:
+                        col_full = f"{prefix}.{col}" if match.group(2) else prefix
+                    for schema_col in schema_columns:
+                        if col_full == schema_col or schema_col.endswith(f'.{col}'):
+                            components.add(schema_col)
         return components
+
+    def _normalize_column_alias(self, col: str, alias_map: dict) -> str:
+        """
+        Nếu col có dạng alias.column thì map alias về bảng gốc.
+        Ngoài ra, chuẩn hóa: lowercase, strip, thay underscore thành dấu cách, unicode normalize.
+        Nếu phát hiện underscore ở std-level, in warning.
+        """
+        orig_col = col
+        col = col.lower().strip()
+        col = col.replace('_', ' ')
+        col = ' '.join(col.split())
+        col = unicodedata.normalize('NFC', col)
+        if '_' in orig_col and orig_col != col:
+            print(f"[WARNING] Underscore detected in column '{orig_col}' at std-level! (normalized: '{col}')")
+        if '.' in col:
+            prefix, colname = col.split('.', 1)
+            prefix_norm = self._normalize_token(prefix)
+            if prefix_norm in alias_map:
+                return f"{alias_map[prefix_norm]}.{colname.strip()}"
+        return col
     
     def _parse_group_by_clause(self, clause: str) -> set:
         """
@@ -484,6 +536,67 @@ class EvaluationMetrics:
                     if match:
                         components.add(match.group(1).strip())
         return components
+    
+    def simple_compare_where(self, pred_sql: str, gold_sql: str) -> bool:
+        """
+        So sánh mệnh đề WHERE của hai câu SQL một cách đơn giản:
+        1. Dùng sqlparse lấy WHERE clause
+        2. Tìm alias trong FROM/JOIN
+        3. Thay alias về tên bảng gốc
+        4. Xóa dấu phẩy, chuẩn hóa
+        5. So sánh
+        """
+        def normalize(text):
+            text = text.lower().strip()
+            text = text.replace('_', ' ')
+            text = unicodedata.normalize('NFC', text)
+            text = text.replace(',', '')
+            text = ' '.join(text.split())
+            return text
+
+        def extract_where_clause(sql):
+            parsed = sqlparse.parse(sql)
+            for stmt in parsed:
+                found = False
+                for token in stmt.tokens:
+                    if found:
+                        # Lấy phần sau WHERE
+                        return str(token).strip()
+                    if token.ttype is sqlparse.tokens.Keyword and token.value.upper() == 'WHERE':
+                        found = True
+            return ''
+
+        def extract_alias_mapping(sql):
+            alias_map = {}
+            parsed = sqlparse.parse(sql)
+            for stmt in parsed:
+                for token in stmt.tokens:
+                    if token.ttype is None and token.is_group:
+                        subtokens = list(token.flatten())
+                        for i, sub in enumerate(subtokens):
+                            if sub.match(sqlparse.tokens.Keyword, ('FROM', 'JOIN')):
+                                # Tìm table và alias
+                                if i+2 < len(subtokens):
+                                    table_token = subtokens[i+1]
+                                    alias_token = subtokens[i+2]
+                                    if alias_token.ttype == sqlparse.tokens.Name:
+                                        alias_map[alias_token.value] = table_token.value
+            return alias_map
+
+        def replace_alias(where_clause, alias_map):
+            for alias, table in alias_map.items():
+                where_clause = re.sub(rf'\b{re.escape(alias)}\.', f'{table}.', where_clause)
+            return where_clause
+
+        pred_where = extract_where_clause(pred_sql)
+        gold_where = extract_where_clause(gold_sql)
+        pred_alias = extract_alias_mapping(pred_sql)
+        gold_alias = extract_alias_mapping(gold_sql)
+        pred_where = replace_alias(pred_where, pred_alias)
+        gold_where = replace_alias(gold_where, gold_alias)
+        pred_where = normalize(pred_where)
+        gold_where = normalize(gold_where)
+        return pred_where == gold_where
     
     def comprehensive_evaluation(self, predicted_queries: List[str], gold_queries: List[str], 
                                execution_results: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
@@ -604,3 +717,33 @@ class SQLDifficultyClassifier:
             return 'medium'
         else:
             return 'easy' 
+
+if __name__ == '__main__':
+    # Test case: SELECT F1 và so sánh WHERE đơn giản
+    pred_sql = "SELECT t.id tài sản FROM tài sản t WHERE t.id tài sản = 1"
+    gold_sql = "SELECT t1.id tài sản FROM tài sản t1 WHERE t1.id tài sản = 1"
+    db_id = 'dummy_db'  # Không dùng schema thật cho test này
+    schema_path = 'dataset/ViText2SQL/std-level/tables.json'  # Đường dẫn giả định
+
+    em = EvaluationMetrics()
+    # Test simple_compare_where
+    print('Test simple_compare_where:', em.simple_compare_where(pred_sql, gold_sql))
+
+    # Test F1 SELECT (giả lập schema)
+    # Tạo schema giả cho extract_components_as_sets
+    schema = {
+        'table_names': ['tài sản'],
+        'column_names': [(0, 'id tài sản')]
+    }
+    schema_tables, schema_columns = em.get_table_and_column_sets(schema)
+    pred_components = em.extract_components_as_sets(pred_sql, schema_tables, schema_columns)
+    gold_components = em.extract_components_as_sets(gold_sql, schema_tables, schema_columns)
+    print('Pred SELECT:', pred_components['SELECT'])
+    print('Gold SELECT:', gold_components['SELECT'])
+    tp = len(pred_components['SELECT'] & gold_components['SELECT'])
+    fp = len(pred_components['SELECT'] - gold_components['SELECT'])
+    fn = len(gold_components['SELECT'] - pred_components['SELECT'])
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    print(f'SELECT F1: {f1:.2f}') 

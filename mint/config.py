@@ -39,7 +39,7 @@ class ViPERConfig:
     # Dataset Settings
     dataset_path: str = field(default="dataset/ViText2SQL")
     split: str = field(default="dev")
-    level: str = field(default="syllable")
+    level: str = field(default="std")  # Mặc định là std-level
     samples: int = field(default=10)
     
     # Strategy Settings
@@ -81,8 +81,14 @@ class ViPERConfig:
     retry_attempts: int = field(default=3)
     retry_delay: int = field(default=1)
     
-    def __post_init__(self):
+    def __init__(self, **kwargs):
         """Load configuration from environment after initialization."""
+        # Set mặc định level = std nếu không truyền vào
+        if 'level' not in kwargs:
+            kwargs['level'] = 'std'
+        for field_name in self.__dataclass_fields__:
+            if field_name in kwargs:
+                setattr(self, field_name, kwargs[field_name])
         self._load_from_env()
         self._validate_config()
         self._setup_directories()
@@ -205,8 +211,8 @@ class ViPERConfig:
         if self.samples < -1 or self.samples == 0:
             raise ValueError("Samples must be -1 (all) or positive integer")
         
-        if self.level not in ['syllable', 'word']:
-            raise ValueError("Level must be 'syllable' or 'word'")
+        if self.level not in ['syllable', 'word', 'std']:
+            raise ValueError("Level must be 'syllable', 'word', or 'std'")
     
     def _setup_directories(self):
         """Create necessary directories."""
@@ -253,3 +259,9 @@ class ViPERConfig:
     def __str__(self) -> str:
         """String representation for logging."""
         return f"ViPERConfig(strategy={self.strategy}, model={self.model_name}, split={self.split})" 
+
+    @property
+    def schema_path(self) -> str:
+        """Get schema path based on level."""
+        level_dir = f"{self.level}-level" if self.level in ["syllable", "word"] else self.level
+        return str(Path(self.dataset_path) / level_dir / "tables.json") 
