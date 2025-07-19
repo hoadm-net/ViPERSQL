@@ -25,22 +25,22 @@ class FewShotStrategy(BaseStrategy):
             from pathlib import Path
             train_file = Path(dataset_path) / "train.json"
             if not train_file.exists():
-                self.logger.log_warning(f"Training file not found: {train_file}")
+                print(f"[FewShot] Training file not found: {train_file}")
                 return []
             with open(train_file, 'r', encoding='utf-8') as f:
                 train_data = json.load(f)
             if db_id:
                 filtered_data = [ex for ex in train_data if ex.get('db_id') == db_id]
                 if not filtered_data:
-                    self.logger.log_warning(f"No examples found for database {db_id}, using all examples")
+                    print(f"[FewShot] No examples found for database {db_id}, using all examples")
                     filtered_data = train_data
             else:
                 filtered_data = train_data
             self._training_examples = filtered_data
-            self.logger.log_info(f"Loaded {len(filtered_data)} training examples")
+            print(f"[FewShot] Loaded {len(filtered_data)} training examples")
             return filtered_data
         except Exception as e:
-            self.logger.log_error(f"Failed to load training examples: {e}")
+            print(f"[FewShot] Failed to load training examples: {e}")
             return []
 
     def select_examples(self, question: str, db_id: str = None, k: int = None) -> List[Dict]:
@@ -51,14 +51,14 @@ class FewShotStrategy(BaseStrategy):
             dataset_path = self.config.dataset_full_path
             self.load_training_examples(dataset_path, db_id)
         if not self._training_examples:
-            self.logger.log_warning("No training examples available")
+            print(f"[FewShot] No training examples available")
             return []
         if self.selection_strategy == 'random':
             selected = self._select_random_examples(k)
         else:
-            self.logger.log_warning(f"Strategy {self.selection_strategy} not implemented, using random")
+            print(f"[FewShot] Strategy {self.selection_strategy} not implemented, using random")
             selected = self._select_random_examples(k)
-        self.logger.log_info(f"Selected {len(selected)} examples using {self.selection_strategy} strategy")
+        print(f"[FewShot] Selected {len(selected)} examples using {self.selection_strategy} strategy")
         return selected
 
     def _select_random_examples(self, k: int) -> List[Dict]:
@@ -100,7 +100,7 @@ class FewShotStrategy(BaseStrategy):
             }
             template = self.templates.get_template('few-shot')
             formatted_prompt = template.format(**template_vars)
-            self.logger.log_info(f"Request {request_id}: Few-shot generation for {db_id} with {len(examples)} examples")
+            print(f"[FewShot] Request {request_id}: Few-shot generation for {db_id} with {len(examples)} examples")
             start_time = time.time()
             raw_response = self.llm.generate(
                 prompt=formatted_prompt,
@@ -136,12 +136,12 @@ class FewShotStrategy(BaseStrategy):
                     'k_examples': self.k_examples
                 }
             )
-            self.logger.log_info(
-                f"Request {request_id}: Generated SQL in {latency:.2f}s - Valid: {is_valid}"
+            print(
+                f"[FewShot] Request {request_id}: Generated SQL in {latency:.2f}s - Valid: {is_valid}"
             )
             self.log_strategy_execution(request_id, question, db_id, result)
             return result
         except Exception as e:
             error_msg = f"Few-shot generation failed: {str(e)}"
-            self.logger.log_error(f"Request {request_id}: {error_msg}")
+            print(f"[FewShot] Request {request_id}: {error_msg}")
             return self.create_error_result(request_id, error_msg, 'few-shot') 

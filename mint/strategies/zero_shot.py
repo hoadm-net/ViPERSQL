@@ -61,7 +61,7 @@ class ZeroShotStrategy(BaseStrategy):
             formatted_prompt = template.format(**template_vars)
             
             # Log the request
-            self.logger.log_info(f"Request {request_id}: Zero-shot generation for {db_id}")
+            print(f"[ZeroShot] Request {request_id}: Zero-shot generation for {db_id}")
             
             # Generate SQL using LLM
             start_time = time.time()
@@ -103,8 +103,8 @@ class ZeroShotStrategy(BaseStrategy):
             )
             
             # Log successful generation
-            self.logger.log_info(
-                f"Request {request_id}: Generated SQL in {latency:.2f}s - Valid: {is_valid}"
+            print(
+                f"[ZeroShot] Request {request_id}: Generated SQL in {latency:.2f}s - Valid: {is_valid}"
             )
             
             # Log detailed execution info
@@ -115,7 +115,7 @@ class ZeroShotStrategy(BaseStrategy):
         except Exception as e:
             # Log error and return error result
             error_msg = f"Zero-shot generation failed: {str(e)}"
-            self.logger.log_error(f"Request {request_id}: {error_msg}")
+            print(f"[ZeroShot] Request {request_id}: {error_msg}")
             
             return self.create_error_result(request_id, error_msg, 'zero-shot')
     

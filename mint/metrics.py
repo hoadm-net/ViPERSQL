@@ -75,12 +75,19 @@ class EvaluationMetrics:
             for clause in clauses:
                 pred_set = pred_components.get(clause, set())
                 gold_set = gold_components.get(clause, set())
-                tp = len(pred_set & gold_set)
-                fp = len(pred_set - gold_set)
-                fn = len(gold_set - pred_set)
-                clause_stats[clause]['tp'] += tp
-                clause_stats[clause]['fp'] += fp
-                clause_stats[clause]['fn'] += fn
+                
+                # Nếu cả predicted và gold đều rỗng, coi như perfect match
+                if len(pred_set) == 0 and len(gold_set) == 0:
+                    clause_stats[clause]['tp'] += 1
+                    clause_stats[clause]['fp'] += 0
+                    clause_stats[clause]['fn'] += 0
+                else:
+                    tp = len(pred_set & gold_set)
+                    fp = len(pred_set - gold_set)
+                    fn = len(gold_set - pred_set)
+                    clause_stats[clause]['tp'] += tp
+                    clause_stats[clause]['fp'] += fp
+                    clause_stats[clause]['fn'] += fn
         f1_scores = {}
         for clause in clauses:
             tp = clause_stats[clause]['tp']
@@ -339,40 +346,69 @@ class EvaluationMetrics:
         select_match = re.search(r'SELECT\s+(.*?)\s+FROM', query_no_alias, re.DOTALL | re.IGNORECASE)
         if select_match:
             select_clause = select_match.group(1).strip()
+            # Xóa dấu chấm phẩy dư thừa
+            select_clause = select_clause.rstrip(';')
+            # Normalize alias trong SELECT clause về table name gốc
+            select_clause = self.normalize_where_alias(select_clause, alias_map)
+            # Thêm table name cho các field không có alias (nếu có thể)
+            select_clause = self.add_table_name_to_fields(select_clause, alias_map, query)
             fields = [self._normalize_token(f.split(' AS ')[0]) for f in select_clause.split(',')]
             components['SELECT'] = set(fields)
         # FROM
         from_match = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if from_match:
             from_clause = from_match.group(1).strip()
+            # Xóa dấu chấm phẩy dư thừa
+            from_clause = from_clause.rstrip(';')
+            # FROM clause đã được normalize alias qua query_no_alias
             tables = [self._normalize_token(t.split()[0]) for t in from_clause.split(',')]
             components['FROM'] = set(tables)
         # WHERE
         where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP|\s+ORDER|\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if where_match:
             where_clause = where_match.group(1).strip()
+            # Chuẩn hóa WHERE clause trước khi tách
+            where_clause = self.normalize_where_clause(where_clause)
+            # Normalize alias trong WHERE clause
+            where_clause = self.normalize_where_alias(where_clause, alias_map)
             # Tách điều kiện theo AND/OR
             conds = re.split(r'\b(?:AND|OR)\b', where_clause, flags=re.IGNORECASE)
-            conds = [self._normalize_token(c) for c in conds if c.strip()]
+            conds = [c.strip() for c in conds if c.strip()]  # Không normalize thêm bằng _normalize_token
             components['WHERE'] = set(conds)
         # GROUP BY
         group_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER|\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if group_match:
             group_by_clause = group_match.group(1).strip()
+            # Xóa dấu chấm phẩy dư thừa
+            group_by_clause = group_by_clause.rstrip(';')
+            # Normalize alias trong GROUP BY clause
+            group_by_clause = self.normalize_where_alias(group_by_clause, alias_map)
+            # Thêm table name cho các field không có alias (nếu có thể)
+            group_by_clause = self.add_table_name_to_fields(group_by_clause, alias_map, query)
             fields = [self._normalize_token(f) for f in group_by_clause.split(',')]
             components['GROUP BY'] = set(fields)
         # ORDER BY
         order_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+HAVING|$)', query_no_alias, re.DOTALL | re.IGNORECASE)
         if order_match:
             order_by_clause = order_match.group(1).strip()
+            # Xóa dấu chấm phẩy dư thừa
+            order_by_clause = order_by_clause.rstrip(';')
+            # Normalize alias trong ORDER BY clause
+            order_by_clause = self.normalize_where_alias(order_by_clause, alias_map)
+            # Thêm table name cho các field không có alias (nếu có thể)
+            order_by_clause = self.add_table_name_to_fields(order_by_clause, alias_map, query)
             fields = [self._normalize_token(f.split()[0]) for f in order_by_clause.split(',')]
             components['ORDER BY'] = set(fields)
         # HAVING
         having_match = re.search(r'HAVING\s+(.*?)$', query_no_alias, re.DOTALL | re.IGNORECASE)
         if having_match:
             having_clause = having_match.group(1).strip()
+            # Xóa dấu chấm phẩy dư thừa
+            having_clause = having_clause.rstrip(';')
+            # Normalize alias trong HAVING clause
+            having_clause = self.normalize_where_alias(having_clause, alias_map)
             conds = re.split(r'\b(?:AND|OR)\b', having_clause, flags=re.IGNORECASE)
-            conds = [self._normalize_token(c) for c in conds if c.strip()]
+            conds = [c.strip() for c in conds if c.strip()]  # Không normalize thêm bằng _normalize_token
             components['HAVING'] = set(conds)
         # KEYWORDS
         keywords = self._extract_keywords(query)
@@ -410,6 +446,127 @@ class EvaluationMetrics:
         token = unicodedata.normalize('NFC', token)
         token = token.replace(' ', '_')
         return token
+
+    def normalize_where_clause(self, where_clause: str) -> str:
+        """
+        Chuẩn hóa WHERE clause:
+        1. Thay toán tử <> thành !=
+        2. Chuẩn hóa giá trị trong ngoặc (nháy kép/đơn, trim, lowercase)
+        3. Xóa dấu chấm phẩy dư thừa
+        4. Chuẩn hóa case sensitivity của LIKE
+        """
+        if not where_clause:
+            return where_clause
+        
+        # 0. Xóa dấu chấm phẩy dư thừa
+        where_clause = where_clause.rstrip(';')
+        
+        # 1. Thay <> thành !=
+        where_clause = re.sub(r'<>', '!=', where_clause)
+        
+        # 2. Chuẩn hóa LIKE thành lowercase
+        where_clause = re.sub(r'\bLIKE\b', 'like', where_clause, flags=re.IGNORECASE)
+        
+        # 3. Chuẩn hóa giá trị trong ngoặc
+        def normalize_value(match):
+            quote_type = match.group(1)  # ' hoặc "
+            value = match.group(2)
+            
+            # Chuẩn hóa giá trị: trim, lowercase, unicode normalize, normalize spaces
+            value = value.strip()
+            value = value.lower()
+            value = unicodedata.normalize('NFC', value)
+            value = ' '.join(value.split())  # Normalize spaces
+            
+            # Luôn trả về với dấu ngoặc kép để thống nhất
+            return f'"{value}"'
+        
+        # Tìm và chuẩn hóa các giá trị trong ngoặc
+        where_clause = re.sub(r'([\'"])([^\'"]*)\1', normalize_value, where_clause)
+        
+        return where_clause
+
+    def normalize_where_alias(self, where_clause: str, alias_map: dict) -> str:
+        """
+        Normalize alias trong WHERE clause về tên bảng gốc.
+        Ví dụ: r1.sức_chứa > 300 -> rạp_chiếu_phim.sức_chứa > 300
+        """
+        if not where_clause or not alias_map:
+            return where_clause
+        
+        # Tìm và thay thế các alias.column
+        def replace_alias(match):
+            alias = match.group(1)
+            column = match.group(2)
+            # Normalize alias để tìm trong alias_map
+            alias_norm = self._normalize_token(alias)
+            if alias_norm in alias_map:
+                table_name = alias_map[alias_norm]
+                return f"{table_name}.{column}"
+            return match.group(0)  # Giữ nguyên nếu không tìm thấy
+        
+        # Pattern để tìm alias.column
+        where_clause = re.sub(r'(\w+)\.(\w+)', replace_alias, where_clause)
+        
+        return where_clause
+
+    def add_table_name_to_fields(self, select_clause: str, alias_map: dict, query: str = "") -> str:
+        """
+        Thêm table name cho các field không có alias trong SELECT clause.
+        Ví dụ: được_đạo_diễn_bởi -> table_name.được_đạo_diễn_bởi (nếu chỉ có 1 table)
+        Hoặc thử match với các table có sẵn trong alias_map
+        """
+        if not select_clause:
+            return select_clause
+        
+        # Nếu alias_map rỗng, thử tạo alias_map từ query
+        if not alias_map and query:
+            # Tìm tất cả table names trong FROM/JOIN
+            from_join_pattern = re.compile(r'(FROM|JOIN)\s+([\w\s]+?)(?:\s+AS\s+\w+)?', re.IGNORECASE)
+            tables = []
+            for match in from_join_pattern.finditer(query):
+                table_part = match.group(2).strip()
+                table_name = table_part.split()[0]
+                tables.append(table_name)  # Giữ nguyên table name gốc
+            
+            # Nếu chỉ có 1 table, tạo alias_map
+            if len(tables) == 1:
+                alias_map = {'': tables[0]}  # Empty alias maps to table name
+        
+        if not alias_map:
+            return select_clause
+        
+        # Tách các field và xử lý từng field
+        fields = [f.strip() for f in select_clause.split(',')]
+        processed_fields = []
+        
+        for field in fields:
+            # Nếu field đã có alias hoặc là function call, giữ nguyên
+            if '.' in field or '(' in field:
+                processed_fields.append(field)
+                continue
+            
+            # Thử tìm table phù hợp trong alias_map
+            field_added = False
+            
+            # Nếu chỉ có 1 table trong alias_map, thêm table name cho tất cả field không có alias
+            if len(alias_map) == 1:
+                table_name = list(alias_map.values())[0]
+                processed_fields.append(f"{table_name}.{field}")
+                field_added = True
+            else:
+                # Nếu có nhiều table, thử match với alias hoặc table name
+                for alias, table_name in alias_map.items():
+                    if field in [alias, table_name]:
+                        processed_fields.append(f"{table_name}.{field}")
+                        field_added = True
+                        break
+            
+            # Nếu không tìm thấy table phù hợp, giữ nguyên
+            if not field_added:
+                processed_fields.append(field)
+        
+        return ', '.join(processed_fields)
 
     def _parse_select_clause_with_alias(self, clause: str, schema_columns: set, alias_map: dict) -> set:
         components = set()
@@ -552,6 +709,8 @@ class EvaluationMetrics:
             text = unicodedata.normalize('NFC', text)
             text = text.replace(',', '')
             text = ' '.join(text.split())
+            # Chuẩn hóa WHERE clause
+            text = self.normalize_where_clause(text)
             return text
 
         def extract_where_clause(sql):

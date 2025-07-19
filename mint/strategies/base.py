@@ -42,11 +42,9 @@ class BaseStrategy(ABC):
         # Import dependencies here to avoid circular imports
         from ..llm_interface import LLMInterface
         from ..template_manager import TemplateManager
-        from ..logger import ViPERLogger
         
         self.llm = LLMInterface(config)
         self.templates = TemplateManager(config)
-        self.logger = ViPERLogger(config)
         
     @abstractmethod
     def _get_strategy_name(self) -> str:
@@ -245,10 +243,10 @@ class BaseStrategy(ABC):
         results = []
         total = len(questions)
         
-        self.logger.log_info(f"Starting {self.strategy_name} batch generation for {total} questions")
+        print(f"Starting {self.strategy_name} batch generation for {total} questions")
         
         for i, (question, schema_info, db_id) in enumerate(zip(questions, schema_infos, db_ids)):
-            self.logger.log_info(f"Processing {i+1}/{total}: {db_id}")
+            print(f"Processing {i+1}/{total}: {db_id}")
             
             result = self.generate_sql(question, schema_info, db_id)
             results.append(result)
@@ -256,13 +254,13 @@ class BaseStrategy(ABC):
             # Log progress
             if (i + 1) % 10 == 0:
                 success_count = sum(1 for r in results if not r.sql_query.startswith("ERROR"))
-                self.logger.log_info(f"Progress: {i+1}/{total}, Success: {success_count}")
+                print(f"Progress: {i+1}/{total}, Success: {success_count}")
         
         # Log final summary
         success_count = sum(1 for r in results if not r.sql_query.startswith("ERROR"))
         avg_confidence = sum(r.confidence_score or 0 for r in results) / len(results)
         
-        self.logger.log_info(
+        print(
             f"{self.strategy_name} batch completed: {success_count}/{total} successful, "
             f"avg confidence: {avg_confidence:.2f}"
         )
@@ -277,15 +275,10 @@ class BaseStrategy(ABC):
         result: StrategyResult
     ):
         """Log strategy execution details."""
-        self.logger.log_request(
-            request_id=request_id,
-            strategy=self.strategy_name,
-            question=question,
-            db_id=db_id,
-            result=result.sql_query,
-            reasoning=result.reasoning,
-            metadata=result.metadata
-        )
+        # The original code had logger.log_request, which was removed.
+        # This method is now effectively a no-op or needs to be re-evaluated
+        # if specific logging is required. For now, removing the call.
+        pass
     
     def __str__(self) -> str:
         """String representation."""

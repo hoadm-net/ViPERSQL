@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from .config import ViPERConfig
+import re
 
 
 class LLMInterface:
@@ -40,8 +41,13 @@ class LLMInterface:
         else:
             raise ValueError(f"Unsupported model: {self.config.model_name}")
     
-    def generate(self, prompt: str, **kwargs) -> str:
+    def generate(self, prompt: str, model: str, temperature: float = 0.7, max_tokens: int = 512) -> str:
         """Generate response from LLM."""
+        # Nếu prompt có trường question, replace _ thành space
+        def replace_underscore_question(text):
+            # Tìm dòng bắt đầu bằng 'Question:' và thay _ thành space
+            return re.sub(r'(Question:\s*)(.*)', lambda m: m.group(1) + m.group(2).replace('_', ' '), text)
+        prompt = replace_underscore_question(prompt)
         try:
             response = self.llm.invoke(prompt)
             return response.content

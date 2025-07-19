@@ -31,7 +31,6 @@ try:
     )
     
     # Evaluation and logging
-    from .logger import ViPERLogger
     from .evaluator import UnifiedEvaluator
 except ImportError as e:
     print(f"Warning: Some MINT components failed to import: {e}")
@@ -60,7 +59,6 @@ __all__ = [
     "CoTStrategy",
     
     # Evaluation and logging
-    "ViPERLogger",
     "UnifiedEvaluator"
 ]
 

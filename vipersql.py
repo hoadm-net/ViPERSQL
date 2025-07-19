@@ -31,6 +31,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
+import re # Added for detailed SQL clause analysis
 
 # Import MINT components
 from mint import (
@@ -235,6 +236,75 @@ class ViPERSQLCLI:
         if 'errors' in summary and summary['errors'] > 0:
             print(f"\n⚠️  Errors: {summary['errors']}")
 
+    def print_detailed_results(self, results: List[Dict[str, Any]], max_samples: int = 10):
+        """Print detailed SQL clause analysis for debugging."""
+        print("\n" + "=" * 80)
+        print("🔍 DETAILED SQL CLAUSE ANALYSIS")
+        print("=" * 80)
+        
+        # Lấy max_samples mẫu đầu tiên để phân tích
+        samples_to_analyze = results[:max_samples]
+        
+        for i, sample in enumerate(samples_to_analyze, 1):
+            if 'error' in sample:
+                continue
+                
+            print(f"\n📝 Sample {i}: {sample['db_id']}")
+            print(f"Question: {sample['question']}")
+            print(f"Predicted: {sample['predicted_sql']}")
+            print(f"Gold:      {sample['gold_sql']}")
+            
+            # Phân tích các mệnh đề SQL
+            evaluation = sample['evaluation']
+            component_scores = evaluation.get('component_f1_scores', {})
+            
+            print("📊 Component Analysis:")
+            for component, score in component_scores.items():
+                status = "✅" if score > 0.8 else "🟡" if score > 0.5 else "❌"
+                print(f"  {status} {component}: {score*100:.1f}%")
+            
+            # Nếu có exact match, highlight
+            if evaluation.get('exact_match', False):
+                print("🎉 EXACT MATCH!")
+            
+            print("-" * 60)
+
+    def extract_sql_clauses(self, sql_query: str) -> Dict[str, str]:
+        """Extract SQL clauses for detailed analysis."""
+        clauses = {}
+        
+        # SELECT clause
+        select_match = re.search(r'SELECT\s+(.*?)\s+FROM', sql_query, re.IGNORECASE | re.DOTALL)
+        if select_match:
+            clauses['SELECT'] = select_match.group(1).strip()
+        
+        # FROM clause
+        from_match = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
+        if from_match:
+            clauses['FROM'] = from_match.group(1).strip()
+        
+        # WHERE clause
+        where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP|\s+ORDER|\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
+        if where_match:
+            clauses['WHERE'] = where_match.group(1).strip()
+        
+        # GROUP BY clause
+        group_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER|\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
+        if group_match:
+            clauses['GROUP BY'] = group_match.group(1).strip()
+        
+        # ORDER BY clause
+        order_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
+        if order_match:
+            clauses['ORDER BY'] = order_match.group(1).strip()
+        
+        # HAVING clause
+        having_match = re.search(r'HAVING\s+(.*?)$', sql_query, re.IGNORECASE | re.DOTALL)
+        if having_match:
+            clauses['HAVING'] = having_match.group(1).strip()
+        
+        return clauses
+
 
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser."""
@@ -313,6 +383,19 @@ Examples:
         "--no-save",
         action="store_true",
         help="Don't save results to file"
+    )
+    
+    parser.add_argument(
+        "--detailed", "-d",
+        action="store_true",
+        help="Show detailed SQL clause analysis"
+    )
+    
+    parser.add_argument(
+        "--max-detail",
+        type=int,
+        default=10,
+        help="Maximum number of samples to show in detailed analysis (default: 10)"
     )
     
     # Special modes
@@ -410,6 +493,10 @@ def main():
         if not args.no_save:
             output_file = cli.save_results(results)
             print(f"📄 Detailed results: {output_file}")
+        
+        # Print detailed results if requested
+        if args.detailed:
+            cli.print_detailed_results(results['detailed_results'], args.max_detail)
         
         print(f"\n🎉 Evaluation completed successfully!")
         

@@ -235,7 +235,7 @@ class ViPERConfig:
     @property
     def dataset_full_path(self) -> str:
         """Get full dataset path including level."""
-        level_dir = f"{self.level}-level" if self.level in ["syllable", "word"] else self.level
+        level_dir = f"{self.level}-level" if self.level in ["syllable", "word", "std"] else self.level
         return str(Path(self.dataset_path) / level_dir)
     
     @property
@@ -263,5 +263,5 @@ class ViPERConfig:
     @property
     def schema_path(self) -> str:
         """Get schema path based on level."""
-        level_dir = f"{self.level}-level" if self.level in ["syllable", "word"] else self.level
+        level_dir = f"{self.level}-level" if self.level in ["syllable", "word", "std"] else self.level
         return str(Path(self.dataset_path) / level_dir / "tables.json") 

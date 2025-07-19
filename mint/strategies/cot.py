@@ -39,7 +39,7 @@ class CoTStrategy(BaseStrategy):
             from pathlib import Path
             train_file = Path(dataset_path) / "train.json"
             if not train_file.exists():
-                self.logger.log_warning(f"Training file not found: {train_file}")
+                print(f"[CoT] Training file not found: {train_file}")
                 return []
             
             with open(train_file, 'r', encoding='utf-8') as f:
@@ -48,16 +48,16 @@ class CoTStrategy(BaseStrategy):
             if db_id:
                 filtered_data = [ex for ex in train_data if ex.get('db_id') == db_id]
                 if not filtered_data:
-                    self.logger.log_warning(f"No examples found for database {db_id}, using all examples")
+                    print(f"[CoT] No examples found for database {db_id}, using all examples")
                     filtered_data = train_data
             else:
                 filtered_data = train_data
             
             self._training_examples = filtered_data
-            self.logger.log_info(f"Loaded {len(filtered_data)} training examples for CoT")
+            print(f"[CoT] Loaded {len(filtered_data)} training examples for CoT")
             return filtered_data
         except Exception as e:
-            self.logger.log_error(f"Failed to load training examples for CoT: {e}")
+            print(f"[CoT] Failed to load training examples for CoT: {e}")
             return []
 
     def select_cot_examples(self, question: str, db_id: str = None) -> List[Dict]:
@@ -160,7 +160,7 @@ SQL: {query}"""
             formatted_prompt = template.format(**template_vars)
             
             # Log the request
-            self.logger.log_info(f"Request {request_id}: CoT generation for {db_id}")
+            print(f"[CoT] Request {request_id}: CoT generation for {db_id}")
             
             # Generate SQL using LLM with CoT reasoning
             start_time = time.time()
@@ -209,8 +209,8 @@ SQL: {query}"""
             )
             
             # Log successful generation
-            self.logger.log_info(
-                f"Request {request_id}: Generated SQL in {latency:.2f}s - Valid: {is_valid}"
+            print(
+                f"[CoT] Request {request_id}: Generated SQL in {latency:.2f}s - Valid: {is_valid}"
             )
             
             # Log detailed execution info
@@ -221,7 +221,7 @@ SQL: {query}"""
         except Exception as e:
             # Log error and return error result
             error_msg = f"CoT generation failed: {str(e)}"
-            self.logger.log_error(f"Request {request_id}: {error_msg}")
+            print(f"[CoT] Request {request_id}: {error_msg}")
             
             return self.create_error_result(request_id, error_msg, 'cot')
 
