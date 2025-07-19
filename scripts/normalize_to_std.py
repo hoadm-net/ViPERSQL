@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script chuẩn hóa ViText2SQL dataset thành std-level
+Script chuẩn hóa ViText2SQL dataset cho hệ thống đánh giá ViPERSQL
 """
 
 import json
@@ -14,6 +14,9 @@ class DatasetNormalizer:
         self.base_path = Path(base_path)
         self.std_path = self.base_path / "std-level"
         self.std_path.mkdir(exist_ok=True)
+        print(f"📁 Chuẩn hóa dữ liệu ViText2SQL cho ViPERSQL")
+        print(f"📂 Thư mục gốc: {self.base_path}")
+        print(f"📂 Thư mục đích: {self.std_path}")
     
     def normalize_sql_query(self, sql: str) -> str:
         """Chuẩn hóa câu truy vấn SQL"""

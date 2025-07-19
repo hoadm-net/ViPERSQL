@@ -1,18 +1,20 @@
 # ViText2SQL Dataset Documentation
 
-Tài liệu chi tiết về tập dữ liệu ViText2SQL và quy trình xây dựng các cấp độ dữ liệu khác nhau.
+Tài liệu về việc sử dụng tập dữ liệu ViText2SQL và quy trình chuẩn hóa dữ liệu cho hệ thống đánh giá ViPERSQL.
 
 ## 🎯 Tổng quan tập dữ liệu ViText2SQL
 
 ### Giới thiệu
-ViText2SQL là tập dữ liệu Text-to-SQL tiếng Việt đầu tiên được xây dựng để đánh giá khả năng chuyển đổi câu hỏi tự nhiên tiếng Việt thành câu truy vấn SQL. Tập dữ liệu này bao gồm các câu hỏi đa dạng về các domain khác nhau và được thiết kế để thách thức các mô hình AI hiện đại.
+ViText2SQL là tập dữ liệu Text-to-SQL tiếng Việt được phát triển bởi [VinAI Research](https://github.com/VinAIResearch/ViText2SQL) và được trình bày trong bài báo [A Pilot Study of Text-to-SQL Semantic Parsing for Vietnamese](https://aclanthology.org/2020.findings-emnlp.364/) tại EMNLP-2020 Findings. Đây là tập dữ liệu Text-to-SQL tiếng Việt đầu tiên và lớn nhất, bao gồm khoảng 10K cặp câu hỏi-SQL với các domain đa dạng.
 
 ### Đặc điểm chính
 - **Ngôn ngữ**: Tiếng Việt (Vietnamese)
 - **Domain**: Đa dạng (quản lý tài sản, nhân sự, bán hàng, v.v.)
 - **Cấu trúc**: Question-SQL pairs với database schema
-- **Kích thước**: Hàng nghìn cặp câu hỏi-SQL
+- **Kích thước**: ~10K cặp câu hỏi-SQL
 - **Độ phức tạp**: Từ đơn giản đến phức tạp
+- **Nguồn**: [VinAI Research](https://github.com/VinAIResearch/ViText2SQL)
+- **Paper**: [EMNLP-2020 Findings](https://aclanthology.org/2020.findings-emnlp.364/)
 
 ### Cấu trúc dữ liệu
 ```
@@ -75,25 +77,27 @@ FROM tài_sản AS t1
 WHERE t1.số_bộ_phận = 2 AND t1.số_nhật_kí_lỗi < 2;
 ```
 
-## 🔧 Xây dựng Std-level Dataset
+## 🔧 Chuẩn hóa dữ liệu cho ViPERSQL
 
 ### Mục đích
-Std-level (Standard level) là phiên bản chuẩn hóa của tập dữ liệu, được tạo ra để:
+Để sử dụng tập dữ liệu ViText2SQL trong hệ thống đánh giá ViPERSQL, chúng ta cần chuẩn hóa dữ liệu để:
 - **Chuẩn hóa format**: Đảm bảo tính nhất quán trong cấu trúc dữ liệu
 - **Tối ưu hóa**: Loại bỏ dữ liệu không cần thiết và chuẩn hóa SQL
-- **Tương thích**: Đảm bảo tương thích với các hệ thống đánh giá
+- **Tương thích**: Đảm bảo tương thích với hệ thống đánh giá ViPERSQL
 - **Hiệu suất**: Tăng tốc độ xử lý và đánh giá
 
 ### Quy trình xây dựng
 
-#### Bước 1: Chuẩn bị dữ liệu gốc
+#### Bước 1: Tải dữ liệu ViText2SQL
 ```bash
-# Đảm bảo có dữ liệu gốc
-ls dataset/ViText2SQL/word-level/
-ls dataset/ViText2SQL/syllable-level/
+# Clone repository ViText2SQL
+git clone https://github.com/VinAIResearch/ViText2SQL.git
+
+# Copy dữ liệu vào thư mục dataset
+cp -r ViText2SQL/data/* dataset/ViText2SQL/
 ```
 
-#### Bước 2: Tạo script chuẩn hóa
+#### Bước 2: Chuẩn hóa dữ liệu
 ```python
 # scripts/normalize_to_std.py
 import json
@@ -101,7 +105,7 @@ import re
 from typing import Dict, List, Any
 
 def normalize_sql_query(sql: str) -> str:
-    """Chuẩn hóa câu truy vấn SQL"""
+    """Chuẩn hóa câu truy vấn SQL cho ViPERSQL"""
     # Loại bỏ khoảng trắng dư thừa
     sql = re.sub(r'\s+', ' ', sql.strip())
     
@@ -114,7 +118,7 @@ def normalize_sql_query(sql: str) -> str:
     return sql
 
 def normalize_dataset(input_file: str, output_file: str):
-    """Chuẩn hóa toàn bộ dataset"""
+    """Chuẩn hóa dataset ViText2SQL cho ViPERSQL"""
     with open(input_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
@@ -171,7 +175,7 @@ def create_gold_sql(data_file: str, output_file: str):
 ```python
 #!/usr/bin/env python3
 """
-Script chuẩn hóa ViText2SQL dataset thành std-level
+Script chuẩn hóa ViText2SQL dataset cho hệ thống đánh giá ViPERSQL
 """
 
 import json
@@ -258,8 +262,8 @@ class DatasetNormalizer:
         print(f"✅ Đã tạo gold SQL cho {len(gold_sql)} mẫu")
     
     def process_all(self):
-        """Xử lý toàn bộ dataset"""
-        print("🚀 Bắt đầu chuẩn hóa ViText2SQL dataset...")
+        """Xử lý toàn bộ dataset ViText2SQL cho ViPERSQL"""
+        print("🚀 Bắt đầu chuẩn hóa ViText2SQL dataset cho ViPERSQL...")
         
         # Sử dụng word-level làm nguồn dữ liệu gốc
         source_path = self.base_path / "word-level"
@@ -286,7 +290,7 @@ class DatasetNormalizer:
         if test_file.exists():
             self.create_gold_sql(str(test_file), str(gold_sql_file))
         
-        print("🎉 Hoàn thành chuẩn hóa dataset!")
+        print("🎉 Hoàn thành chuẩn hóa dataset cho ViPERSQL!")
 
 def main():
     normalizer = DatasetNormalizer()
@@ -298,17 +302,14 @@ if __name__ == "__main__":
 
 ## 📋 Cách sử dụng script
 
-### 1. Chạy script chuẩn hóa
+### 1. Tải và chuẩn hóa dữ liệu
 ```bash
-# Tạo script
-python scripts/normalize_to_std.py
+# Tải dữ liệu ViText2SQL
+git clone https://github.com/VinAIResearch/ViText2SQL.git
+cp -r ViText2SQL/data/* dataset/ViText2SQL/
 
-# Hoặc chạy trực tiếp
-python -c "
-from scripts.normalize_to_std import DatasetNormalizer
-normalizer = DatasetNormalizer()
-normalizer.process_all()
-"
+# Chạy script chuẩn hóa
+python scripts/normalize_to_std.py
 ```
 
 ### 2. Kiểm tra kết quả
@@ -347,12 +348,13 @@ except Exception as e:
 | **Word-level** | Cấp độ từ | Tách từ theo từ điển | Baseline evaluation |
 | **Std-level** | Cấp độ chuẩn | Chuẩn hóa format | Production evaluation |
 
-## 📊 Thống kê dataset
+## 📊 Thống kê ViText2SQL Dataset
 
-### Kích thước các tập
+### Kích thước các tập (theo paper gốc)
 - **Training**: ~8,000 mẫu
 - **Development**: ~1,000 mẫu  
 - **Test**: ~1,000 mẫu
+- **Tổng cộng**: ~10,000 cặp câu hỏi-SQL
 
 ### Domain phân bố
 - **Quản lý tài sản**: 30%
@@ -364,6 +366,8 @@ except Exception as e:
 - **Đơn giản**: SELECT đơn giản (40%)
 - **Trung bình**: JOIN, WHERE phức tạp (35%)
 - **Phức tạp**: Subquery, aggregation (25%)
+
+*Thống kê dựa trên bài báo gốc: [A Pilot Study of Text-to-SQL Semantic Parsing for Vietnamese](https://aclanthology.org/2020.findings-emnlp.364/)*
 
 ## 🛠️ Tùy chỉnh và mở rộng
 
@@ -388,19 +392,21 @@ def validate_dataset(self, data: List[Dict]) -> bool:
 
 ## 📚 References
 
-- [ViText2SQL Paper](https://example.com/vitext2sql-paper)
-- [Text-to-SQL Evaluation](https://example.com/text2sql-eval)
-- [SQL Normalization](https://example.com/sql-normalization)
+- **[ViText2SQL Repository](https://github.com/VinAIResearch/ViText2SQL)** - Repository chính thức của VinAI Research
+- **[ViText2SQL Paper](https://aclanthology.org/2020.findings-emnlp.364/)** - A Pilot Study of Text-to-SQL Semantic Parsing for Vietnamese (EMNLP-2020 Findings)
+- **[VinAI Research](https://vinai.io/)** - Tổ chức phát triển ViText2SQL
 
 ## 🤝 Contributing
 
-Để đóng góp vào việc cải thiện dataset:
+Để đóng góp vào việc cải thiện hệ thống chuẩn hóa dữ liệu:
 
-1. Fork repository
+1. Fork repository ViPERSQL
 2. Tạo feature branch
 3. Thêm normalization rules mới
-4. Test với subset dữ liệu
+4. Test với subset dữ liệu ViText2SQL
 5. Submit pull request
+
+*Lưu ý: ViText2SQL dataset thuộc về VinAI Research. Chúng ta chỉ sử dụng và chuẩn hóa dữ liệu cho hệ thống đánh giá ViPERSQL.*
 
 ## 📄 License
 
@@ -408,4 +414,4 @@ MIT License - Xem file LICENSE để biết thêm chi tiết.
 
 ---
 
-**ViText2SQL Dataset** - Tập dữ liệu Text-to-SQL tiếng Việt chuẩn! 🚀 
+**ViPERSQL Dataset Processing** - Hệ thống chuẩn hóa dữ liệu ViText2SQL cho đánh giá Text-to-SQL tiếng Việt! 🚀 
