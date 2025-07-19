@@ -100,40 +100,35 @@ cp -r ViText2SQL/data/* dataset/ViText2SQL/
 #### Bước 2: Chuẩn hóa dữ liệu
 ```python
 # scripts/normalize_to_std.py
-import json
-import re
-from typing import Dict, List, Any
-
-def normalize_sql_query(sql: str) -> str:
-    """Chuẩn hóa câu truy vấn SQL cho ViPERSQL"""
-    # Loại bỏ khoảng trắng dư thừa
-    sql = re.sub(r'\s+', ' ', sql.strip())
+class DatasetNormalizer:
+    def normalize_token(self, token):
+        """Normalize token từ word-level sang std-level format"""
+        token_with_spaces = token.replace('_', ' ')
+        parts = token_with_spaces.split()
+        return '_'.join(parts)
     
-    # Chuẩn hóa alias format
-    sql = re.sub(r'FROM\s+(\w+)\s+AS\s+(\w+)', r'FROM \1 AS \2', sql)
-    
-    # Loại bỏ dấu chấm phẩy cuối
-    sql = sql.rstrip(';')
-    
-    return sql
-
-def normalize_dataset(input_file: str, output_file: str):
-    """Chuẩn hóa dataset ViText2SQL cho ViPERSQL"""
-    with open(input_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    normalized_data = []
-    for item in data:
-        normalized_item = {
-            "question": item["question"].strip(),
-            "query": normalize_sql_query(item["query"]),
-            "db_id": item["db_id"],
-            "question_id": item["question_id"]
-        }
-        normalized_data.append(normalized_item)
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(normalized_data, f, ensure_ascii=False, indent=2)
+    def normalize_data(self, word_level_data):
+        """Chuẩn hóa data từ word-level sang std-level format"""
+        normalized_data = []
+        for word_item in word_level_data:
+            # Process query_toks
+            normalized_toks = self.process_query_toks(word_item['query_toks'])
+            normalized_query = ' '.join(normalized_toks)
+            
+            # Fix quoted strings
+            normalized_query = self.fix_quoted_strings(normalized_query)
+            
+            # Normalize question
+            normalized_question = self.normalize_question(word_item['question'])
+            
+            normalized_item = {
+                'db_id': word_item['db_id'],
+                'question': normalized_question,
+                'query': normalized_query
+            }
+            normalized_data.append(normalized_item)
+        
+        return normalized_data
 ```
 
 #### Bước 3: Chuẩn hóa schema
@@ -170,12 +165,13 @@ def create_gold_sql(data_file: str, output_file: str):
         f.write('\n\n'.join(gold_sql))
 ```
 
-### Script hoàn chỉnh
+### Script hoàn chỉnh (Merged)
 
 ```python
 #!/usr/bin/env python3
 """
 Script chuẩn hóa ViText2SQL dataset cho hệ thống đánh giá ViPERSQL
+Tổng hợp từ create_std_level.py và normalize_to_std.py
 """
 
 import json
