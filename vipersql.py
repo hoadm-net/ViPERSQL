@@ -77,24 +77,16 @@ class ViPERSQLCLI:
 
         start_time = time.time()
 
-        # Load dataset
-        num_samples = self.config.num_samples
-        # Ensure num_samples is an integer if provided
-        if num_samples is not None and isinstance(num_samples, str):
-            num_samples = int(num_samples)
-
-        dataset = load_dataset(self.config.level, self.config.split, num_samples)
-
-        # Ensure we only take the specified number of samples
-        if num_samples and len(dataset) > num_samples:
-            dataset = dataset[:num_samples]
+        # Load dataset - let load_dataset handle the num_samples logic
+        dataset = load_dataset(self.config.level, self.config.split, self.config.num_samples)
 
         # Load tables info for schema information
         tables_info = load_tables_info(self.config.level)
 
         # Create output directory
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = f"results/{self.config.strategy}{num_samples}_{timestamp}"
+        samples_suffix = f"{len(dataset)}" if self.config.num_samples is None else str(self.config.num_samples)
+        output_dir = f"results/{self.config.strategy}{samples_suffix}_{timestamp}"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         # Initialize results
