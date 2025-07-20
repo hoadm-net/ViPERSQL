@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from .config import ViPERConfig
+from .constants import FALLBACK_TEMPERATURE, FALLBACK_MAX_TOKENS
 import re
 
 
@@ -41,11 +42,11 @@ class LLMInterface:
         else:
             raise ValueError(f"Unsupported model: {self.config.model_name}")
     
-    def generate(self, prompt: str, model: str, temperature: float = 0.7, max_tokens: int = 512) -> str:
+    def generate(self, prompt: str, model: str, temperature: float = FALLBACK_TEMPERATURE, max_tokens: int = FALLBACK_MAX_TOKENS) -> str:
         """Generate response from LLM."""
-        # Nếu prompt có trường question, replace _ thành space
+        # Replace underscores in question field with spaces if present
         def replace_underscore_question(text):
-            # Tìm dòng bắt đầu bằng 'Question:' và thay _ thành space
+            # Find lines starting with 'Question:' and replace _ with space
             return re.sub(r'(Question:\s*)(.*)', lambda m: m.group(1) + m.group(2).replace('_', ' '), text)
         prompt = replace_underscore_question(prompt)
         try:
@@ -76,4 +77,4 @@ class LLMInterface:
                 'latency': latency,
                 'model': self.config.model_name,
                 'error': str(e)
-            } 
+            }

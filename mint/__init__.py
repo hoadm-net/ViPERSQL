@@ -5,24 +5,21 @@ A comprehensive toolkit for Vietnamese Text-to-SQL conversion with support for
 multiple strategies: Zero-shot, Few-shot, and Chain-of-Thought (CoT).
 
 Core Components:
-- Strategy Manager: Orchestrates different NL2SQL approaches
 - LLM Interface: Unified interface for OpenAI and Anthropic models
 - Template System: Flexible prompt template management
-- Evaluation Engine: Comprehensive evaluation metrics
-- Database Manager: SQLite database creation and management
+- Evaluation Engine: Comprehensive evaluation metrics with component-wise analysis
 """
 
 # Core components
-from .metrics import EvaluationMetrics
-from .utils import load_dataset, normalize_sql
+from .enhanced_metrics import EnhancedEvaluationMetrics
+from .utils import load_dataset, normalize_sql, load_tables_info
 
 # New unified components
 try:
     from .config import ViPERConfig
     from .llm_interface import LLMInterface
     from .template_manager import TemplateManager
-    from .strategy_manager import StrategyManager
-    
+
     # Strategy implementations
     from .strategies import (
         ZeroShotStrategy,
@@ -30,7 +27,7 @@ try:
         CoTStrategy
     )
     
-    # Evaluation and logging
+    # Evaluation
     from .evaluator import UnifiedEvaluator
 except ImportError as e:
     print(f"Warning: Some MINT components failed to import: {e}")
@@ -38,28 +35,32 @@ except ImportError as e:
     ViPERConfig = None
     LLMInterface = None
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __author__ = "ViPERSQL Research Team"
 
 __all__ = [
-    # Legacy components (for backward compatibility)
-    "EvaluationMetrics",
+    # Core components
+    "EnhancedEvaluationMetrics",
     "load_dataset",
     "normalize_sql",
-    
-    # New unified components
+    "load_tables_info",
+
+    # Unified components
     "ViPERConfig",
     "LLMInterface", 
     "TemplateManager",
-    "StrategyManager",
-    
+
     # Strategy implementations
     "ZeroShotStrategy",
     "FewShotStrategy",
     "CoTStrategy",
     
-    # Evaluation and logging
-    "UnifiedEvaluator"
+    # Evaluation
+    "UnifiedEvaluator",
+
+    # Convenience functions
+    "create_strategy",
+    "create_unified_system"
 ]
 
 # Convenience imports for common usage patterns
@@ -69,31 +70,43 @@ def create_strategy(strategy_name: str = None, **kwargs):
     
     Args:
         strategy_name: 'zero-shot', 'few-shot', or 'cot'
-        **kwargs: Additional configuration parameters
-        
-    Returns:
-        Strategy instance
-    """
-    config = ViPERConfig(**kwargs)
-    strategy_name = strategy_name or config.default_strategy
-    
-    strategy_map = {
-        'zero-shot': ZeroShotStrategy,
-        'few-shot': FewShotStrategy,
-        'cot': CoTStrategy
-    }
-    
-    if strategy_name not in strategy_map:
-        raise ValueError(f"Unknown strategy: {strategy_name}. Available: {list(strategy_map.keys())}")
-    
-    return strategy_map[strategy_name](config)
+        **kwargs: Additional parameters for strategy initialization
 
-def create_unified_system(**kwargs):
+    Returns:
+        Strategy instance based on the selected strategy
+    """
+    if not strategy_name:
+        strategy_name = "zero-shot"
+
+    # Create a ViPERConfig from kwargs if not already provided
+    if 'config' in kwargs:
+        config = kwargs['config']
+    else:
+        config = ViPERConfig(**kwargs)
+
+    # Normalize strategy name
+    strategy_name = strategy_name.lower().replace("_", "-")
+
+    if strategy_name == "zero-shot":
+        return ZeroShotStrategy(config)
+    elif strategy_name == "few-shot":
+        return FewShotStrategy(config)
+    elif strategy_name == "cot":
+        return CoTStrategy(config)
+    else:
+        raise ValueError(f"Unknown strategy: {strategy_name}")
+
+def create_unified_system(config: ViPERConfig):
     """
     Create a complete ViPERSQL system with all components.
-    
+
+    Args:
+        config: ViPERConfig instance
+
     Returns:
-        StrategyManager instance with all strategies loaded
+        Tuple of (strategy, evaluator) instances
     """
-    config = ViPERConfig(**kwargs)
-    return StrategyManager(config)
+    strategy = create_strategy(config.strategy, **config.to_dict())
+    evaluator = UnifiedEvaluator(config)
+
+    return strategy, evaluator

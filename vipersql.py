@@ -28,10 +28,10 @@ import argparse
 import json
 import sys
 import time
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
-import re # Added for detailed SQL clause analysis
 
 # Import MINT components
 from mint import (
@@ -39,7 +39,13 @@ from mint import (
     create_strategy, 
     create_unified_system,
     load_dataset,
+    load_tables_info,
     UnifiedEvaluator
+)
+from mint.constants import (
+    SEPARATOR_LENGTH, LONG_SEPARATOR_LENGTH,
+    QUESTION_PREVIEW_LENGTH, SQL_PREVIEW_LENGTH,
+    INTERMEDIATE_SAVE_INTERVAL
 )
 
 
@@ -58,455 +64,210 @@ class ViPERSQLCLI:
         self.evaluator = UnifiedEvaluator(config)
         
         print("🚀 ViPERSQL - Vietnamese Text-to-SQL System")
-        print("=" * 60)
-        print(f"📊 Strategy: {config.strategy.upper()}")
-        print(f"🧠 Model: {config.model_name}")
-        print(f"📁 Dataset: {config.dataset_full_path}")
-        print(f"📝 Template: {config.template_path}")
-        print("=" * 60)
-    
-    def run_single_query(self, question: str, schema_info: Dict, db_id: str):
-        """Run a single query for testing."""
-        print(f"\n🔍 Single Query Test")
-        print(f"Question: {question}")
-        print(f"Database: {db_id}")
-        
-        result = self.strategy.generate_sql(question, schema_info, db_id)
-        
-        print(f"Generated SQL: {result.sql_query}")
-        print(f"Confidence: {result.confidence_score:.2f}")
-        if result.reasoning:
-            print(f"Reasoning: {result.reasoning}")
-        
-        return result
-    
+        print("=" * SEPARATOR_LENGTH)
+
     def run_evaluation(self) -> Dict[str, Any]:
-        """Run evaluation on dataset."""
-        print(f"\n📊 Running Evaluation")
-        print(f"Split: {self.config.split}")
-        print(f"Samples: {self.config.samples}")
-        print(f"Level: {self.config.level}")
-        
-        # Load dataset
-        dataset_file = Path(self.config.dataset_full_path) / f"{self.config.split}.json"
-        if not dataset_file.exists():
-            raise FileNotFoundError(f"Dataset not found: {dataset_file}")
-        
-        print(f"📁 Loading dataset from: {dataset_file}")
-        dataset = load_dataset(str(dataset_file))
-        
-        # Load tables schema
-        tables_file = Path(self.config.dataset_full_path) / "tables.json"
-        if not tables_file.exists():
-            raise FileNotFoundError(f"Tables file not found: {tables_file}")
-        
-        with open(tables_file, 'r', encoding='utf-8') as f:
-            tables_list = json.load(f)
-        tables_info = {table['db_id']: table for table in tables_list}
-        
-        # Limit samples if specified
-        if self.config.samples > 0:
-            dataset = dataset[:self.config.samples]
-        
-        print(f"✅ Loaded {len(dataset)} samples")
-        
-        # Process samples
-        results = []
+        """Run evaluation with simple sequential processing."""
+        print(f"🚀 Starting ViPERSQL Evaluation")
+        print(f"Strategy: {self.config.strategy.upper()}")
+        print(f"Model: {self.config.model_name}")
+        print(f"Dataset: {self.config.level}-level, {self.config.split} split")
+        print(f"Samples: {self.config.num_samples or 'all'}")
+        print("=" * SEPARATOR_LENGTH)
+
         start_time = time.time()
-        
-        for i, sample in enumerate(dataset, 1):
-            print(f"\n📝 Processing {i}/{len(dataset)}: {sample['db_id']}")
-            
-            # Get schema info
-            schema_info = tables_info.get(sample['db_id'])
-            if not schema_info:
-                print(f"❌ Schema not found for {sample['db_id']}")
-                continue
-            
-            # Generate SQL
+
+        # Load dataset
+        num_samples = self.config.num_samples
+        dataset = load_dataset(self.config.level, self.config.split, num_samples)
+
+        # Ensure we only take the specified number of samples
+        if num_samples and len(dataset) > num_samples:
+            dataset = dataset[:num_samples]
+
+        # Load tables info for schema information
+        tables_info = load_tables_info(self.config.level)
+
+        # Create output directory
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = f"results/{self.config.strategy}{num_samples}_{timestamp}"
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        # Initialize results
+        results = []
+
+        print(f"Processing {len(dataset)} samples sequentially...")
+
+        # Simple sequential processing - no batches needed
+        for i, item in enumerate(dataset, 1):
+            db_id = item['db_id']
+            question = item['question']
+            gold_sql = item.get('query', '')
+
+            # Get database schema for the given db_id
+            db_schema = tables_info.get(db_id, {})
+
+            # Generate SQL from natural language
+            print(f"[{i}/{len(dataset)}] Processing: {question[:QUESTION_PREVIEW_LENGTH]}...")
             try:
-                result = self.strategy.generate_sql(
-                    sample['question'], 
-                    schema_info, 
-                    sample['db_id']
-                )
-                
-                # Evaluate result
-                evaluation = self.evaluator.evaluate_single(
-                    predicted_sql=result.sql_query,
-                    gold_sql=sample.get('query', ''),
-                    db_id=sample['db_id'],
-                    request_id=result.request_id
-                )
-                
-                # Store result
-                sample_result = {
-                    'index': i - 1,
-                    'db_id': sample['db_id'],
-                    'question': sample['question'],
-                    'predicted_sql': result.sql_query,
-                    'gold_sql': sample.get('query', ''),
-                    'strategy_result': result,
-                    'evaluation': evaluation
-                }
-                results.append(sample_result)
-                
-                # Print immediate feedback
-                if evaluation.get('exact_match', False):
-                    print("✅ Exact match!")
-                elif evaluation.get('execution_accuracy', False):
-                    print("🟡 Execution accurate but different syntax")
-                else:
-                    print("❌ Incorrect result")
-                    
-            except Exception as e:
-                print(f"❌ Error processing sample: {str(e)}")
+                predicted_sql = self.strategy.generate_sql(question, db_schema, db_id)
+
+                # Extract SQL string from result if it's a StrategyResult object
+                if hasattr(predicted_sql, 'sql_query'):
+                    predicted_sql = predicted_sql.sql_query
+
+                # Add to results
                 results.append({
-                    'index': i - 1,
-                    'db_id': sample['db_id'],
-                    'question': sample['question'],
+                    'db_id': db_id,
+                    'question': question,
+                    'predicted': predicted_sql,
+                    'gold': gold_sql
+                })
+
+                print(f"✓ Generated SQL: {predicted_sql[:SQL_PREVIEW_LENGTH]}...")
+
+            except Exception as e:
+                print(f"✗ Error generating SQL: {e}")
+                results.append({
+                    'db_id': db_id,
+                    'question': question,
+                    'predicted': "",
+                    'gold': gold_sql,
                     'error': str(e)
                 })
-        
-        # Calculate summary
-        total_time = time.time() - start_time
-        summary = self.evaluator.calculate_summary(results)
-        
-        evaluation_results = {
-            'config': {
-                'strategy': self.config.strategy,
-                'model': self.config.model_name,
-                'split': self.config.split,
-                'level': self.config.level,
-                'template': self.config.template_path,
-                'num_samples': len(dataset),
-                'timestamp': datetime.now().isoformat(),
-                'total_time': total_time
-            },
-            'summary': summary,
-            'detailed_results': results
+
+            # Save intermediate results every 10 samples
+            if i % INTERMEDIATE_SAVE_INTERVAL == 0:
+                intermediate_path = os.path.join(output_dir, f"intermediate_results_{i}.json")
+                with open(intermediate_path, 'w', encoding='utf-8') as f:
+                    json.dump({'predictions': results}, f, indent=2, ensure_ascii=False)
+                print(f"💾 Saved intermediate results ({i} samples)")
+
+        # Save final predictions
+        predictions_path = os.path.join(output_dir, 'predictions.json')
+        with open(predictions_path, 'w', encoding='utf-8') as f:
+            json.dump({'predictions': results}, f, indent=2, ensure_ascii=False)
+
+        print(f"✅ SQL Generation completed in {time.time() - start_time:.2f} seconds")
+        print(f"✅ Generated {len(results)} predictions")
+        print(f"✅ Results saved to: {predictions_path}")
+
+        # Now run enhanced evaluation
+        print("\n🔍 Starting Enhanced Evaluation...")
+        evaluation_start = time.time()
+
+        try:
+            evaluation_results = self.evaluator.evaluate_batch(
+                results,
+                schema_path=f"dataset/ViText2SQL/{self.config.level}-level/tables.json"
+            )
+
+            # Generate and save enhanced report
+            report_files = self.evaluator.generate_report(evaluation_results, output_dir)
+
+            evaluation_time = time.time() - evaluation_start
+            print(f"✅ Enhanced Evaluation completed in {evaluation_time:.2f} seconds")
+            print(f"📊 Report saved to: {report_files.get('report_path', 'N/A')}")
+
+            # Print summary metrics
+            self._print_evaluation_summary(evaluation_results)
+
+        except Exception as e:
+            print(f"⚠️ Enhanced evaluation failed: {str(e)}")
+            print("💾 SQL predictions have been saved successfully")
+
+        elapsed_time = time.time() - start_time
+        return {
+            'predictions': results,
+            'evaluation': evaluation_results if 'evaluation_results' in locals() else None,
+            'total_time': elapsed_time
         }
-        
-        return evaluation_results
-    
-    def save_results(self, results: Dict[str, Any]) -> str:
-        """Save evaluation results to file."""
-        # Create output directory
-        Path(self.config.results_dir).mkdir(exist_ok=True)
-        
-        # Generate filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        strategy = results['config']['strategy']
-        model_name = results['config']['model'].replace('/', '_')
-        split = results['config']['split']
-        filename = f"evaluation_{strategy}_{model_name}_{split}_{timestamp}.json"
-        filepath = Path(self.config.results_dir) / filename
-        
-        # Save results
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(results, f, indent=2, ensure_ascii=False, default=str)
-        
-        print(f"\n💾 Results saved to: {filepath}")
-        return str(filepath)
-    
-    def print_summary(self, summary: Dict[str, Any]):
-        """Print evaluation summary."""
-        print("\n" + "=" * 60)
-        print("📊 EVALUATION SUMMARY")
-        print("=" * 60)
-        
-        print(f"Strategy: {self.config.strategy.upper()}")
-        print(f"Total samples: {summary.get('total_samples', 0)}")
-        print(f"Exact Match: {summary.get('exact_match_accuracy', 0):.1f}%")
-        print(f"Syntax Validity: {summary.get('syntax_validity', 0):.1f}%")
-        print(f"Average Component F1: {summary.get('avg_component_f1core', 0):.1f}%")
-        
-        if 'confidence_stats' in summary:
-            conf_stats = summary['confidence_stats']
-            print(f"Average Confidence: {conf_stats.get('mean', 0):.2f}")
-            print(f"Confidence Range: {conf_stats.get('min', 0):.2f} - {conf_stats.get('max', 0):.2f}")
-        
-        # Display detailed F1-scores for each SQL clause
-        if 'component_f1_scores' in summary:
-            print("\n🔍 COMPONENT F1-SCORES:")
-            print("-" * 40)
-            for component, f1score in summary['component_f1_scores'].items():
-                print(f"  {component}: {f1score*100:.1f}%")
-        
-        if 'errors' in summary and summary['errors'] > 0:
-            print(f"\n⚠️  Errors: {summary['errors']}")
 
-    def print_detailed_results(self, results: List[Dict[str, Any]], max_samples: int = 10):
-        """Print detailed SQL clause analysis for debugging."""
-        print("\n" + "=" * 80)
-        print("🔍 DETAILED SQL CLAUSE ANALYSIS")
-        print("=" * 80)
-        
-        # Lấy max_samples mẫu đầu tiên để phân tích
-        samples_to_analyze = results[:max_samples]
-        
-        for i, sample in enumerate(samples_to_analyze, 1):
-            if 'error' in sample:
-                continue
-                
-            print(f"\n📝 Sample {i}: {sample['db_id']}")
-            print(f"Question: {sample['question']}")
-            print(f"Predicted: {sample['predicted_sql']}")
-            print(f"Gold:      {sample['gold_sql']}")
-            
-            # Phân tích các mệnh đề SQL
-            evaluation = sample['evaluation']
-            component_scores = evaluation.get('component_f1_scores', {})
-            
-            print("📊 Component Analysis:")
-            for component, score in component_scores.items():
-                status = "✅" if score > 0.8 else "🟡" if score > 0.5 else "❌"
-                print(f"  {status} {component}: {score*100:.1f}%")
-            
-            # Nếu có exact match, highlight
-            if evaluation.get('exact_match', False):
-                print("🎉 EXACT MATCH!")
-            
-            print("-" * 60)
+    def _print_evaluation_summary(self, evaluation_results: Dict[str, Any]):
+        """Print enhanced evaluation summary."""
+        print("\n" + "=" * LONG_SEPARATOR_LENGTH)
+        print("📊 ENHANCED EVALUATION SUMMARY")
+        print("=" * LONG_SEPARATOR_LENGTH)
+        print(f"🤖 Model: {self.config.model_name}")
+        print(f"🎯 Strategy: {self.config.strategy.upper()}")
 
-    def extract_sql_clauses(self, sql_query: str) -> Dict[str, str]:
-        """Extract SQL clauses for detailed analysis."""
-        clauses = {}
-        
-        # SELECT clause
-        select_match = re.search(r'SELECT\s+(.*?)\s+FROM', sql_query, re.IGNORECASE | re.DOTALL)
-        if select_match:
-            clauses['SELECT'] = select_match.group(1).strip()
-        
-        # FROM clause
-        from_match = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
-        if from_match:
-            clauses['FROM'] = from_match.group(1).strip()
-        
-        # WHERE clause
-        where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP|\s+ORDER|\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
-        if where_match:
-            clauses['WHERE'] = where_match.group(1).strip()
-        
-        # GROUP BY clause
-        group_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER|\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
-        if group_match:
-            clauses['GROUP BY'] = group_match.group(1).strip()
-        
-        # ORDER BY clause
-        order_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+HAVING|$)', sql_query, re.IGNORECASE | re.DOTALL)
-        if order_match:
-            clauses['ORDER BY'] = order_match.group(1).strip()
-        
-        # HAVING clause
-        having_match = re.search(r'HAVING\s+(.*?)$', sql_query, re.IGNORECASE | re.DOTALL)
-        if having_match:
-            clauses['HAVING'] = having_match.group(1).strip()
-        
-        return clauses
+        # Get results directly (not under 'comprehensive_evaluation')
+        comprehensive = evaluation_results
 
+        # Exact Match Results
+        em_results = comprehensive.get('exact_match', {})
+        print(f"🎯 Exact Match Accuracy: {em_results.get('em_accuracy', 0)*100:.2f}%")
+        print(f"   Total Queries: {em_results.get('total_queries', 0)}")
+        print(f"   Exact Matches: {em_results.get('exact_matches', 0)}")
 
-def create_argument_parser() -> argparse.ArgumentParser:
-    """Create and configure argument parser."""
-    parser = argparse.ArgumentParser(
-        description="ViPERSQL - Unified Vietnamese Text-to-SQL CLI",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Zero-shot evaluation (default)
-  python vipersql.py --samples 10
-  
-  # Few-shot with examples
-  python vipersql.py --strategy few-shot --samples 20
-  
-  # Chain-of-Thought reasoning
-  python vipersql.py --strategy cot --samples 5
-  
-  # Different model and dataset
-  python vipersql.py --model claude-3-sonnet --split test --samples 50
-  
-  # Custom configuration file
-  python vipersql.py --config custom.env --strategy cot
-        """
-    )
-    
-    # Strategy selection
-    parser.add_argument(
-        "--strategy", "-s",
-        choices=["zero-shot", "few-shot", "cot"],
-        help="Strategy to use for NL2SQL conversion"
-    )
-    
-    # Model selection
-    parser.add_argument(
-        "--model", "-m",
-        help="Model to use (e.g., gpt-4o-mini, claude-3-sonnet)"
-    )
-    
-    # Dataset options
-    parser.add_argument(
-        "--split",
-        choices=["train", "dev", "test"],
-        help="Dataset split to evaluate"
-    )
-    
-    parser.add_argument(
-        "--level", "-l",
-        choices=["syllable", "word", "std"],
-        help="Tokenization level (default: std, recommended for LLMs)"
-    )
-    
-    parser.add_argument(
-        "--samples", "-n",
-        type=int,
-        help="Number of samples to evaluate (-1 for all)"
-    )
-    
-    # Configuration
-    parser.add_argument(
-        "--config", "-c",
-        help="Path to configuration file (.env format)"
-    )
-    
-    parser.add_argument(
-        "--template", "-t",
-        help="Path to custom template file"
-    )
-    
-    # Output options
-    parser.add_argument(
-        "--output-dir", "-o",
-        help="Output directory for results"
-    )
-    
-    parser.add_argument(
-        "--no-save",
-        action="store_true",
-        help="Don't save results to file"
-    )
-    
-    parser.add_argument(
-        "--detailed", "-d",
-        action="store_true",
-        help="Show detailed SQL clause analysis"
-    )
-    
-    parser.add_argument(
-        "--max-detail",
-        type=int,
-        default=10,
-        help="Maximum number of samples to show in detailed analysis (default: 10)"
-    )
-    
-    # Special modes
-    parser.add_argument(
-        "--demo",
-        action="store_true", 
-        help="Run interactive demo mode"
-    )
-    
-    parser.add_argument(
-        "--test-query",
-        help="Test a single Vietnamese query"
-    )
-    
-    parser.add_argument(
-        "--list-strategies",
-        action="store_true",
-        help="List available strategies and exit"
-    )
-    
-    return parser
+        # Component F1 Results
+        f1_results = comprehensive.get('component_f1', {})
+        f1_scores = f1_results.get('f1_scores', {})
+
+        print(f"\n🔍 COMPONENT-WISE F1 SCORES:")
+        print("-" * 50)
+        for component, score in f1_scores.items():
+            print(f"  {component:12}: {score*100:6.2f}%")
+
+        # Calculate and show overall average F1
+        if f1_scores:
+            overall_avg = sum(f1_scores.values()) / len(f1_scores)
+            print(f"  {'Overall F1':12}: {overall_avg*100:6.2f}%")
+
+        print(f"\n💾 For detailed precision & recall scores, check the saved JSON report.")
+        print("=" * LONG_SEPARATOR_LENGTH)
+
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description='ViPERSQL - Vietnamese Text-to-SQL System')
+
+    # Basic configuration
+    parser.add_argument('--strategy', type=str, default='zero-shot',
+                        choices=['zero-shot', 'few-shot', 'cot'],
+                        help='Strategy to use for text-to-SQL generation')
+
+    parser.add_argument('--model', type=str, default='gpt-3.5-turbo',
+                        help='LLM model to use')
+
+    parser.add_argument('--level', type=str, default='std',
+                        choices=['std', 'syllable', 'word'],
+                        help='Level of Vietnamese text segmentation')
+
+    parser.add_argument('--split', type=str, default='dev',
+                        choices=['train', 'dev', 'test'],
+                        help='Dataset split to use')
+
+    parser.add_argument('--samples', type=int, default=None,
+                        help='Number of samples to process (default: all)')
+
+    parser.add_argument('--config', type=str, default='.env',
+                        help='Path to configuration file')
+
+    return parser.parse_args()
 
 
 def main():
     """Main entry point."""
-    parser = create_argument_parser()
-    args = parser.parse_args()
-    
-    # Handle special modes
-    if args.list_strategies:
-        print("Available strategies:")
-        print("  zero-shot: Direct conversion without examples")
-        print("  few-shot:  Uses examples to guide conversion")
-        print("  cot:       Chain-of-Thought reasoning approach")
+    args = parse_args()
 
-        return
-    
-    try:
-        # Create configuration
-        config_kwargs = {}
-        
-        # Override config with command line arguments
-        if args.strategy:
-            config_kwargs['strategy'] = args.strategy
-        if args.model:
-            config_kwargs['model_name'] = args.model
-        if args.split:
-            config_kwargs['split'] = args.split
-        if args.level:
-            config_kwargs['level'] = args.level
-        if args.samples is not None:
-            config_kwargs['samples'] = args.samples
-        if args.template:
-            config_kwargs['template_name'] = args.template
-        if args.output_dir:
-            config_kwargs['results_dir'] = args.output_dir
-        
-        # Load custom config file if specified
-        if args.config:
-            import os
-            from dotenv import load_dotenv
-            if Path(args.config).exists():
-                load_dotenv(args.config, override=True)
-            else:
-                print(f"❌ Config file not found: {args.config}")
-                sys.exit(1)
-        
-        # Create configuration
-        config = ViPERConfig(**config_kwargs)
-        
-        # Create CLI instance
-        cli = ViPERSQLCLI(config)
-        
-        # Handle test query mode
-        if args.test_query:
-            print(f"\n🧪 Testing single query: {args.test_query}")
-            # For demo, use first available schema
-            # In real usage, user would specify database
-            print("Note: Using demo schema. Specify --db-id for specific database.")
-            return
-        
-        # Handle demo mode
-        if args.demo:
-            print("\n🎮 Demo mode not implemented yet")
-            print("Use --test-query 'your question' for single query testing")
-            return
-        
-        # Run evaluation
-        results = cli.run_evaluation()
-        
-        # Print summary
-        cli.print_summary(results['summary'])
-        
-        # Save results unless disabled
-        if not args.no_save:
-            output_file = cli.save_results(results)
-            print(f"📄 Detailed results: {output_file}")
-        
-        # Print detailed results if requested
-        if args.detailed:
-            cli.print_detailed_results(results['detailed_results'], args.max_detail)
-        
-        print(f"\n🎉 Evaluation completed successfully!")
-        
-    except KeyboardInterrupt:
-        print("\n⚠️ Evaluation interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Error: {str(e)}")
-        sys.exit(1)
+    # Load configuration
+    config_params = {}
+    if args.samples:
+        config_params['num_samples'] = args.samples
+
+    config = ViPERConfig(
+        config_file=args.config,
+        strategy=args.strategy,
+        model_name=args.model,
+        level=args.level,
+        split=args.split,
+        **config_params
+    )
+
+    # Create and run CLI
+    cli = ViPERSQLCLI(config)
+    cli.run_evaluation()
 
 
-if __name__ == "__main__":
-    main() 
+if __name__ == '__main__':
+    main()

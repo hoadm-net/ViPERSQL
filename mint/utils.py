@@ -49,22 +49,7 @@ def normalize_sql(query: str) -> str:
         normalized = normalized.rstrip(';')  # Remove trailing semicolon
         return normalized.lower()
 
-def load_dataset(file_path: str) -> List[Dict[str, Any]]:
-    """
-    Load dataset from JSON file.
-    
-    Args:
-        file_path (str): Path to JSON dataset file
-        
-    Returns:
-        List[Dict[str, Any]]: Loaded dataset
-    """
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data
-    except Exception as e:
-        raise FileNotFoundError(f"Failed to load dataset from {file_path}: {e}")
+
 
 def extract_queries_from_dataset(dataset: List[Dict[str, Any]], query_key: str = 'query') -> List[str]:
     """
@@ -334,3 +319,54 @@ def create_directory_if_not_exists(directory_path: str) -> None:
         directory_path (str): Directory path to create
     """
     Path(directory_path).mkdir(parents=True, exist_ok=True) 
+
+def load_tables_info(level: str) -> Dict[str, Any]:
+    """
+    Load tables information from JSON file.
+    
+    Args:
+        level (str): Dataset level (std, word, syllable)
+        
+    Returns:
+        Dict[str, Any]: Tables information
+    """
+    try:
+        tables_path = f"dataset/ViText2SQL/{level}-level/tables.json"
+        with open(tables_path, 'r', encoding='utf-8') as f:
+            tables_data = json.load(f)
+        
+        # Convert to dictionary with db_id as key
+        tables_info = {}
+        for table_info in tables_data:
+            db_id = table_info.get('db_id')
+            if db_id:
+                tables_info[db_id] = table_info
+        
+        return tables_info
+    except Exception as e:
+        raise FileNotFoundError(f"Failed to load tables info from {level}-level: {e}")
+
+def load_dataset(level: str, split: str, num_samples: int = None) -> List[Dict[str, Any]]:
+    """
+    Load dataset from JSON file with optional sampling.
+    
+    Args:
+        level (str): Dataset level (std, word, syllable)
+        split (str): Dataset split (train, dev, test)
+        num_samples (int): Number of samples to load (None for all)
+        
+    Returns:
+        List[Dict[str, Any]]: Loaded dataset
+    """
+    try:
+        dataset_path = f"dataset/ViText2SQL/{level}-level/{split}.json"
+        with open(dataset_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if num_samples and num_samples < len(data):
+            # Take exactly the first num_samples items instead of random sampling
+            data = data[:num_samples]
+
+        return data
+    except Exception as e:
+        raise FileNotFoundError(f"Failed to load dataset from {level}-level {split}: {e}")

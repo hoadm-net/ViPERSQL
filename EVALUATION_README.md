@@ -94,161 +94,278 @@ Predicted: kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng
 Gold:      kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng
 ```
 
-## 📈 Output Format
+# Evaluation Framework
 
-### 1. Summary Report
+Comprehensive evaluation metrics and output analysis for Vietnamese Text-to-SQL systems in ViPERSQL.
+
+## Overview
+
+The ViPERSQL evaluation framework provides multi-dimensional analysis of Text-to-SQL model performance, including exact match accuracy, component-wise analysis, and detailed error categorization. The framework is designed to support rigorous research evaluation and model comparison.
+
+## Evaluation Metrics
+
+### 1. Exact Match (EM) Accuracy
+
+**Definition**: Binary metric indicating whether the predicted SQL query exactly matches the gold standard query after normalization.
+
+**Formula**:
 ```
-============================================================
-📊 EVALUATION SUMMARY
-============================================================
+EM_Accuracy = |{i : normalize(pred_i) = normalize(gold_i)}| / N
+```
+Where:
+- `pred_i`: Predicted SQL query for sample i
+- `gold_i`: Gold standard SQL query for sample i
+- `normalize()`: SQL normalization function
+- `N`: Total number of samples
+
+**Normalization Process**:
+- Convert to lowercase
+- Remove extra whitespace
+- Standardize alias naming (t1, t2, ...)
+- Normalize aggregation function spacing
+
+### 2. Component-wise F1 Scores
+
+**Definition**: F1 scores calculated independently for each SQL component (SELECT, FROM, WHERE, etc.).
+
+**Components Evaluated**:
+- **SELECT**: Column selection and expressions
+- **FROM**: Table selection and JOIN operations
+- **WHERE**: Filtering conditions
+- **GROUP BY**: Grouping expressions
+- **ORDER BY**: Sorting specifications
+- **HAVING**: Group filtering conditions
+- **KEYWORDS**: SQL keywords and operators
+
+**Formulas**:
+```
+Precision_c = TP_c / (TP_c + FP_c)
+Recall_c = TP_c / (TP_c + FN_c)
+F1_c = 2 × (Precision_c × Recall_c) / (Precision_c + Recall_c)
+```
+Where:
+- `TP_c`: True positives for component c
+- `FP_c`: False positives for component c
+- `FN_c`: False negatives for component c
+
+**Overall F1**: Macro-average across all components
+```
+Overall_F1 = (1/|C|) × Σ F1_c
+```
+
+### 3. Query Difficulty Classification
+
+**Complexity Categories**:
+- **Simple**: Basic SELECT with simple WHERE conditions
+- **Moderate**: JOIN operations or aggregations
+- **Complex**: Multiple JOINs with GROUP BY/HAVING
+- **Very Complex**: Nested queries or advanced SQL constructs
+
+**Scoring Factors**:
+- Base operations: +1 point each
+- JOIN operations: +0.5 points each
+- Aggregations: +0.5 points each
+- Subqueries: +2 points each
+- Window functions: +2 points each
+
+### 4. Error Analysis
+
+**Error Categories**:
+- **Syntax Errors**: Malformed SQL syntax
+- **Semantic Errors**: Valid syntax but incorrect logic
+- **Column Selection Errors**: Wrong columns chosen
+- **Table Selection Errors**: Wrong tables or missing JOINs
+- **Condition Errors**: Incorrect WHERE/HAVING conditions
+- **Join Errors**: Missing or incorrect JOIN conditions
+- **Aggregation Errors**: Wrong aggregation functions
+- **Operator Errors**: Incorrect comparison operators
+
+## Output Format
+
+### 1. Command Line Output
+
+The system provides real-time feedback during execution:
+
+```
+🚀 Starting ViPERSQL Evaluation
 Strategy: FEW-SHOT
-Total samples: 100
-Exact Match: 25.0%
-Syntax Validity: 100.0%
-Average Component F1: 0.0%
+Model: gpt-4o-mini
+Dataset: std-level, dev split
+Samples: 10
+============================================================
 
-🔍 COMPONENT F1-SCORES:
-----------------------------------------
-  SELECT: 78.8%
-  FROM: 79.6%
-  WHERE: 83.3%
-  GROUP BY: 90.6%
-  ORDER BY: 86.7%
-  HAVING: 89.6%
-  KEYWORDS: 94.9%
+📊 ENHANCED EVALUATION SUMMARY
+============================================================
+🤖 Model: gpt-4o-mini
+🎯 Strategy: FEW-SHOT
+🎯 Exact Match Accuracy: 75.00%
+   Total Queries: 10
+   Exact Matches: 7
+
+🔍 COMPONENT-WISE F1 SCORES:
+--------------------------------------------------
+  SELECT      :  88.89%
+  FROM        : 100.00%
+  WHERE       :  67.50%
+  GROUP BY    :  90.00%
+  ORDER BY    :  85.00%
+  HAVING      :  92.50%
+  KEYWORDS    :  95.00%
+  Overall F1  :  88.41%
 ```
 
-### 2. Detailed Analysis
-```
-📝 Sample 1: assets_maintenance
-Question: Những tài sản nào có 2 bộ phận và có ít hơn 2 nhật kí lỗi?
-Predicted: SELECT t.id_tài_sản, t.chi_tiết_tài_sản FROM tài_sản t...
-Gold:      SELECT t1.id_tài_sản, t1.chi_tiết_tài_sản FROM tài_sản AS t1...
-📊 Component Analysis:
-  ✅ SELECT: 100.0%
-  ✅ FROM: 100.0%
-  ✅ WHERE: 100.0%
-  🟡 GROUP BY: 66.7%
-  ✅ ORDER BY: 100.0%
-  ❌ HAVING: 0.0%
-  ✅ KEYWORDS: 82.4%
-```
+### 2. JSON Output (`eval_results_*.json`)
 
-## 🛠️ Cấu hình
+Comprehensive machine-readable evaluation results:
 
-### 1. Model Configuration
-```python
-# mint/config.py
-MODEL_CONFIG = {
-    "model": "gpt-4.1-mini",
-    "temperature": 0.0,
-    "max_tokens": 2048
+```json
+{
+  "experiment_config": {
+    "model_name": "gpt-4o-mini",
+    "strategy": "few-shot",
+    "level": "std",
+    "split": "dev",
+    "num_samples": 10,
+    "timestamp": "2025-07-20T07:09:08.123456",
+    "schema_path": "dataset/ViText2SQL/std-level/tables.json"
+  },
+  "exact_match": {
+    "em_accuracy": 0.75,
+    "total_queries": 10,
+    "exact_matches": 7,
+    "match_indices": [0, 1, 3, 5, 6, 7, 9]
+  },
+  "component_f1": {
+    "f1_scores": {
+      "SELECT": 0.8889,
+      "FROM": 1.0000,
+      "WHERE": 0.6750,
+      "GROUP BY": 0.9000,
+      "ORDER BY": 0.8500,
+      "HAVING": 0.9250,
+      "KEYWORDS": 0.9500
+    },
+    "precision_scores": { ... },
+    "recall_scores": { ... },
+    "avg_f1": 0.8841
+  },
+  "difficulty_analysis": {
+    "distribution": {
+      "simple": {"count": 3, "percentage": 30.0},
+      "moderate": {"count": 4, "percentage": 40.0},
+      "complex": {"count": 2, "percentage": 20.0},
+      "very_complex": {"count": 1, "percentage": 10.0}
+    }
+  },
+  "error_analysis": {
+    "syntax_errors": {"count": 1, "percentage": 10.0},
+    "semantic_errors": {"count": 2, "percentage": 20.0},
+    "column_selection_errors": {"count": 1, "percentage": 10.0}
+  }
 }
 ```
 
-### 2. Evaluation Parameters
-```python
-# mint/metrics.py
-class EvaluationMetrics:
-    def __init__(self):
-        self.normalize_operators = True
-        self.normalize_quotes = True
-        self.add_table_names = True
-        self.remove_semicolons = True
+### 3. Text Report (`eval_report_*.txt`)
+
+Human-readable detailed analysis:
+
+```
+================================================================================
+📊 EVALUATION REPORT
+================================================================================
+🤖 Model: gpt-4o-mini
+🎯 Strategy: FEW-SHOT
+📊 Dataset: std-level, dev split
+📅 Timestamp: 2025-07-20T07:09:08.123456
+================================================================================
+Total Samples: 10
+Valid Results: 10
+Exact Match Accuracy: 75.00%
+Syntax Validity: 90.00%
+Overall F1 Score: 88.41%
+
+----------------------------------------
+COMPONENT-WISE SCORES
+----------------------------------------
+Component       F1 Score   Precision    Recall
+--------------------------------------------------
+SELECT            88.89%      90.00%     87.50%
+FROM             100.00%     100.00%    100.00%
+WHERE             67.50%      70.00%     65.00%
+GROUP BY          90.00%      92.00%     88.00%
+ORDER BY          85.00%      86.00%     84.00%
+HAVING            92.50%      94.00%     91.00%
+KEYWORDS          95.00%      96.00%     94.00%
+
+----------------------------------------
+QUERY COMPLEXITY DISTRIBUTION
+----------------------------------------
+simple      :     3 queries (30.00%)
+moderate    :     4 queries (40.00%)
+complex     :     2 queries (20.00%)
+very_complex:     1 queries (10.00%)
+
+----------------------------------------
+ERROR ANALYSIS
+----------------------------------------
+Syntax Error Rate: 10.00%
+Semantic Error Rate: 20.00%
+Total Queries with Errors: 3
 ```
 
-## 🔧 Tùy chỉnh
+### 4. Predictions Output (`predictions.json`)
 
-### 1. Thêm normalization rule mới
-```python
-def custom_normalization(self, sql: str) -> str:
-    # Thêm logic normalization tùy chỉnh
-    return normalized_sql
+Raw model predictions with metadata:
+
+```json
+{
+  "predictions": [
+    {
+      "db_id": "university",
+      "question": "Có bao nhiêu sinh viên trong trường?",
+      "predicted": "SELECT COUNT(*) FROM students",
+      "gold": "SELECT COUNT(*) FROM students"
+    }
+  ]
+}
 ```
 
-### 2. Thêm scoring metric mới
-```python
-def custom_scoring(self, predicted: str, gold: str) -> float:
-    # Thêm metric đánh giá tùy chỉnh
-    return score
-```
+## Evaluation Best Practices
 
-### 3. Tùy chỉnh component extraction
-```python
-def extract_custom_component(self, sql: str) -> set:
-    # Trích xuất component tùy chỉnh
-    return component_set
-```
+### 1. Experimental Setup
+- Use consistent random seeds for reproducibility
+- Report model temperature and sampling parameters
+- Include dataset split information in results
+- Document preprocessing steps
 
-## 📁 File Structure
+### 2. Metric Reporting
+- Always report both EM accuracy and component F1 scores
+- Include confidence intervals for statistical significance
+- Provide error analysis for failure case understanding
+- Report execution time and computational requirements
 
-### Input Files
-- `dataset/ViText2SQL/{level}/{split}.json`: Dữ liệu đánh giá
-- `dataset/ViText2SQL/{level}/tables.json`: Schema database
-- `templates/{strategy}_vietnamese_nl2sql.txt`: Template prompts
+### 3. Comparison Guidelines
+- Use identical evaluation settings across models
+- Report on same dataset splits and sample sizes
+- Include baseline comparisons
+- Document any modifications to evaluation metrics
 
-### Output Files
-- `results/evaluation_{strategy}_{model}_{split}_{timestamp}.json`: Kết quả đánh giá
-- `logs/`: Log files (nếu có)
+### 4. Statistical Analysis
+- Perform significance testing for model comparisons
+- Report standard deviations across multiple runs
+- Use appropriate sample sizes for reliable estimates
+- Consider stratified analysis by query complexity
 
-## 🚀 Performance Tips
+## Implementation Details
 
-### 1. Batch Processing
-- Sử dụng `--samples` lớn để đánh giá nhiều mẫu
-- Hệ thống tự động xử lý batch để tối ưu performance
+### Normalization Algorithms
+- **SQL Parsing**: Uses `sqlparse` library for robust SQL parsing
+- **Alias Normalization**: Converts all table aliases to standard form (t1, t2, ...)
+- **Unicode Handling**: Proper Vietnamese diacritic normalization
+- **Whitespace Handling**: Consistent spacing and formatting
 
-### 2. Caching
-- Kết quả đánh giá được cache để tránh tính toán lại
-- Schema được load một lần và reuse
-
-### 3. Parallel Processing
-- Có thể chạy nhiều evaluation jobs song song
-- Mỗi job độc lập và thread-safe
-
-## 🐛 Troubleshooting
-
-### 1. Alias Mapping Issues
-```python
-# Debug alias extraction
-print(f"Alias map: {alias_map}")
-print(f"Normalized SQL: {normalized_sql}")
-```
-
-### 2. Component Extraction Issues
-```python
-# Debug component extraction
-print(f"SELECT: {components['SELECT']}")
-print(f"FROM: {components['FROM']}")
-```
-
-### 3. Scoring Issues
-```python
-# Debug scoring
-print(f"Predicted set: {pred_set}")
-print(f"Gold set: {gold_set}")
-print(f"Intersection: {intersection}")
-```
-
-## 📚 References
-
-- [SQL Normalization Techniques](https://example.com/sql-normalization)
-- [Component-wise Evaluation](https://example.com/component-evaluation)
-- [Alias Handling Best Practices](https://example.com/alias-handling)
-
-## 🤝 Contributing
-
-Để đóng góp vào hệ thống đánh giá:
-
-1. Fork repository
-2. Tạo feature branch
-3. Implement changes
-4. Add tests
-5. Submit pull request
-
-## 📄 License
-
-MIT License - Xem file LICENSE để biết thêm chi tiết.
-
----
-
-**ViPERSQL Evaluation System** - Hệ thống đánh giá Text-to-SQL tiếng Việt tiên tiến nhất! 🚀 
+### Component Extraction
+- **Regex-based Parsing**: Reliable extraction of SQL components
+- **Schema-aware Analysis**: Uses database schema for validation
+- **Error Handling**: Graceful handling of malformed queries
+- **Alias Resolution**: Maps aliases back to original table names

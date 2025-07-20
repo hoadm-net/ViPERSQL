@@ -1,63 +1,87 @@
-# ViPERSQL: Vietnamese NL2SQL Prompting & Evaluation Toolkit
+# ViPERSQL: Vietnamese Text-to-SQL System
 
-## Mục đích
-Project này cung cấp các chiến lược Prompting hiện đại cho bài toán Vietnamese Text-to-SQL (NL2SQL) và bộ công cụ đánh giá kết quả truy vấn SQL.
+A comprehensive toolkit for Vietnamese Natural Language to SQL conversion with advanced prompting strategies and enhanced evaluation metrics.
 
-## Thành phần chính
-- **3 chiến lược Prompting:**
-  - **Zero-shot**: Chuyển đổi câu hỏi sang SQL không cần ví dụ.
-  - **Few-shot**: Sử dụng k ví dụ mẫu để hướng dẫn LLM sinh SQL.
-  - **Chain-of-Thought (CoT)**: Hỗ trợ suy luận từng bước trước khi sinh SQL.
-- **Đánh giá:**
-  - Đánh giá exact match, component-wise F1, phân tích độ phức tạp, v.v.
+## Overview
 
-## Cấu trúc project
+ViPERSQL provides a unified framework for Vietnamese Text-to-SQL conversion, supporting multiple prompting strategies and comprehensive evaluation. The system is designed for research and practical applications in Vietnamese database query generation using large language models.
+
+## Key Features
+
+- **Multiple Strategies**: Zero-shot, Few-shot, and Chain-of-Thought (CoT) prompting
+- **Enhanced Evaluation**: Component-wise F1 scores, exact match accuracy, error analysis
+- **Multi-LLM Support**: OpenAI GPT models and Anthropic Claude
+- **Vietnamese Text Processing**: Support for std, syllable, and word-level granularity
+- **Comprehensive Metrics**: Detailed performance analysis with precision and recall
+
+## Architecture
+
 ```
-mint/
-├── strategies/           # Các chiến lược prompting
-│   ├── zero_shot.py
-│   ├── few_shot.py
-│   ├── cot.py
-│   ├── base.py
-│   └── __init__.py
-├── metrics.py            # Đánh giá F1, exact match, difficulty...
-├── evaluator.py          # Module đánh giá tổng hợp
-├── strategy_manager.py   # Quản lý và gọi các chiến lược
-├── template_manager.py   # Quản lý template prompt
-├── config.py             # Cấu hình hệ thống
-├── utils.py              # Tiện ích chung
-└── __init__.py           # Khởi tạo package
-```
-
-## Hướng dẫn sử dụng
-### 1. Chọn và chạy chiến lược Prompting
-```python
-from mint import StrategyManager, ViPERConfig
-
-config = ViPERConfig(strategy="few-shot", model_name="gpt-4o-mini")
-manager = StrategyManager(config)
-
-question = "Có bao nhiêu sinh viên?"
-schema_info = {...}  # Thông tin schema
-result = manager.generate_sql(question, schema_info, db_id="school")
-print(result.sql_query)
+ViPERSQL/
+├── vipersql.py             # Main CLI interface
+├── mint/                   # Core framework
+│   ├── strategies/         # Prompting strategies
+│   ├── enhanced_metrics.py # Evaluation metrics
+│   ├── evaluator.py        # Unified evaluator
+│   ├── llm_interface.py    # LLM abstraction
+│   └── config.py          # System configuration
+├── dataset/ViText2SQL/     # Vietnamese Text-to-SQL dataset
+├── templates/              # Prompt templates
+└── results/                # Evaluation outputs
 ```
 
-### 2. Đánh giá kết quả truy vấn
-```python
-from mint.metrics import EvaluationMetrics
-metrics = EvaluationMetrics()
+## Quick Start
 
-predicted = ["SELECT COUNT(*) FROM students"]
-gold = ["SELECT COUNT(*) FROM students"]
-print(metrics.exact_match_accuracy(predicted, gold))
-print(metrics.component_wise_f1_score(predicted, gold))
+### Installation
+
+```bash
+git clone <repository-url>
+cd ViPERSQL
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## Lưu ý
-- Project đã clean, chỉ giữ lại các module cần thiết cho Prompting và Đánh giá.
-- Không còn các file log, test, markdown cũ, hoặc các module không liên quan.
-- Nếu muốn mở rộng thêm chiến lược hoặc đánh giá, chỉ cần thêm vào các module tương ứng.
+### Configuration
 
-## Liên hệ
-- Nếu có vấn đề về sử dụng hoặc muốn đóng góp chiến lược mới, hãy tạo issue hoặc pull request trên GitHub.
+Copy `.env.example` to `.env` and add your API keys:
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+### Usage
+
+```bash
+# Few-shot strategy with GPT-4o-mini
+python vipersql.py --strategy few-shot --model gpt-4o-mini --samples 10
+
+# Zero-shot with Claude
+python vipersql.py --strategy zero-shot --model claude-3-5-sonnet-20241022 --samples 20
+
+# Chain-of-Thought reasoning
+python vipersql.py --strategy cot --samples 5
+```
+
+### Command Options
+
+- `--strategy`: Prompting strategy (zero-shot, few-shot, cot)
+- `--model`: LLM model name
+- `--level`: Text granularity (std, syllable, word)
+- `--split`: Dataset split (train, dev, test)
+- `--samples`: Number of samples to process
+
+## Output
+
+The system generates:
+- **Predictions**: SQL queries with metadata (`predictions.json`)
+- **Evaluation metrics**: Detailed performance analysis (`eval_results_*.json`)
+- **Reports**: Human-readable evaluation summaries (`eval_report_*.txt`)
+
+## Research Applications
+
+ViPERSQL is designed for:
+- Vietnamese NL2SQL model evaluation and comparison
+- Prompting strategy research and development
+- Cross-lingual Text-to-SQL studies
+- LLM performance analysis on structured query generation

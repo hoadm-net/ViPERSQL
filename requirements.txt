@@ -1,0 +1,31 @@
+# Core dependencies for ViPERSQL
+# Vietnamese Text-to-SQL System with Advanced Prompting and Evaluation
+
+# LLM Integration
+langchain-openai
+langchain-anthropic
+langchain-core
+
+# SQL Parsing and Analysis
+sqlparse
+
+# Environment and Configuration
+python-dotenv
+
+# Data Processing
+pandas
+
+# HTTP Requests (for API calls)
+httpx
+
+# Optional: Enhanced Logging and Tracing
+langsmith
+
+# Development and Testing
+pytest
+pytest-cov
+
+# Code Quality
+black
+isort
+flake8

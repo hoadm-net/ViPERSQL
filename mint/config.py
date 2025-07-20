@@ -10,6 +10,13 @@ from typing import Dict, Any, Optional, Union
 from pathlib import Path
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
+from .constants import (
+    DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT,
+    DEFAULT_BATCH_SIZE, DEFAULT_CONCURRENT_REQUESTS,
+    DEFAULT_RETRY_ATTEMPTS, DEFAULT_RETRY_DELAY,
+    DEFAULT_FEW_SHOT_EXAMPLES, DEFAULT_LOG_LEVEL, DEFAULT_LOG_FORMAT,
+    MIN_TEMPERATURE, MAX_TEMPERATURE, MIN_TOKENS
+)
 
 
 @dataclass
@@ -32,23 +39,23 @@ class ViPERConfig:
     
     # Model Settings
     model_name: str = field(default="gpt-4o-mini")
-    temperature: float = field(default=0.1)
-    max_tokens: int = field(default=2000)
-    timeout: int = field(default=30)
-    
+    temperature: float = field(default=DEFAULT_TEMPERATURE)
+    max_tokens: int = field(default=DEFAULT_MAX_TOKENS)
+    timeout: int = field(default=DEFAULT_TIMEOUT)
+
     # Dataset Settings
     dataset_path: str = field(default="dataset/ViText2SQL")
     split: str = field(default="dev")
-    level: str = field(default="std")  # Mặc định là std-level
-    samples: int = field(default=10)
-    
+    level: str = field(default="std")  # Default is std-level
+    num_samples: Optional[int] = field(default=None)  # Number of samples to process (None = all)
+
     # Strategy Settings
     strategy: str = field(default="zero-shot")
     template_dir: str = field(default="templates")
     template_name: str = field(default="vietnamese_nl2sql.txt")
     
     # Few-shot Settings
-    few_shot_examples: int = field(default=3)
+    few_shot_examples: int = field(default=DEFAULT_FEW_SHOT_EXAMPLES)
     few_shot_template: str = field(default="few_shot_vietnamese_nl2sql.txt")
     
     # Chain-of-Thought Settings
@@ -67,23 +74,23 @@ class ViPERConfig:
     enable_execution_accuracy: bool = field(default=True)
     enable_component_analysis: bool = field(default=True)
     enable_error_analysis: bool = field(default=True)
-    evaluation_timeout: int = field(default=30)
-    
+    evaluation_timeout: int = field(default=DEFAULT_TIMEOUT)
+
     # Logging Settings
-    log_level: str = field(default="INFO")
-    log_format: str = field(default="json")
+    log_level: str = field(default=DEFAULT_LOG_LEVEL)
+    log_format: str = field(default=DEFAULT_LOG_FORMAT)
     enable_request_logging: bool = field(default=True)
     enable_response_logging: bool = field(default=True)
     
     # Performance Settings
-    batch_size: int = field(default=10)
-    max_concurrent_requests: int = field(default=5)
-    retry_attempts: int = field(default=3)
-    retry_delay: int = field(default=1)
-    
+    batch_size: int = field(default=DEFAULT_BATCH_SIZE)
+    max_concurrent_requests: int = field(default=DEFAULT_CONCURRENT_REQUESTS)
+    retry_attempts: int = field(default=DEFAULT_RETRY_ATTEMPTS)
+    retry_delay: int = field(default=DEFAULT_RETRY_DELAY)
+
     def __init__(self, **kwargs):
         """Load configuration from environment after initialization."""
-        # Set mặc định level = std nếu không truyền vào
+        # Set default level = std if not provided
         if 'level' not in kwargs:
             kwargs['level'] = 'std'
         for field_name in self.__dataclass_fields__:
@@ -120,8 +127,8 @@ class ViPERConfig:
             'dataset_path': 'DATASET_PATH',
             'split': 'DEFAULT_SPLIT',
             'level': 'DEFAULT_LEVEL', 
-            'samples': 'DEFAULT_SAMPLES',
-            
+            'num_samples': 'DEFAULT_SAMPLES',
+
             # Strategy Settings
             'strategy': 'DEFAULT_STRATEGY',
             'template_dir': 'DEFAULT_TEMPLATE_DIR',
@@ -197,36 +204,39 @@ class ViPERConfig:
         if self.strategy not in valid_strategies:
             raise ValueError(f"Invalid strategy: {self.strategy}. Must be one of {valid_strategies}")
         
-        # Validate model name
-        if not self.model_name:
-            raise ValueError("Model name cannot be empty")
-        
-        # Validate API keys based on model
-        if 'gpt' in self.model_name.lower() and not self.openai_api_key:
-            raise ValueError("OpenAI API key required for GPT models")
-        elif 'claude' in self.model_name.lower() and not self.anthropic_api_key:
-            raise ValueError("Anthropic API key required for Claude models")
-        
-        # Validate dataset settings
-        if self.samples < -1 or self.samples == 0:
-            raise ValueError("Samples must be -1 (all) or positive integer")
-        
-        if self.level not in ['syllable', 'word', 'std']:
-            raise ValueError("Level must be 'syllable', 'word', or 'std'")
-    
+        # Validate level
+        valid_levels = ['std', 'syllable', 'word']
+        if self.level not in valid_levels:
+            raise ValueError(f"Invalid level: {self.level}. Must be one of {valid_levels}")
+
+        # Validate split
+        valid_splits = ['train', 'dev', 'test']
+        if self.split not in valid_splits:
+            raise ValueError(f"Invalid split: {self.split}. Must be one of {valid_splits}")
+
+        # Validate numeric values
+        if self.temperature < 0 or self.temperature > 2:
+            raise ValueError(f"Temperature must be between 0 and 2, got {self.temperature}")
+
+        if self.max_tokens <= 0:
+            raise ValueError(f"Max tokens must be positive, got {self.max_tokens}")
+
+        if self.few_shot_examples < 0:
+            raise ValueError(f"Few-shot examples must be non-negative, got {self.few_shot_examples}")
+
     def _setup_directories(self):
-        """Create necessary directories."""
-        directories = [self.results_dir, self.logs_dir, self.template_dir]
+        """Create necessary directories if they don't exist."""
+        directories = [self.results_dir, self.logs_dir, self.sqlite_dbs_dir]
         for directory in directories:
             Path(directory).mkdir(parents=True, exist_ok=True)
     
     @property
     def template_path(self) -> str:
-        """Get full path to the template file based on strategy."""
+        """Get template path based on strategy."""
         template_map = {
             'zero-shot': self.template_name,
             'few-shot': self.few_shot_template,
-            'cot': self.cot_template,
+            'cot': self.cot_template
 
         }
         template_file = template_map.get(self.strategy, self.template_name)
@@ -264,4 +274,4 @@ class ViPERConfig:
     def schema_path(self) -> str:
         """Get schema path based on level."""
         level_dir = f"{self.level}-level" if self.level in ["syllable", "word", "std"] else self.level
-        return str(Path(self.dataset_path) / level_dir / "tables.json") 
+        return str(Path(self.dataset_path) / level_dir / "tables.json")
