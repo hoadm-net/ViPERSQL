@@ -57,7 +57,8 @@ class ViPERConfig:
     # Few-shot Settings
     few_shot_examples: int = field(default=DEFAULT_FEW_SHOT_EXAMPLES)
     few_shot_template: str = field(default="few_shot_vietnamese_nl2sql.txt")
-    
+    example_selection_strategy: str = field(default="random")  # 'random' or 'skill_knn'
+
     # Chain-of-Thought Settings
     cot_reasoning_steps: bool = field(default=True)
     cot_template: str = field(default="cot_vietnamese_nl2sql.txt")
@@ -137,7 +138,8 @@ class ViPERConfig:
             # Few-shot Settings
             'few_shot_examples': 'FEW_SHOT_EXAMPLES',
             'few_shot_template': 'FEW_SHOT_TEMPLATE',
-            
+            'example_selection_strategy': 'EXAMPLE_SELECTION_STRATEGY',
+
             # CoT Settings
             'cot_reasoning_steps': 'COT_REASONING_STEPS',
             'cot_template': 'COT_TEMPLATE',
@@ -273,5 +275,5 @@ class ViPERConfig:
     @property
     def schema_path(self) -> str:
         """Get schema path based on level."""
-        level_dir = f"{self.level}-level" if self.level in ["syllable", "word", "std"] else self.level
+        level_dir = f"{self.level}-level" if self.level in ["syyllable", "word", "std"] else self.level
         return str(Path(self.dataset_path) / level_dir / "tables.json")

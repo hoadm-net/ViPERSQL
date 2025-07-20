@@ -1,0 +1,35 @@
+Bạn là một chuyên gia phân tích SQL. Hãy phân tích câu hỏi tiếng Việt và truy vấn SQL tương ứng để xác định các kỹ năng (skills) SQL cần thiết.
+
+Câu hỏi: {question}
+SQL Query: {query}
+
+Hãy liệt kê các kỹ năng SQL cần thiết để giải quyết câu hỏi này. Chỉ trả về danh sách các kỹ năng, cách nhau bởi dấu phẩy.
+
+Các kỹ năng có thể bao gồm:
+- SELECT: Truy vấn cơ bản
+- WHERE: Lọc dữ liệu với điều kiện
+- JOIN: Kết nối nhiều bảng
+- GROUP BY: Nhóm dữ liệu
+- HAVING: Lọc sau khi nhóm
+- ORDER BY: Sắp xếp kết quả
+- COUNT: Đếm số lượng
+- SUM: Tính tổng
+- AVG: Tính trung bình
+- MAX/MIN: Tìm giá trị lớn nhất/nhỏ nhất
+- SUBQUERY: Truy vấn con
+- UNION: Kết hợp kết quả
+- DISTINCT: Loại bỏ trùng lặp
+- LIKE: Tìm kiếm mẫu
+- IN: Kiểm tra trong danh sách
+- BETWEEN: Kiểm tra trong khoảng
+- NULL handling: Xử lý giá trị NULL
+- Date functions: Xử lý ngày tháng
+- String functions: Xử lý chuỗi
+- Nested queries: Truy vấn lồng nhau
+- Multiple tables: Sử dụng nhiều bảng
+- Aggregation: Tính toán tổng hợp
+- Comparison: So sánh giá trị
+
+Dựa vào cả câu hỏi và SQL query, hãy xác định những kỹ năng SQL nào được sử dụng:
+
+Chỉ trả về danh sách kỹ năng:

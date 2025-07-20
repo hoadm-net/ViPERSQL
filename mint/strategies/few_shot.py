@@ -15,6 +15,12 @@ class FewShotStrategy(BaseStrategy):
         self.selection_strategy = getattr(config, 'example_selection_strategy', 'random')
         self._training_examples = None
 
+        # Initialize skill_knn selector if needed
+        self._skill_knn_selector = None
+        if self.selection_strategy == 'skill_knn':
+            from ..skill_knn_selector import SkillKNNSelector
+            self._skill_knn_selector = SkillKNNSelector(config)
+
     def _get_strategy_name(self) -> str:
         return "few-shot"
 
@@ -47,17 +53,31 @@ class FewShotStrategy(BaseStrategy):
         """Select k examples using the specified strategy."""
         if k is None:
             k = self.k_examples
+
+        # Use skill_knn selector if available
+        if self.selection_strategy == 'skill_knn' and self._skill_knn_selector:
+            try:
+                print(f"[FewShot] Using skill_knn selection strategy")
+                return self._skill_knn_selector.select_examples(question, k, db_id)
+            except Exception as e:
+                print(f"[FewShot] Skill KNN selection failed: {e}, falling back to random")
+                self.selection_strategy = 'random'  # Fallback
+
+        # Load training examples for random selection
         if self._training_examples is None:
             dataset_path = self.config.dataset_full_path
             self.load_training_examples(dataset_path, db_id)
+
         if not self._training_examples:
             print(f"[FewShot] No training examples available")
             return []
+
         if self.selection_strategy == 'random':
             selected = self._select_random_examples(k)
         else:
             print(f"[FewShot] Strategy {self.selection_strategy} not implemented, using random")
             selected = self._select_random_examples(k)
+
         print(f"[FewShot] Selected {len(selected)} examples using {self.selection_strategy} strategy")
         return selected
 
@@ -144,4 +164,4 @@ class FewShotStrategy(BaseStrategy):
         except Exception as e:
             error_msg = f"Few-shot generation failed: {str(e)}"
             print(f"[FewShot] Request {request_id}: {error_msg}")
-            return self.create_error_result(request_id, error_msg, 'few-shot') 
+            return self.create_error_result(request_id, error_msg, 'few-shot')

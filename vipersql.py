@@ -236,6 +236,10 @@ def parse_args():
     parser.add_argument('--samples', type=int, default=None,
                         help='Number of samples to process (default: all)')
 
+    parser.add_argument('--example-selection-strategy', type=str, default='random',
+                        choices=['random', 'skill_knn'],
+                        help='Example selection strategy for few-shot (random or skill_knn)')
+
     parser.add_argument('--config', type=str, default='.env',
                         help='Path to configuration file')
 
@@ -254,6 +258,9 @@ def main():
     # Only pass model_name if it's explicitly provided by user
     if args.model is not None:
         config_params['model_name'] = args.model
+
+    # Pass example selection strategy
+    config_params['example_selection_strategy'] = args.example_selection_strategy
 
     config = ViPERConfig(
         strategy=args.strategy,
