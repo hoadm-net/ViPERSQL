@@ -363,9 +363,14 @@ def load_dataset(level: str, split: str, num_samples: int = None) -> List[Dict[s
         with open(dataset_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        if num_samples and num_samples < len(data):
-            # Take exactly the first num_samples items instead of random sampling
-            data = data[:num_samples]
+        # Ensure num_samples is an integer if provided
+        if num_samples is not None:
+            if isinstance(num_samples, str):
+                num_samples = int(num_samples)
+
+            if num_samples > 0 and num_samples < len(data):
+                # Take exactly the first num_samples items instead of random sampling
+                data = data[:num_samples]
 
         return data
     except Exception as e:

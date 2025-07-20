@@ -233,7 +233,7 @@ def parse_args():
                         choices=['std', 'syllable', 'word'],
                         help='Level of Vietnamese text segmentation')
 
-    parser.add_argument('--split', type=str, default='dev',
+    parser.add_argument('--split', type=str, default='test',
                         choices=['train', 'dev', 'test'],
                         help='Dataset split to use')
 
