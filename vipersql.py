@@ -79,6 +79,10 @@ class ViPERSQLCLI:
 
         # Load dataset
         num_samples = self.config.num_samples
+        # Ensure num_samples is an integer if provided
+        if num_samples is not None and isinstance(num_samples, str):
+            num_samples = int(num_samples)
+
         dataset = load_dataset(self.config.level, self.config.split, num_samples)
 
         # Ensure we only take the specified number of samples
@@ -252,8 +256,8 @@ def main():
 
     # Load configuration
     config_params = {}
-    if args.samples:
-        config_params['num_samples'] = args.samples
+    # Always set num_samples explicitly to avoid string/int conversion issues
+    config_params['num_samples'] = args.samples  # This will be None if not provided
 
     config = ViPERConfig(
         config_file=args.config,
