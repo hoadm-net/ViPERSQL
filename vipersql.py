@@ -222,8 +222,8 @@ def parse_args():
                         choices=['zero-shot', 'few-shot', 'cot'],
                         help='Strategy to use for text-to-SQL generation')
 
-    parser.add_argument('--model', type=str, default='gpt-3.5-turbo',
-                        help='LLM model to use')
+    parser.add_argument('--model', type=str, default=None,
+                        help='LLM model to use (defaults to DEFAULT_MODEL from .env)')
 
     parser.add_argument('--level', type=str, default='std',
                         choices=['std', 'syllable', 'word'],
@@ -251,10 +251,12 @@ def main():
     # Always set num_samples explicitly to avoid string/int conversion issues
     config_params['num_samples'] = args.samples  # This will be None if not provided
 
+    # Only pass model_name if it's explicitly provided by user
+    if args.model is not None:
+        config_params['model_name'] = args.model
+
     config = ViPERConfig(
-        config_file=args.config,
         strategy=args.strategy,
-        model_name=args.model,
         level=args.level,
         split=args.split,
         **config_params

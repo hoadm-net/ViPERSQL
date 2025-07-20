@@ -113,7 +113,8 @@ class EnhancedEvaluationMetrics:
 
                     # Handle empty sets - if both are empty, it's a perfect match
                     if len(pred_set) == 0 and len(gold_set) == 0:
-                        clause_stats[clause]['tp'] += 1  # This is correct - but we need to make sure F1 is 1.0
+                        clause_stats[clause]['tp'] += 1
+                        # This is correct - but we need to make sure F1 is 1.0
                     elif len(gold_set) > 0 or len(pred_set) > 0:  # At least one has this component
                         tp = len(pred_set & gold_set)
                         fp = len(pred_set - gold_set)
@@ -911,21 +912,18 @@ class EnhancedEvaluationMetrics:
         Normalize column reference by removing alias prefixes.
 
         Args:
-            column_ref (str): Column reference (e.g., "t1.column_name" or "column_name")
+            column_ref (str): Column reference (e.g., "t1.column_name", "table_name.column_name", or "column_name")
 
         Returns:
-            str: Normalized column reference
+            str: Normalized column reference (just the column name)
         """
-        # Remove table alias prefix if present
+        # Remove table alias or table name prefix if present
         if '.' in column_ref:
             parts = column_ref.split('.')
             if len(parts) == 2:
-                alias, column = parts
-                # If alias looks like a standard alias (t1, t2, etc.), just return column
-                if re.match(r'^t\d+$', alias.strip()):
-                    return column.strip()
-                # Otherwise, keep the full reference
-                return column_ref.strip()
+                table_part, column_part = parts
+                # Return just the column name part, regardless of whether it's an alias or full table name
+                return column_part.strip()
 
         return column_ref.strip()
 
@@ -942,15 +940,15 @@ class EnhancedEvaluationMetrics:
         """
         normalized_clause = clause
 
-        # Find all column references with aliases
-        pattern = r'\b(t\d+)\.(\w+)\b'
+        # Find all column references with table prefixes (both aliases and full table names)
+        pattern = r'\b(\w+)\.(\w+)\b'
         matches = re.findall(pattern, normalized_clause, re.IGNORECASE)
 
-        for alias, column in matches:
-            # Replace alias.column with just column if it's in schema
-            if column.lower() in schema_columns:
-                old_ref = f"{alias}.{column}"
-                normalized_clause = normalized_clause.replace(old_ref, column)
+        for table_part, column_part in matches:
+            # Replace table_part.column with just column if it's in schema
+            if column_part.lower() in schema_columns:
+                old_ref = f"{table_part}.{column_part}"
+                normalized_clause = normalized_clause.replace(old_ref, column_part)
 
         return normalized_clause
 
@@ -1142,3 +1140,299 @@ class SQLErrorAnalyzer:
             errors['semantic_issues'].append('Comparing with NULL using = instead of IS NULL')
 
         return errors
+
+
+class SQLAliasNormalizer:
+    """
+    Comprehensive SQL alias normalizer that handles all alias scenarios:
+    1. Different aliases between gold and predicted queries
+    2. Only one query uses aliases
+    3. Both queries use different alias patterns
+    4. Schema-aware column validation
+    """
+
+    def __init__(self, schema: dict):
+        """
+        Initialize with database schema.
+
+        Args:
+            schema (dict): Database schema from tables.json
+        """
+        self.schema = schema
+        self.table_to_columns = self._build_table_column_mapping()
+        self.column_to_table = self._build_column_table_mapping()
+
+    def _build_table_column_mapping(self) -> Dict[str, Set[str]]:
+        """Build mapping from table name to its columns."""
+        mapping = {}
+
+        table_names = self.schema.get('table_names', [])
+        column_names = self.schema.get('column_names', [])
+
+        for table_idx, table_name in enumerate(table_names):
+            mapping[table_name] = set()
+
+        for col_info in column_names:
+            if len(col_info) >= 2:
+                table_idx, column_name = col_info[0], col_info[1]
+                if table_idx >= 0 and table_idx < len(table_names):
+                    table_name = table_names[table_idx]
+                    mapping[table_name].add(column_name)
+
+        return mapping
+
+    def _build_column_table_mapping(self) -> Dict[str, Set[str]]:
+        """Build mapping from column name to possible tables (handle duplicate column names)."""
+        mapping = {}
+
+        table_names = self.schema.get('table_names', [])
+        column_names = self.schema.get('column_names', [])
+
+        for col_info in column_names:
+            if len(col_info) >= 2:
+                table_idx, column_name = col_info[0], col_info[1]
+                if table_idx >= 0 and table_idx < len(table_names):
+                    table_name = table_names[table_idx]
+                    if column_name not in mapping:
+                        mapping[column_name] = set()
+                    mapping[column_name].add(table_name)
+
+        return mapping
+
+    def normalize_sql_with_schema(self, sql: str) -> str:
+        """
+        Normalize SQL query by standardizing all aliases and column references.
+
+        This method:
+        1. Extracts all table references (with/without aliases)
+        2. Maps aliases to actual table names using schema
+        3. Standardizes all aliases to t1, t2, t3... format
+        4. Validates column references against schema
+        5. Normalizes column references to just column names where unambiguous
+
+        Args:
+            sql (str): SQL query to normalize
+
+        Returns:
+            str: Schema-aware normalized SQL
+        """
+        try:
+            # Step 1: Parse and extract table information
+            table_info = self._extract_table_info_comprehensive(sql)
+
+            # Step 2: Validate table names against schema
+            validated_tables = self._validate_tables_against_schema(table_info)
+
+            # Step 3: Create standardized alias mapping
+            alias_mapping = self._create_standard_alias_mapping(validated_tables)
+
+            # Step 4: Apply alias normalization
+            normalized_sql = self._apply_alias_normalization(sql, alias_mapping)
+
+            # Step 5: Normalize column references based on schema
+            normalized_sql = self._normalize_column_references_with_schema(normalized_sql, alias_mapping)
+
+            return normalized_sql
+
+        except Exception as e:
+            print(f"Error in schema-aware normalization: {e}")
+            return sql
+
+    def _extract_table_info_comprehensive(self, sql: str) -> List[Dict[str, str]]:
+        """
+        Extract comprehensive table information including aliases.
+
+        Returns list of dicts with keys: 'table_name', 'alias', 'context' (FROM/JOIN)
+        """
+        table_info = []
+        sql_lower = sql.lower()
+
+        # Pattern 1: FROM/JOIN table_name AS alias
+        pattern1 = r'\b(from|join)\s+(\w+)\s+as\s+(\w+)\b'
+        matches = re.finditer(pattern1, sql_lower)
+        for match in matches:
+            context, table_name, alias = match.groups()
+            table_info.append({
+                'table_name': table_name,
+                'alias': alias,
+                'context': context,
+                'has_explicit_alias': True
+            })
+
+        # Pattern 2: FROM/JOIN table_name alias (without AS)
+        pattern2 = r'\b(from|join)\s+(\w+)\s+(\w+)\b(?!\s*(?:on|where|group|order|having|limit|join|inner|left|right|outer))'
+        matches = re.finditer(pattern2, sql_lower)
+        for match in matches:
+            context, table_name, potential_alias = match.groups()
+            # Verify it's not a keyword
+            if potential_alias not in ['on', 'where', 'group', 'order', 'having', 'limit', 'join', 'inner', 'left', 'right', 'outer']:
+                table_info.append({
+                    'table_name': table_name,
+                    'alias': potential_alias,
+                    'context': context,
+                    'has_explicit_alias': True
+                })
+
+        # Pattern 3: FROM/JOIN table_name (no alias)
+        pattern3 = r'\b(from|join)\s+(\w+)\b(?!\s+(?!on|where|group|order|having|limit|join|inner|left|right|outer)\w+)'
+        matches = re.finditer(pattern3, sql_lower)
+        for match in matches:
+            context, table_name = match.groups()
+            # Check if this table already found with alias
+            already_found = any(t['table_name'] == table_name for t in table_info)
+            if not already_found:
+                table_info.append({
+                    'table_name': table_name,
+                    'alias': None,
+                    'context': context,
+                    'has_explicit_alias': False
+                })
+
+        return table_info
+
+    def _validate_tables_against_schema(self, table_info: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """Validate table names against schema and filter valid ones."""
+        valid_tables = []
+        schema_table_names = set(self.schema.get('table_names', []))
+
+        for table_entry in table_info:
+            table_name = table_entry['table_name']
+            if table_name in schema_table_names:
+                valid_tables.append(table_entry)
+            else:
+                print(f"Warning: Table '{table_name}' not found in schema")
+
+        return valid_tables
+
+    def _create_standard_alias_mapping(self, validated_tables: List[Dict[str, str]]) -> Dict[str, str]:
+        """
+        Create mapping from current references to standardized aliases.
+
+        Returns dict mapping: current_reference -> standard_alias
+        """
+        mapping = {}
+        alias_counter = 1
+
+        # Sort tables by appearance order for consistency
+        for table_entry in validated_tables:
+            table_name = table_entry['table_name']
+            current_alias = table_entry['alias']
+            standard_alias = f"t{alias_counter}"
+
+            # Map table name to standard alias
+            mapping[table_name] = standard_alias
+
+            # If there's a current alias, map it too
+            if current_alias:
+                mapping[current_alias] = standard_alias
+
+            alias_counter += 1
+
+        return mapping
+
+    def _apply_alias_normalization(self, sql: str, alias_mapping: Dict[str, str]) -> str:
+        """Apply alias normalization to SQL query."""
+        normalized_sql = sql
+
+        # Sort by length (longest first) to avoid partial replacements
+        sorted_mappings = sorted(alias_mapping.items(), key=lambda x: len(x[0]), reverse=True)
+
+        for current_ref, standard_alias in sorted_mappings:
+            # Replace table references in FROM/JOIN clauses
+            # Pattern: FROM/JOIN table_name [AS alias] -> FROM/JOIN table_name AS standard_alias
+
+            # Case 1: table_name AS current_alias -> table_name AS standard_alias
+            pattern1 = rf'\b{re.escape(current_ref)}\s+as\s+\w+\b'
+            replacement1 = f"{current_ref} as {standard_alias}"
+            normalized_sql = re.sub(pattern1, replacement1, normalized_sql, flags=re.IGNORECASE)
+
+            # Case 2: table_name current_alias -> table_name standard_alias (no AS)
+            pattern2 = rf'\b{re.escape(current_ref)}\s+(?!as\s+)\w+\b(?!\s*\.)'
+            replacement2 = f"{current_ref} {standard_alias}"
+            normalized_sql = re.sub(pattern2, replacement2, normalized_sql, flags=re.IGNORECASE)
+
+            # Case 3: table_name (no alias) -> table_name AS standard_alias
+            pattern3 = rf'\b(from|join)\s+{re.escape(current_ref)}\b(?!\s+(?:as\s+)?\w+)'
+            replacement3 = rf'\1 {current_ref} as {standard_alias}'
+            normalized_sql = re.sub(pattern3, replacement3, normalized_sql, flags=re.IGNORECASE)
+
+            # Replace column references: current_ref.column -> standard_alias.column
+            pattern4 = rf'\b{re.escape(current_ref)}\.'
+            replacement4 = f"{standard_alias}."
+            normalized_sql = re.sub(pattern4, replacement4, normalized_sql, flags=re.IGNORECASE)
+
+        return normalized_sql
+
+    def _normalize_column_references_with_schema(self, sql: str, alias_mapping: Dict[str, str]) -> str:
+        """
+        Normalize column references using schema information.
+
+        For unambiguous columns (appear in only one table), remove table prefix.
+        For ambiguous columns, keep table prefix for clarity.
+        """
+        normalized_sql = sql
+
+        # Find all column references with table/alias prefix
+        pattern = r'\b(\w+)\.(\w+)\b'
+        matches = re.findall(pattern, normalized_sql, re.IGNORECASE)
+
+        for table_ref, column_name in matches:
+            # Check if column is unambiguous (appears in only one table)
+            possible_tables = self.column_to_table.get(column_name, set())
+
+            if len(possible_tables) == 1:
+                # Unambiguous column - can remove table prefix
+                old_ref = f"{table_ref}.{column_name}"
+                normalized_sql = normalized_sql.replace(old_ref, column_name)
+            # For ambiguous columns, keep the standardized table prefix
+
+        return normalized_sql
+
+    def normalize_column_list(self, columns: List[str]) -> List[str]:
+        """
+        Normalize a list of column references for comparison.
+
+        Args:
+            columns (List[str]): List of column references (may include table prefixes)
+
+        Returns:
+            List[str]: Normalized column list (just column names, sorted)
+        """
+        normalized = []
+
+        for col_ref in columns:
+            if '.' in col_ref:
+                # Extract column name from table.column or alias.column
+                parts = col_ref.split('.')
+                if len(parts) == 2:
+                    table_part, column_part = parts
+                    # Always use just the column name for consistency
+                    normalized.append(column_part.strip())
+                else:
+                    normalized.append(col_ref.strip())
+            else:
+                # No table prefix - use as is
+                normalized.append(col_ref.strip())
+
+        return sorted(set(normalized))  # Remove duplicates and sort for consistent comparison
+
+    def _resolve_table_reference(self, table_ref: str) -> Optional[str]:
+        """
+        Resolve a table reference (could be table name or alias) to actual table name.
+
+        Args:
+            table_ref (str): Table reference from SQL
+
+        Returns:
+            Optional[str]: Actual table name if found, None otherwise
+        """
+        schema_tables = set(self.schema.get('table_names', []))
+
+        # Check if it's a direct table name
+        if table_ref in schema_tables:
+            return table_ref
+
+        # Could be an alias - for now, return None
+        # In a more sophisticated implementation, we'd track alias mappings
+        return None
+

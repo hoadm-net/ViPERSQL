@@ -38,7 +38,7 @@ class ViPERConfig:
     langchain_tracing: bool = field(default=False)
     
     # Model Settings
-    model_name: str = field(default="gpt-4o-mini")
+    model_name: str = field(default="gpt-4-turbo")  # Will be overridden by DEFAULT_MODEL from .env
     temperature: float = field(default=DEFAULT_TEMPERATURE)
     max_tokens: int = field(default=DEFAULT_MAX_TOKENS)
     timeout: int = field(default=DEFAULT_TIMEOUT)
