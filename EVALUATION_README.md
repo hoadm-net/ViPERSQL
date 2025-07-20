@@ -1,16 +1,16 @@
 # ViPERSQL Evaluation System
 
-Hệ thống đánh giá toàn diện cho Vietnamese Text-to-SQL với các tính năng normalization và scoring tiên tiến.
+Comprehensive evaluation system for Vietnamese Text-to-SQL with advanced normalization and scoring features.
 
-## 🎯 Tổng quan
+## 🎯 Overview
 
-Hệ thống đánh giá ViPERSQL được thiết kế để đánh giá chính xác các câu truy vấn SQL được sinh ra từ mô hình Text-to-SQL tiếng Việt. Hệ thống hỗ trợ nhiều loại đánh giá khác nhau và có khả năng xử lý các trường hợp phức tạp như alias normalization, operator standardization, và clause-level analysis.
+The ViPERSQL evaluation system is designed to accurately assess SQL queries generated from Vietnamese Text-to-SQL models. The system supports multiple evaluation types and can handle complex cases such as alias normalization, operator standardization, and clause-level analysis.
 
-## 🏗️ Kiến trúc hệ thống
+## 🏗️ System Architecture
 
 ```
 mint/
-├── metrics.py          # Core evaluation logic
+├── enhanced_metrics.py  # Core evaluation logic
 ├── evaluator.py        # Main evaluation orchestrator
 ├── config.py           # Configuration management
 ├── llm_interface.py    # LLM integration
@@ -21,57 +21,56 @@ mint/
     └── cot.py          # Chain-of-thought evaluation
 ```
 
-## 🔧 Tính năng chính
+## 🔧 Key Features
 
 ### 1. SQL Normalization
-- **Alias Normalization**: Chuẩn hóa alias về table name gốc
-- **Table Name Addition**: Tự động thêm table name cho fields không có alias
-- **Semicolon Removal**: Loại bỏ dấu chấm phẩy dư thừa
-- **Whitespace Normalization**: Chuẩn hóa khoảng trắng và xuống dòng
+- **Alias Normalization**: Standardize aliases to original table names
+- **Table Name Addition**: Automatically add table names for fields without aliases
+- **Semicolon Removal**: Remove redundant semicolons
+- **Whitespace Normalization**: Standardize whitespace and line breaks
 
 ### 2. Operator Standardization
-- **Logical Operators**: Chuẩn hóa `<>` thành `!=`
-- **Quote Normalization**: Chuẩn hóa dấu ngoặc `'` và `"`
-- **Case Sensitivity**: Chuẩn hóa case cho các keywords
+- **Logical Operators**: Normalize `<>` to `!=`
+- **Quote Normalization**: Standardize single and double quotes
+- **Case Sensitivity**: Normalize case for SQL keywords
 
 ### 3. Component-wise Evaluation
-- **SELECT Clause**: Đánh giá các fields được chọn
-- **FROM Clause**: Đánh giá các tables được tham chiếu
-- **WHERE Clause**: Đánh giá các điều kiện lọc
-- **GROUP BY Clause**: Đánh giá các nhóm
-- **ORDER BY Clause**: Đánh giá thứ tự sắp xếp
-- **HAVING Clause**: Đánh giá điều kiện nhóm
-- **KEYWORDS**: Đánh giá các từ khóa SQL
+- **SELECT Clause**: Evaluate selected fields
+- **FROM Clause**: Evaluate referenced tables
+- **WHERE Clause**: Evaluate filtering conditions
+- **GROUP BY Clause**: Evaluate grouping
+- **ORDER BY Clause**: Evaluate sorting order
+- **HAVING Clause**: Evaluate group conditions
+- **KEYWORDS**: Evaluate SQL keywords
 
 ### 4. Scoring Metrics
-- **Exact Match Accuracy**: Tỷ lệ câu truy vấn hoàn toàn chính xác
-- **Component F1 Score**: F1-score cho từng thành phần
-- **Syntax Validity**: Kiểm tra tính hợp lệ cú pháp
-- **Detailed Analysis**: Phân tích chi tiết từng clause
+- **Exact Match Accuracy**: Percentage of completely correct queries
+- **Component F1 Score**: F1-score for each component
+- **Syntax Validity**: Check syntax correctness
+- **Detailed Analysis**: Detailed analysis of each clause
 
-## 📊 Cách sử dụng
+## 📊 Usage
 
-### 1. Chạy đánh giá cơ bản
+### 1. Basic evaluation
 ```bash
 python vipersql.py --strategy few-shot --samples 10 --level std --split test
 ```
 
-### 2. Chạy đánh giá chi tiết
+### 2. Detailed evaluation
 ```bash
-python vipersql.py --strategy few-shot --samples 50 --level std --split test --detailed
+python vipersql.py --strategy few-shot --samples 50 --level std --split test
 ```
 
-### 3. Các tham số có sẵn
-- `--strategy`: Loại đánh giá (zero-shot, few-shot, cot)
-- `--samples`: Số lượng mẫu đánh giá
-- `--level`: Cấp độ dữ liệu (std, word, syllable)
-- `--split`: Tập dữ liệu (train, dev, test)
-- `--detailed`: Hiển thị phân tích chi tiết
+### 3. Available parameters
+- `--strategy`: Evaluation type (zero-shot, few-shot, cot)
+- `--samples`: Number of evaluation samples
+- `--level`: Data level (std, word, syllable)
+- `--split`: Dataset split (train, dev, test)
 
 ## 🔍 Alias Normalization
 
-### Vấn đề
-Các câu truy vấn SQL có thể sử dụng alias khác nhau:
+### Problem
+SQL queries may use different aliases:
 ```sql
 -- Predicted
 SELECT id_kỹ_năng, mô_tả_về_kỹ_năng FROM kỹ_năng
@@ -80,16 +79,16 @@ SELECT id_kỹ_năng, mô_tả_về_kỹ_năng FROM kỹ_năng
 SELECT t1.id_kỹ_năng, t1.mô_tả_về_kỹ_năng FROM kỹ_năng AS t1
 ```
 
-### Giải pháp
-Hệ thống tự động:
-1. **Extract alias mapping** từ FROM/JOIN clauses
-2. **Normalize aliases** về table name gốc
-3. **Add table names** cho fields không có alias
-4. **Compare normalized forms** để đánh giá
+### Solution
+The system automatically:
+1. **Extract alias mapping** from FROM/JOIN clauses
+2. **Normalize aliases** to original table names
+3. **Add table names** for fields without aliases
+4. **Compare normalized forms** for evaluation
 
-### Kết quả
+### Result
 ```sql
--- Sau normalization
+-- After normalization
 Predicted: kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng
 Gold:      kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng
 ```
@@ -322,7 +321,7 @@ Raw model predictions with metadata:
   "predictions": [
     {
       "db_id": "university",
-      "question": "Có bao nhiêu sinh viên trong trường?",
+      "question": "How many students are in the university?",
       "predicted": "SELECT COUNT(*) FROM students",
       "gold": "SELECT COUNT(*) FROM students"
     }

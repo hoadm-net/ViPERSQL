@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script chuẩn hóa ViText2SQL dataset cho hệ thống đánh giá ViPERSQL
-Tổng hợp từ create_std_level.py và normalize_to_std.py
+Script to normalize ViText2SQL dataset for ViPERSQL evaluation system
+Consolidated from create_std_level.py and normalize_to_std.py
 """
 
 import json
@@ -14,10 +14,10 @@ class DatasetNormalizer:
         self.base_path = Path(base_path)
         self.std_path = self.base_path / "std-level"
         self.std_path.mkdir(exist_ok=True)
-        print(f"📁 Chuẩn hóa dữ liệu ViText2SQL cho ViPERSQL")
-        print(f"📂 Thư mục gốc: {self.base_path}")
-        print(f"📂 Thư mục đích: {self.std_path}")
-    
+        print(f"📁 Normalizing ViText2SQL data for ViPERSQL")
+        print(f"📂 Source directory: {self.base_path}")
+        print(f"📂 Target directory: {self.std_path}")
+
     def load_json_file(self, file_path):
         """Load JSON file."""
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -66,14 +66,14 @@ class DatasetNormalizer:
         return question.replace('_', ' ')
     
     def normalize_sql_query(self, sql: str) -> str:
-        """Chuẩn hóa câu truy vấn SQL cho ViPERSQL"""
-        # Loại bỏ khoảng trắng dư thừa
+        """Normalize SQL query for ViPERSQL"""
+        # Remove extra whitespace
         sql = re.sub(r'\s+', ' ', sql.strip())
         
-        # Chuẩn hóa alias format
+        # Normalize alias format
         sql = re.sub(r'FROM\s+(\w+)\s+AS\s+(\w+)', r'FROM \1 AS \2', sql)
         
-        # Loại bỏ dấu chấm phẩy cuối
+        # Remove trailing semicolon
         sql = sql.rstrip(';')
         
         return sql
@@ -159,9 +159,9 @@ class DatasetNormalizer:
         return normalized_data
     
     def create_gold_sql(self, data_file: str, output_file: str):
-        """Tạo file gold SQL cho test set"""
-        print(f"Tạo gold SQL {data_file} -> {output_file}")
-        
+        """Create gold SQL file for test set"""
+        print(f"Creating gold SQL {data_file} -> {output_file}")
+
         with open(data_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
@@ -175,12 +175,12 @@ class DatasetNormalizer:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write('\n\n'.join(gold_sql))
         
-        print(f"✅ Đã tạo gold SQL cho {len(gold_sql)} mẫu")
-    
+        print(f"��� Created gold SQL for {len(gold_sql)} samples")
+
     def process_all(self):
-        """Xử lý toàn bộ dataset ViText2SQL cho ViPERSQL"""
-        print("🚀 Bắt đầu chuẩn hóa ViText2SQL dataset cho ViPERSQL...")
-        
+        """Process entire ViText2SQL dataset for ViPERSQL"""
+        print("🚀 Starting ViText2SQL dataset normalization for ViPERSQL...")
+
         # File paths
         word_level_dir = self.base_path / "word-level"
         
@@ -197,8 +197,8 @@ class DatasetNormalizer:
         std_test = self.std_path / 'test.json'
         std_gold_sql = self.std_path / 'test_gold.sql'
         
-        # 1. Tạo tables.json
-        print("\n📋 Bước 1: Tạo tables.json...")
+        # 1. Create tables.json
+        print("\n📋 Step 1: Creating tables.json...")
         if word_tables.exists():
             word_schemas = self.load_json_file(word_tables)
             std_schemas = []
@@ -208,63 +208,63 @@ class DatasetNormalizer:
                 std_schemas.append(normalized_schema)
             
             self.save_json_file(std_schemas, std_tables)
-            print(f"✅ Đã tạo {std_tables}")
+            print(f"✅ Created {std_tables}")
         else:
-            print("⚠️ Không tìm thấy tables.json trong word-level")
-        
-        # 2. Tạo train.json
-        print("\n📚 Bước 2: Tạo train.json...")
+            print("⚠️ tables.json not found in word-level")
+
+        # 2. Create train.json
+        print("\n📚 Step 2: Creating train.json...")
         if word_train.exists():
             word_train_data = self.load_json_file(word_train)
             normalized_train = self.normalize_data(word_train_data)
             self.save_json_file(normalized_train, std_train)
-            print(f"✅ Đã tạo {std_train} với {len(normalized_train)} samples")
+            print(f"✅ Created {std_train} with {len(normalized_train)} samples")
         else:
-            print("⚠️ Không tìm thấy train.json trong word-level")
-        
-        # 3. Tạo dev.json
-        print("\n🧪 Bước 3: Tạo dev.json...")
+            print("⚠️ train.json not found in word-level")
+
+        # 3. Create dev.json
+        print("\n🧪 Step 3: Creating dev.json...")
         if word_dev.exists():
             word_dev_data = self.load_json_file(word_dev)
             normalized_dev = self.normalize_data(word_dev_data)
             self.save_json_file(normalized_dev, std_dev)
-            print(f"✅ Đã tạo {std_dev} với {len(normalized_dev)} samples")
+            print(f"✅ Created {std_dev} with {len(normalized_dev)} samples")
         else:
-            print("⚠️ Không tìm thấy dev.json trong word-level")
-        
-        # 4. Tạo test.json
-        print("\n🧪 Bước 4: Tạo test.json...")
+            print("⚠️ dev.json not found in word-level")
+
+        # 4. Create test.json
+        print("\n🧪 Step 4: Creating test.json...")
         if word_test.exists():
             word_test_data = self.load_json_file(word_test)
             normalized_test = self.normalize_data(word_test_data)
             self.save_json_file(normalized_test, std_test)
-            print(f"✅ Đã tạo {std_test} với {len(normalized_test)} samples")
+            print(f"✅ Created {std_test} with {len(normalized_test)} samples")
         else:
-            print("⚠️ Không tìm thấy test.json trong word-level")
-        
-        # 5. Tạo gold SQL cho test set
-        print("\n📝 Bước 5: Tạo test_gold.sql...")
+            print("⚠️ test.json not found in word-level")
+
+        # 5. Create gold SQL for test set
+        print("\n📝 Step 5: Creating test_gold.sql...")
         if std_test.exists():
             self.create_gold_sql(str(std_test), str(std_gold_sql))
         
-        # 6. Kiểm tra kết quả
-        print("\n🔍 Bước 6: Kiểm tra kết quả...")
-        
-        # Kiểm tra một số ví dụ
+        # 6. Check results
+        print("\n🔍 Step 6: Checking results...")
+
+        # Check some examples
         if word_dev.exists() and std_dev.exists():
             word_dev_data = self.load_json_file(word_dev)
             std_dev_data = self.load_json_file(std_dev)
             
-            print("\n📊 Ví dụ chuẩn hóa:")
+            print("\n📊 Normalization examples:")
             for i, (word_item, std_item) in enumerate(zip(word_dev_data[:3], std_dev_data[:3])):
-                print(f"\nVí dụ {i+1}:")
+                print(f"\nExample {i+1}:")
                 print(f"  Word-level question: {word_item['question']}")
                 print(f"  Std-level question: {std_item['question']}")
                 print(f"  Word-level query_toks: {word_item['query_toks'][:10]}...")
                 print(f"  Std-level query: {std_item['query'][:100]}...")
         
-        print(f"\n🎉 Hoàn thành! Std-level đã được tạo tại: {self.std_path}")
-        print(f"📁 Các file đã tạo:")
+        print(f"\n🎉 Completed! Std-level created at: {self.std_path}")
+        print(f"📁 Created files:")
         print(f"   - {std_tables}")
         print(f"   - {std_train}")
         print(f"   - {std_dev}")
@@ -276,4 +276,4 @@ def main():
     normalizer.process_all()
 
 if __name__ == "__main__":
-    main() 
+    main()
