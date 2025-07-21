@@ -21,6 +21,9 @@ class FewShotStrategy(BaseStrategy):
         if self.selection_strategy == 'skill_knn':
             from ..selectors import SkillKNNSelector
             return SkillKNNSelector(self.config)
+        elif self.selection_strategy == 'dicl':
+            from ..selectors import DICLSelector
+            return DICLSelector(self.config)
         elif self.selection_strategy == 'random':
             from ..selectors import RandomSelector
             return RandomSelector(self.config)

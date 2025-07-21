@@ -4,8 +4,7 @@ ViPERSQL - Unified Vietnamese Text-to-SQL CLI Tool
 ===================================================
 
 A unified command-line interface for Vietnamese Text-to-SQL conversion
-supporting multiple strategies: Zero-shot, Few-shot, Chain-of-Thought (CoT), 
-and Chain-of-Thought (CoT).
+supporting multiple strategies: Zero-shot, Few-shot, and Chain-of-Thought (CoT).
 
 Usage:
     # Zero-shot strategy (default)
@@ -14,7 +13,7 @@ Usage:
     # Few-shot strategy with examples
     python vipersql.py --strategy few-shot --samples 10
     
-    # Chain-of-Thought reasoning
+    # Chain-of-thought reasoning
     python vipersql.py --strategy cot --samples 5
     
     # Different models and datasets
@@ -26,18 +25,16 @@ Usage:
 
 import argparse
 import json
-import sys
-import time
 import os
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 # Import MINT components
 from mint import (
     ViPERConfig, 
     create_strategy, 
-    create_unified_system,
     load_dataset,
     load_tables_info,
     UnifiedEvaluator
@@ -151,6 +148,7 @@ class ViPERSQLCLI:
         # Now run enhanced evaluation
         print("\n🔍 Starting Enhanced Evaluation...")
         evaluation_start = time.time()
+        evaluation_results = None
 
         try:
             evaluation_results = self.evaluator.evaluate_batch(
@@ -175,7 +173,7 @@ class ViPERSQLCLI:
         elapsed_time = time.time() - start_time
         return {
             'predictions': results,
-            'evaluation': evaluation_results if 'evaluation_results' in locals() else None,
+            'evaluation': evaluation_results,
             'total_time': elapsed_time
         }
 
@@ -237,8 +235,8 @@ def parse_args():
                         help='Number of samples to process (default: all)')
 
     parser.add_argument('--example-selection-strategy', type=str, default='random',
-                        choices=['random', 'skill_knn'],
-                        help='Example selection strategy for few-shot (random or skill_knn)')
+                        choices=['random', 'skill_knn', 'dicl'],
+                        help='Example selection strategy for few-shot (random, skill_knn, or dicl)')
 
     parser.add_argument('--config', type=str, default='.env',
                         help='Path to configuration file')
