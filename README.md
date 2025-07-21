@@ -161,15 +161,3 @@ The system follows a clean, modular architecture:
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📚 Citation
-
-If you use this work in your research, please cite:
-
-```bibtex
-@article{vipersql2025,
-  title={ViPERSQL: Vietnamese Text-to-SQL with Advanced Example Selection},
-  author={Your Name},
-  year={2025}
-}
-```
