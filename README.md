@@ -257,22 +257,3 @@ We welcome contributions! Please see our contributing guidelines for:
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- ViText2SQL dataset contributors
-- Vietnamese NLP research community
-- Open source LLM providers
-
-## 📚 Citation
-
-If you use ViPERSQL in your research, please cite:
-
-```bibtex
-@article{vipersql2024,
-  title={ViPERSQL: A Comprehensive Vietnamese Text-to-SQL System with Enhanced Evaluation},
-  author={ViPERSQL Research Team},
-  journal={arXiv preprint},
-  year={2024}
-}
-```
