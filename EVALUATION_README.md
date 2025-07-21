@@ -15,10 +15,12 @@ mint/
 │   ├── zero_shot.py        # Zero-shot strategy
 │   ├── few_shot.py         # Few-shot strategy
 │   └── cot.py              # Chain-of-thought strategy
-├── selectors/              # Example selection strategies (NEW)
+├── selectors/              # Example selection strategies
 │   ├── base_selector.py    # Abstract base selector
 │   ├── random_selector.py  # Random selection
-│   └── skill_knn_selector.py # Skill-based KNN selection
+│   ├── skill_knn_selector.py # Skill-based KNN selection
+│   ├── dicl_selector.py    # DICL selection
+│   └── astres_selector.py  # ASTRES selection (NEW)
 ├── enhanced_metrics.py     # Core evaluation logic
 ├── evaluator.py           # Main evaluation orchestrator
 ├── config.py              # Configuration management
@@ -48,6 +50,18 @@ The system now features a clean, modular architecture for example selection:
   - BERT embeddings for skill representation
   - Cosine similarity for finding relevant examples
   - Robust fallback to random selection
+
+- **DICLSelector**: Domain-Independent Context Learning selection
+  - Advanced cross-domain learning capabilities
+  - Contextual similarity matching for transferable patterns
+  - Pre-built candidate pools for efficient selection
+  - Enhanced generalization across database domains
+
+- **ASTRESSelector**: AST-based Retrieval and Example Selection (NEW)
+  - Four-step hybrid process: zero-shot → semantic retrieval → AST conversion → AST similarity re-ranking
+  - PhoBERT-base-v2 integration for Vietnamese semantic understanding
+  - Abstract Syntax Tree analysis for structural similarity
+  - Combines semantic and structural matching for optimal example selection
 
 ### 2. Enhanced Few-shot Strategy
 - **Strategy Pattern**: Clean separation of concerns
@@ -95,9 +109,48 @@ python vipersql.py --strategy few-shot --samples 50 --level std --split test
 
 ### 3. Available parameters
 - `--strategy`: Evaluation type (zero-shot, few-shot, cot)
+- `--example-selection-strategy`: Example selection method (random, skill_knn, dicl, astres)
 - `--samples`: Number of evaluation samples
 - `--level`: Data level (std, word, syllable)
 - `--split`: Dataset split (train, dev, test)
+
+### 4. Example selection strategies
+```bash
+# Random selection (default)
+python vipersql.py --strategy few-shot --example-selection-strategy random --samples 10
+
+# Skill-based KNN selection
+python vipersql.py --strategy few-shot --example-selection-strategy skill_knn --samples 10
+
+# DICL selection
+python vipersql.py --strategy few-shot --example-selection-strategy dicl --samples 10
+
+# ASTRES selection (NEW)
+python vipersql.py --strategy few-shot --example-selection-strategy astres --samples 10
+```
+
+## 📁 Results Organization
+
+### Strategy-Specific Folder Naming (NEW)
+The system now creates result folders with strategy-specific naming for better organization:
+
+**Folder Naming Pattern**: `{strategy}{samples}_{timestamp}`
+
+**Examples**:
+```
+results/
+├── zero-shot10_20250721_120000/       # Zero-shot with 10 samples
+├── few-shot-random50_20250721_130000/  # Few-shot with random selection
+├── few-shot-dicl100_20250721_140000/   # Few-shot with DICL selection  
+├── few-shot-astres25_20250721_150000/  # Few-shot with ASTRES selection
+└── cot20_20250721_160000/              # Chain-of-thought with 20 samples
+```
+
+**Benefits**:
+- Easy identification of experiment configurations
+- Organized comparison between different strategies
+- Clear separation of results by example selection method
+- Timestamp-based chronological ordering
 
 ## 🔍 Alias Normalization
 
@@ -298,7 +351,7 @@ Comprehensive machine-readable evaluation results:
 
 ### 3. Text Report (`eval_report_*.txt`)
 
-Human-readable detailed analysis:
+Human-readable detailed analysis with execution timing (NEW):
 
 ```
 ================================================================================
@@ -306,8 +359,18 @@ Human-readable detailed analysis:
 ================================================================================
 🤖 Model: gpt-4o-mini
 🎯 Strategy: FEW-SHOT
+🔧 Example Selection: ASTRES
 📊 Dataset: std-level, dev split
-📅 Timestamp: 2025-07-20T07:09:08.123456
+📝 Samples: 10
+📅 Timestamp: 2025-07-21T21:59:38
+
+⏱️  EXECUTION TIMING
+----------------------------------------
+Start Time: 2025-07-21 21:59:23
+End Time: 2025-07-21 21:59:38
+SQL Generation Time: 14.87 seconds
+Evaluation Time: 0.06 seconds
+Total Execution Time: 14.93 seconds
 ================================================================================
 Total Samples: 10
 Valid Results: 10

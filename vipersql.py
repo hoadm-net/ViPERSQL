@@ -80,10 +80,17 @@ class ViPERSQLCLI:
         # Load tables info for schema information
         tables_info = load_tables_info(self.config.level)
 
-        # Create output directory
+        # Create output directory with strategy-specific naming
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         samples_suffix = f"{len(dataset)}" if self.config.num_samples is None else str(self.config.num_samples)
-        output_dir = f"results/{self.config.strategy}{samples_suffix}_{timestamp}"
+
+        # Add example selection strategy to folder name for few-shot
+        strategy_suffix = self.config.strategy
+        if self.config.strategy == 'few-shot':
+            example_strategy = getattr(self.config, 'example_selection_strategy', 'random')
+            strategy_suffix = f"few-shot-{example_strategy}"
+
+        output_dir = f"results/{strategy_suffix}{samples_suffix}_{timestamp}"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         # Initialize results
@@ -155,6 +162,31 @@ class ViPERSQLCLI:
                 results,
                 schema_path=f"dataset/ViText2SQL/{self.config.level}-level/tables.json"
             )
+
+            # Add timing information to evaluation results
+            sql_generation_time = evaluation_start - start_time
+            evaluation_time = time.time() - evaluation_start
+            total_time = time.time() - start_time
+
+            # Add timing and config info to evaluation results
+            evaluation_results['timing_info'] = {
+                'sql_generation_time': sql_generation_time,
+                'evaluation_time': evaluation_time,
+                'total_execution_time': total_time,
+                'start_time': datetime.fromtimestamp(start_time).strftime("%Y-%m-%d %H:%M:%S"),
+                'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+            # Add experiment configuration
+            evaluation_results['experiment_config'] = {
+                'model_name': self.config.model_name,
+                'strategy': self.config.strategy,
+                'level': self.config.level,
+                'split': self.config.split,
+                'num_samples': len(dataset),
+                'example_selection_strategy': getattr(self.config, 'example_selection_strategy', 'N/A'),
+                'timestamp': timestamp
+            }
 
             # Generate and save enhanced report
             report_files = self.evaluator.generate_report(evaluation_results, output_dir)

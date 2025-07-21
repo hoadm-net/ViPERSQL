@@ -158,11 +158,31 @@ class UnifiedEvaluator:
 
         # Add experiment configuration info
         config = evaluation_results.get('experiment_config', {})
+        timing_info = evaluation_results.get('timing_info', {})
+
         if config:
             report.append(f"🤖 Model: {config.get('model_name', 'Unknown')}")
             report.append(f"🎯 Strategy: {config.get('strategy', 'Unknown').upper()}")
+
+            # Add example selection strategy for few-shot
+            if config.get('strategy') == 'few-shot':
+                example_strategy = config.get('example_selection_strategy', 'N/A')
+                report.append(f"🔧 Example Selection: {example_strategy.upper()}")
+
             report.append(f"📊 Dataset: {config.get('level', 'Unknown')}-level, {config.get('split', 'Unknown')} split")
+            report.append(f"📝 Samples: {config.get('num_samples', 'Unknown')}")
             report.append(f"📅 Timestamp: {config.get('timestamp', 'Unknown')}")
+
+            # Add timing information
+            if timing_info:
+                report.append("\n⏱️  EXECUTION TIMING")
+                report.append("-" * 40)
+                report.append(f"Start Time: {timing_info.get('start_time', 'Unknown')}")
+                report.append(f"End Time: {timing_info.get('end_time', 'Unknown')}")
+                report.append(f"SQL Generation Time: {timing_info.get('sql_generation_time', 0):.2f} seconds")
+                report.append(f"Evaluation Time: {timing_info.get('evaluation_time', 0):.2f} seconds")
+                report.append(f"Total Execution Time: {timing_info.get('total_execution_time', 0):.2f} seconds")
+
             report.append("=" * 80)
 
         total_queries = exact_match['total_queries']
