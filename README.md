@@ -6,7 +6,7 @@ A comprehensive Vietnamese Text-to-SQL system that converts natural language que
 
 ### Core Capabilities
 - **Multiple Strategies**: Zero-shot, Few-shot, and Chain-of-Thought (CoT) approaches
-- **Advanced Example Selection**: Random, Skill-based KNN, and DICL selection for few-shot learning
+- **Advanced Example Selection**: Random, Skill-based KNN, and DICL (Domain-Independent Context Learning) selection for few-shot learning
 - **Multi-level Vietnamese Support**: Standard, syllable, and word-level text segmentation
 - **Enhanced Evaluation**: Component-wise F1 scores with precision/recall analysis
 - **Multiple LLM Support**: OpenAI GPT and Anthropic Claude models
@@ -136,10 +136,12 @@ Uses training examples to guide SQL generation with multiple selection strategie
 - Selects examples with highest skill relevance
 - Improved performance on complex queries
 
-#### DICL Selection
-- Domain-Independent Context Learning
-- Cross-domain example selection
-- Enhanced generalization capabilities
+#### DICL (Domain-Independent Context Learning) Selection
+- **Advanced Cross-Domain Learning**: Selects examples that demonstrate transferable reasoning patterns across different database domains
+- **Contextual Similarity Matching**: Uses semantic understanding to find examples with similar logical structures regardless of domain
+- **Enhanced Generalization**: Improves model performance on unseen domains by learning domain-agnostic SQL patterns
+- **Intelligent Candidate Building**: Pre-processes training data to identify high-quality cross-domain examples
+- **Robust Performance**: Maintains consistency across diverse database schemas and question types
 
 ### 3. Chain-of-Thought (CoT)
 Step-by-step reasoning approach that breaks down complex problems:
