@@ -24,6 +24,9 @@ class FewShotStrategy(BaseStrategy):
         elif self.selection_strategy == 'dicl':
             from ..selectors import DICLSelector
             return DICLSelector(self.config)
+        elif self.selection_strategy == 'astres':
+            from ..selectors import ASTRESSelector
+            return ASTRESSelector(self.config)
         elif self.selection_strategy == 'random':
             from ..selectors import RandomSelector
             return RandomSelector(self.config)
@@ -35,14 +38,20 @@ class FewShotStrategy(BaseStrategy):
     def _get_strategy_name(self) -> str:
         return "few-shot"
 
-    def select_examples(self, question: str, db_id: str = None, k: int = None) -> List[Dict]:
+    def select_examples(self, question: str, db_id: str = None, k: int = None, schema_info: Dict[str, Any] = None) -> List[Dict]:
         """Select k examples using the configured strategy."""
         if k is None:
             k = self.k_examples
 
         try:
             print(f"[FewShot] Using {self.selection_strategy} selection strategy")
-            return self._selector.select_examples(question, k, db_id)
+
+            # For ASTRES, pass schema_info if available
+            if self.selection_strategy == 'astres' and schema_info is not None:
+                return self._selector.select_examples(question, k, db_id, schema_info)
+            else:
+                return self._selector.select_examples(question, k, db_id)
+
         except Exception as e:
             print(f"[FewShot] Error in {self.selection_strategy} selection: {e}")
             # Fallback to random if current strategy fails
@@ -79,7 +88,7 @@ class FewShotStrategy(BaseStrategy):
         request_id = f"few_shot_{int(time.time() * 1000000)}"
         try:
             if examples is None:
-                examples = self.select_examples(question, db_id)
+                examples = self.select_examples(question, db_id, schema_info=schema_info)
             schema_context = self.prepare_schema_context(schema_info)
             examples_str = self.format_examples(examples)
             template_vars = {

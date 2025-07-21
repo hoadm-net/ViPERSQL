@@ -6,7 +6,7 @@ A comprehensive Vietnamese Text-to-SQL system that converts natural language que
 
 ### Core Capabilities
 - **Multiple Strategies**: Zero-shot, Few-shot, and Chain-of-Thought (CoT) approaches
-- **Advanced Example Selection**: Random, Skill-based KNN, and DICL (Domain-Independent Context Learning) selection for few-shot learning
+- **Advanced Example Selection**: Random, Skill-based KNN, DICL (Domain-Independent Context Learning), and ASTRES (AST-based Retrieval and Example Selection) for few-shot learning
 - **Multi-level Vietnamese Support**: Standard, syllable, and word-level text segmentation
 - **Enhanced Evaluation**: Component-wise F1 scores with precision/recall analysis
 - **Multiple LLM Support**: OpenAI GPT and Anthropic Claude models
@@ -31,7 +31,8 @@ ViPERSQL/
 │   ├── selectors/                 # Example selection strategies
 │   │   ├── random_selector.py     # Random selection
 │   │   ├── skill_knn_selector.py  # Skill-based KNN selection
-│   │   └── dicl_selector.py       # DICL selection
+│   │   ├── dicl_selector.py       # DICL selection
+│   │   └── astres_selector.py     # ASTRES selection
 │   ├── config.py                  # Configuration management
 │   ├── llm_interface.py           # Unified LLM provider interface
 │   ├── template_manager.py        # Prompt template system
@@ -110,6 +111,9 @@ python vipersql.py --model claude-3-sonnet --samples 10
 
 # DICL example selection
 python vipersql.py --strategy few-shot --example-selection-strategy dicl --samples 10
+
+# ASTRES example selection
+python vipersql.py --strategy few-shot --example-selection-strategy astres --samples 10
 ```
 
 ## 🧠 Strategies
@@ -142,6 +146,14 @@ Uses training examples to guide SQL generation with multiple selection strategie
 - **Enhanced Generalization**: Improves model performance on unseen domains by learning domain-agnostic SQL patterns
 - **Intelligent Candidate Building**: Pre-processes training data to identify high-quality cross-domain examples
 - **Robust Performance**: Maintains consistency across diverse database schemas and question types
+
+#### ASTRES (AST-based Retrieval and Example Selection)
+- **Four-Step Process**: Zero-shot generation → Semantic retrieval → AST conversion → AST similarity re-ranking
+- **Hybrid Approach**: Combines PhoBERT semantic embeddings with Abstract Syntax Tree structural analysis
+- **Vietnamese Language Optimization**: Uses PhoBERT-base-v2 for semantic understanding of Vietnamese questions
+- **Structural Understanding**: Converts SQL queries to AST for precise structural similarity comparison
+- **Intelligent Re-ranking**: Re-ranks semantically similar examples by AST structural similarity for optimal selection
+- **Candidate Reuse**: Leverages DICL candidate building script to create high-quality candidate pools
 
 ### 3. Chain-of-Thought (CoT)
 Step-by-step reasoning approach that breaks down complex problems:

@@ -235,8 +235,8 @@ def parse_args():
                         help='Number of samples to process (default: all)')
 
     parser.add_argument('--example-selection-strategy', type=str, default='random',
-                        choices=['random', 'skill_knn', 'dicl'],
-                        help='Example selection strategy for few-shot (random, skill_knn, or dicl)')
+                        choices=['random', 'skill_knn', 'dicl', 'astres'],
+                        help='Example selection strategy for few-shot (random, skill_knn, dicl, or astres)')
 
     parser.add_argument('--config', type=str, default='.env',
                         help='Path to configuration file')
