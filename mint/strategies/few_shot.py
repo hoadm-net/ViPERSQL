@@ -1,5 +1,4 @@
 import time
-import random
 from typing import Dict, List, Any, Optional
 from .base import BaseStrategy, StrategyResult
 
@@ -13,78 +12,45 @@ class FewShotStrategy(BaseStrategy):
         super().__init__(config)
         self.k_examples = getattr(config, 'few_shot_examples', 3)
         self.selection_strategy = getattr(config, 'example_selection_strategy', 'random')
-        self._training_examples = None
 
-        # Initialize skill_knn selector if needed
-        self._skill_knn_selector = None
+        # Initialize the appropriate selector based on strategy
+        self._selector = self._create_selector()
+
+    def _create_selector(self):
+        """Create and return the appropriate example selector."""
         if self.selection_strategy == 'skill_knn':
-            from ..skill_knn_selector import SkillKNNSelector
-            self._skill_knn_selector = SkillKNNSelector(config)
+            from ..selectors import SkillKNNSelector
+            return SkillKNNSelector(self.config)
+        elif self.selection_strategy == 'random':
+            from ..selectors import RandomSelector
+            return RandomSelector(self.config)
+        else:
+            print(f"[FewShot] Unknown selection strategy '{self.selection_strategy}', falling back to random")
+            from ..selectors import RandomSelector
+            return RandomSelector(self.config)
 
     def _get_strategy_name(self) -> str:
         return "few-shot"
 
-    def load_training_examples(self, dataset_path: str, db_id: str = None) -> List[Dict]:
-        """Load training examples from dataset."""
-        try:
-            import json
-            from pathlib import Path
-            train_file = Path(dataset_path) / "train.json"
-            if not train_file.exists():
-                print(f"[FewShot] Training file not found: {train_file}")
-                return []
-            with open(train_file, 'r', encoding='utf-8') as f:
-                train_data = json.load(f)
-            if db_id:
-                filtered_data = [ex for ex in train_data if ex.get('db_id') == db_id]
-                if not filtered_data:
-                    print(f"[FewShot] No examples found for database {db_id}, using all examples")
-                    filtered_data = train_data
-            else:
-                filtered_data = train_data
-            self._training_examples = filtered_data
-            print(f"[FewShot] Loaded {len(filtered_data)} training examples")
-            return filtered_data
-        except Exception as e:
-            print(f"[FewShot] Failed to load training examples: {e}")
-            return []
-
     def select_examples(self, question: str, db_id: str = None, k: int = None) -> List[Dict]:
-        """Select k examples using the specified strategy."""
+        """Select k examples using the configured strategy."""
         if k is None:
             k = self.k_examples
 
-        # Use skill_knn selector if available
-        if self.selection_strategy == 'skill_knn' and self._skill_knn_selector:
-            try:
-                print(f"[FewShot] Using skill_knn selection strategy")
-                return self._skill_knn_selector.select_examples(question, k, db_id)
-            except Exception as e:
-                print(f"[FewShot] Skill KNN selection failed: {e}, falling back to random")
-                self.selection_strategy = 'random'  # Fallback
-
-        # Load training examples for random selection
-        if self._training_examples is None:
-            dataset_path = self.config.dataset_full_path
-            self.load_training_examples(dataset_path, db_id)
-
-        if not self._training_examples:
-            print(f"[FewShot] No training examples available")
-            return []
-
-        if self.selection_strategy == 'random':
-            selected = self._select_random_examples(k)
-        else:
-            print(f"[FewShot] Strategy {self.selection_strategy} not implemented, using random")
-            selected = self._select_random_examples(k)
-
-        print(f"[FewShot] Selected {len(selected)} examples using {self.selection_strategy} strategy")
-        return selected
-
-    def _select_random_examples(self, k: int) -> List[Dict]:
-        if len(self._training_examples) <= k:
-            return self._training_examples.copy()
-        return random.sample(self._training_examples, k)
+        try:
+            print(f"[FewShot] Using {self.selection_strategy} selection strategy")
+            return self._selector.select_examples(question, k, db_id)
+        except Exception as e:
+            print(f"[FewShot] Error in {self.selection_strategy} selection: {e}")
+            # Fallback to random if current strategy fails
+            if self.selection_strategy != 'random':
+                print(f"[FewShot] Falling back to random selection")
+                from ..selectors import RandomSelector
+                fallback_selector = RandomSelector(self.config)
+                return fallback_selector.select_examples(question, k, db_id)
+            else:
+                print(f"[FewShot] Random selection also failed")
+                return []
 
     def format_examples(self, examples: List[Dict]) -> str:
         """Format examples for template insertion."""

@@ -68,9 +68,7 @@ class ViPERConfig:
     
     # Output Settings
     results_dir: str = field(default="results")
-    logs_dir: str = field(default="logs")
-    sqlite_dbs_dir: str = field(default="sqlite_dbs")
-    
+
     # Evaluation Settings
     enable_execution_accuracy: bool = field(default=True)
     enable_component_analysis: bool = field(default=True)
@@ -148,9 +146,7 @@ class ViPERConfig:
             
             # Output Settings
             'results_dir': 'RESULTS_DIR',
-            'logs_dir': 'LOGS_DIR',
-            'sqlite_dbs_dir': 'SQLITE_DBS_DIR',
-            
+
             # Evaluation Settings
             'enable_execution_accuracy': 'ENABLE_EXECUTION_ACCURACY',
             'enable_component_analysis': 'ENABLE_COMPONENT_ANALYSIS',
@@ -228,7 +224,7 @@ class ViPERConfig:
 
     def _setup_directories(self):
         """Create necessary directories if they don't exist."""
-        directories = [self.results_dir, self.logs_dir, self.sqlite_dbs_dir]
+        directories = [self.results_dir]
         for directory in directories:
             Path(directory).mkdir(parents=True, exist_ok=True)
     

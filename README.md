@@ -1,120 +1,175 @@
-# ViPERSQL: Vietnamese Text-to-SQL System
+# ViPERSQL - Vietnamese Text-to-SQL System
 
-A comprehensive toolkit for Vietnamese Natural Language to SQL conversion with advanced prompting strategies, intelligent example selection, and enhanced evaluation metrics.
+A comprehensive Vietnamese Text-to-SQL system that converts natural language questions in Vietnamese to SQL queries using Large Language Models (LLMs).
 
-## Overview
+## 🚀 Features
 
-ViPERSQL provides a unified framework for Vietnamese Text-to-SQL conversion, supporting multiple prompting strategies with intelligent example selection and comprehensive evaluation. The system is designed for research and practical applications in Vietnamese database query generation using large language models.
+- **Multiple Strategies**: Zero-shot, Few-shot, and Chain-of-Thought approaches
+- **Advanced Example Selection**: Random and Skill-based KNN selection for few-shot learning
+- **Multi-level Vietnamese Support**: Standard, syllable, and word-level text segmentation
+- **Comprehensive Evaluation**: Enhanced metrics with component-wise analysis
+- **Multiple LLM Support**: OpenAI GPT and Anthropic Claude models
+- **Modular Architecture**: Clean, extensible codebase with strategy pattern
 
-## Key Features
-
-- **Multiple Strategies**: Zero-shot, Few-shot, and Chain-of-Thought (CoT) prompting
-- **Intelligent Example Selection**: 
-  - Random selection (baseline)
-  - **Skill-KNN**: Similarity-based selection using SQL skills analysis
-- **Enhanced Evaluation**: Component-wise F1 scores, exact match accuracy, error analysis
-- **Multi-LLM Support**: OpenAI GPT models and Anthropic Claude
-- **Vietnamese Text Processing**: Support for std, syllable, and word-level granularity
-- **Comprehensive Metrics**: Detailed performance analysis with precision and recall
-
-## Architecture
+## 📁 Project Structure
 
 ```
 ViPERSQL/
-├── vipersql.py             # Main CLI interface
-├── mint/                   # Core framework
-│   ├── strategies/         # Prompting strategies
-│   ├── skill_knn_selector.py # Intelligent example selection
-│   ├── enhanced_metrics.py # Evaluation metrics
-│   ├── evaluator.py        # Unified evaluator
-│   ├── llm_interface.py    # LLM abstraction
-│   └── config.py          # System configuration
-├── dataset/ViText2SQL/     # Vietnamese Text-to-SQL dataset
-├── templates/              # Prompt templates
-├── scripts/                # Preprocessing utilities
-└── results/                # Evaluation outputs
+├── mint/                     # Core system package
+│   ├── strategies/          # SQL generation strategies
+│   │   ├── zero_shot.py    # Zero-shot strategy
+│   │   ├── few_shot.py     # Few-shot strategy
+│   │   └── cot.py          # Chain-of-thought strategy
+│   ├── selectors/          # Example selection strategies
+│   │   ├── random_selector.py     # Random selection
+│   │   └── skill_knn_selector.py  # Skill-based KNN selection
+│   ├── config.py           # Configuration management
+│   ├── llm_interface.py    # LLM provider interface
+│   ├── evaluator.py        # Evaluation engine
+│   └── utils.py            # Utility functions
+├── dataset/                 # Vietnamese Text-to-SQL dataset
+│   └── ViText2SQL/
+│       ├── std-level/       # Standard Vietnamese
+│       ├── syllable-level/  # Syllable-segmented
+│       └── word-level/      # Word-segmented
+├── templates/               # Prompt templates
+├── scripts/                 # Utility scripts
+├── results/                 # Evaluation results
+└── vipersql.py             # Main entry point
 ```
 
-## Quick Start
+## 🛠 Installation
 
-### Installation
-
+1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/your-username/ViPERSQL.git
 cd ViPERSQL
-python -m venv venv
-source venv/bin/activate
+```
+
+2. Install dependencies:
+```bash
 pip install -r requirements.txt
 ```
 
-### Configuration
-
-Copy `.env.example` to `.env` and add your API keys:
+3. Configure environment variables:
 ```bash
 cp .env.example .env
 # Edit .env with your API keys
 ```
 
-### Usage
+## 🎯 Usage
+
+### Basic Usage
 
 ```bash
-# Few-shot strategy with random example selection (baseline)
-python vipersql.py --strategy few-shot --model gpt-4o-mini --samples 10
+# Zero-shot generation
+python vipersql.py --strategy zero-shot --samples 10
 
-# Few-shot strategy with Skill-KNN intelligent selection
+# Few-shot with random selection
+python vipersql.py --strategy few-shot --example-selection-strategy random --samples 10
+
+# Few-shot with skill-based selection
 python vipersql.py --strategy few-shot --example-selection-strategy skill_knn --samples 10
 
-# Zero-shot with Claude
-python vipersql.py --strategy zero-shot --model claude-3-5-sonnet-20241022 --samples 20
-
-# Chain-of-Thought reasoning
-python vipersql.py --strategy cot --samples 5
+# Chain-of-thought reasoning
+python vipersql.py --strategy cot --samples 10
 ```
 
-### Command Options
+### Advanced Options
 
-- `--strategy`: Prompting strategy (zero-shot, few-shot, cot)
-- `--example-selection-strategy`: Example selection method (random, skill_knn) - for few-shot only
-- `--model`: LLM model name
-- `--level`: Text granularity (std, syllable, word)
-- `--split`: Dataset split (train, dev, test)
-- `--samples`: Number of samples to process
-
-## Skill-KNN Example Selection
-
-ViPERSQL introduces an intelligent example selection method for few-shot learning:
-
-### How it works:
-1. **Preprocessing**: Extract SQL skills from training data using LLM analysis of question + SQL pairs
-2. **Skill Embedding**: Create embeddings using google-bert/bert-base-uncased
-3. **Runtime Selection**: For each test question, predict required skills and find most similar training examples
-
-### Setup Skill-KNN:
 ```bash
-# First, preprocess training data (run once)
-python scripts/skill_knn_preprocessing.py --num_samples 50  # for testing
-python scripts/skill_knn_preprocessing.py                  # for full dataset
+# Different text segmentation levels
+python vipersql.py --level syllable --samples 10
+python vipersql.py --level word --samples 10
 
-# Then use skill_knn selection
-python vipersql.py --strategy few-shot --example-selection-strategy skill_knn --samples 10
+# Different dataset splits
+python vipersql.py --split dev --samples 10
+python vipersql.py --split test --samples 10
+
+# Different models
+python vipersql.py --model gpt-4-turbo --samples 10
+python vipersql.py --model claude-3-sonnet --samples 10
 ```
 
-### Benefits:
-- **Smarter selection**: Choose examples with similar SQL complexity and patterns
-- **Better context**: Provide more relevant examples to guide LLM reasoning
-- **Improved accuracy**: Potentially better performance than random selection
+## 🧠 Strategies
 
-## Output
+### 1. Zero-shot
+Direct translation from Vietnamese question to SQL without examples.
 
-The system generates:
-- **Predictions**: SQL queries with metadata (`predictions.json`)
-- **Evaluation metrics**: Detailed performance analysis (`eval_results_*.json`)
-- **Reports**: Human-readable evaluation summaries (`eval_report_*.txt`)
+### 2. Few-shot
+Uses training examples to guide SQL generation with two selection strategies:
 
-## Research Applications
+#### Random Selection
+- Randomly selects k examples from training data
+- Fast and simple baseline approach
 
-ViPERSQL is designed for:
-- Vietnamese NL2SQL model evaluation and comparison
-- Prompting strategy research and development
-- Cross-lingual Text-to-SQL studies
-- LLM performance analysis on structured query generation
+#### Skill-based KNN Selection
+- Extracts SQL skills from questions using LLM
+- Uses BERT embeddings for skill similarity
+- Selects examples with highest skill similarity
+
+### 3. Chain-of-Thought (CoT)
+Step-by-step reasoning approach that breaks down the problem.
+
+## 📊 Evaluation
+
+The system provides comprehensive evaluation with:
+
+- **Exact Match Accuracy**: Perfect SQL query matches
+- **Component-wise F1 Scores**: SELECT, FROM, WHERE, GROUP BY, etc.
+- **Enhanced Metrics**: Detailed precision and recall analysis
+- **Error Analysis**: Categorized error types and patterns
+
+## 🔧 Configuration
+
+Key configuration options in `.env`:
+
+```env
+# API Keys
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+
+# Model Settings
+DEFAULT_MODEL=gpt-4-turbo
+DEFAULT_TEMPERATURE=0.3
+DEFAULT_MAX_TOKENS=1000
+
+# Strategy Settings
+DEFAULT_STRATEGY=zero-shot
+FEW_SHOT_EXAMPLES=3
+EXAMPLE_SELECTION_STRATEGY=random
+```
+
+## 🏗 Architecture
+
+The system follows a clean, modular architecture:
+
+- **Strategy Pattern**: Different SQL generation approaches
+- **Selector Pattern**: Pluggable example selection methods
+- **Template System**: Flexible prompt engineering
+- **Unified LLM Interface**: Support for multiple providers
+- **Comprehensive Evaluation**: Detailed metrics and analysis
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📚 Citation
+
+If you use this work in your research, please cite:
+
+```bibtex
+@article{vipersql2025,
+  title={ViPERSQL: Vietnamese Text-to-SQL with Advanced Example Selection},
+  author={Your Name},
+  year={2025}
+}
+```

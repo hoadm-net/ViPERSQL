@@ -10,39 +10,63 @@ The ViPERSQL evaluation system is designed to accurately assess SQL queries gene
 
 ```
 mint/
-├── enhanced_metrics.py  # Core evaluation logic
-├── evaluator.py        # Main evaluation orchestrator
-├── skill_knn_selector.py # Intelligent example selection
-├── config.py           # Configuration management
-├── llm_interface.py    # LLM integration
-└── strategies/         # Evaluation strategies
-    ├── base.py         # Base strategy class
-    ├── zero_shot.py    # Zero-shot evaluation
-    ├── few_shot.py     # Few-shot evaluation (with skill-based selection)
-    └── cot.py          # Chain-of-thought evaluation
+├── strategies/              # SQL generation strategies
+│   ├── base.py             # Base strategy class
+│   ├── zero_shot.py        # Zero-shot strategy
+│   ├── few_shot.py         # Few-shot strategy
+│   └── cot.py              # Chain-of-thought strategy
+├── selectors/              # Example selection strategies (NEW)
+│   ├── base_selector.py    # Abstract base selector
+│   ├── random_selector.py  # Random selection
+│   └── skill_knn_selector.py # Skill-based KNN selection
+├── enhanced_metrics.py     # Core evaluation logic
+├── evaluator.py           # Main evaluation orchestrator
+├── config.py              # Configuration management
+├── llm_interface.py       # LLM integration
+├── template_manager.py    # Template management
+└── utils.py              # Utility functions
 ```
 
 ## 🔧 Key Features
 
-### 1. Intelligent Example Selection (NEW)
-- **Random Selection**: Baseline random sampling for few-shot examples
-- **Skill-KNN Selection**: Similarity-based selection using SQL skills analysis
-  - LLM-based skill extraction from questions and SQL queries
+### 1. Modular Example Selection Architecture (NEW)
+The system now features a clean, modular architecture for example selection:
+
+#### Base Selector Pattern
+- **BaseSelector**: Abstract base class defining the selector interface
+- **Pluggable Architecture**: Easy to add new selection strategies
+- **Unified Interface**: All selectors follow the same `select_examples()` method
+
+#### Available Selectors
+- **RandomSelector**: Baseline random sampling for few-shot examples
+  - Fast and simple approach
+  - Good fallback mechanism
+  - Database-specific filtering support
+
+- **SkillKNNSelector**: Intelligent similarity-based selection
+  - LLM-based skill extraction from Vietnamese questions
   - BERT embeddings for skill representation
   - Cosine similarity for finding relevant examples
+  - Robust fallback to random selection
 
-### 2. SQL Normalization
+### 2. Enhanced Few-shot Strategy
+- **Strategy Pattern**: Clean separation of concerns
+- **Dynamic Selector Creation**: Factory pattern for selector instantiation
+- **Error Handling**: Robust fallback mechanisms
+- **Performance Optimization**: Caching and efficient data loading
+
+### 3. SQL Normalization
 - **Alias Normalization**: Standardize aliases to original table names
 - **Table Name Addition**: Automatically add table names for fields without aliases
 - **Semicolon Removal**: Remove redundant semicolons
 - **Whitespace Normalization**: Standardize whitespace and line breaks
 
-### 3. Operator Standardization
+### 4. Operator Standardization
 - **Logical Operators**: Normalize `<>` to `!=`
 - **Quote Normalization**: Standardize single and double quotes
 - **Case Sensitivity**: Normalize case for SQL keywords
 
-### 4. Component-wise Evaluation
+### 5. Component-wise Evaluation
 - **SELECT Clause**: Evaluate selected fields
 - **FROM Clause**: Evaluate referenced tables
 - **WHERE Clause**: Evaluate filtering conditions
@@ -51,7 +75,7 @@ mint/
 - **HAVING Clause**: Evaluate group conditions
 - **KEYWORDS**: Evaluate SQL keywords
 
-### 5. Scoring Metrics
+### 6. Scoring Metrics
 - **Exact Match Accuracy**: Percentage of completely correct queries
 - **Component F1 Score**: F1-score for each component
 - **Syntax Validity**: Check syntax correctness
