@@ -1,0 +1,184 @@
+{
+  "predictions": [
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những tài sản nào có 2 bộ phận và có ít hơn 2 nhật kí lỗi ? Liệt kê id và chi tiết của những tài sản này .",
+      "predicted": "select tài_sản.id_tài_sản, tài_sản.chi_tiết_tài_sản\nfrom tài_sản\njoin bộ_phận_của_tài_sản on tài_sản.id_tài_sản = bộ_phận_của_tài_sản.id_tài_sản\nleft join nhật_ký_lỗi on tài_sản.id_tài_sản = nhật_ký_lỗi.id_tài_sản\ngroup by tài_sản.id_tài_sản, tài_sản.chi_tiết_tài_sản\nhaving count(distinct bộ_phận_của_tài_sản.id_bộ_phận) = 2\nand count(distinct nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi) < 2",
+      "gold": "select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join bộ_phận_của_tài_sản as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) = 2 intersect select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join nhật_ký_lỗi as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) < 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi hợp đồng bảo trì có bao nhiêu tài sản ? Liệt kê id hợp đồng và số lượng tài sản trong từng hợp đồng .",
+      "predicted": "select id_hợp_đồng_bảo_trì, count(id_tài_sản) as số_lượng_tài_sản\nfrom tài_sản\ngroup by id_hợp_đồng_bảo_trì",
+      "gold": "select count ( * ) , t1.id_hợp_đồng_bảo_trì from hợp_đồng_bảo_trì as t1 join tài_sản as t2 on t1.id_hợp_đồng_bảo_trì = t2.id_hợp_đồng_bảo_trì group by t1.id_hợp_đồng_bảo_trì"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Đếm số lượng tài sản được cung cấp bởi từng công ty bên thứ ba . Hiển thị đồng thời id của những công ty này .",
+      "predicted": "select công_ty_bên_thứ_ba.id_công_ty, count(tài_sản.id_tài_sản) as số_lượng_tài_sản\nfrom công_ty_bên_thứ_ba\nleft join tài_sản on công_ty_bên_thứ_ba.id_công_ty = tài_sản.id_công_ty_cung_cấp\ngroup by công_ty_bên_thứ_ba.id_công_ty",
+      "gold": "select count ( * ) , t1.id_công_ty from công_ty_bên_thứ_ba as t1 join tài_sản as t2 on t1.id_công_ty = t2.id_công_ty_cung_cấp group by t1.id_công_ty"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Công ty bên thứ ba nào có ít nhất 2 kỹ sư bảo trì hoặc có ít nhất 2 hợp đồng bảo trì ? Liệt kê tên và id của những công ty này .",
+      "predicted": "select tên_công_ty, id_công_ty from công_ty_bên_thứ_ba where id_công_ty in (\n    select id_công_ty from kỹ_sư_bảo_trì group by id_công_ty having count(id_kỹ_sư) >= 2\n) union select tên_công_ty, id_công_ty from công_ty_bên_thứ_ba where id_công_ty in (\n    select id_hợp_đồng_bảo_trì_của_công_ty from hợp_đồng_bảo_trì group by id_hợp_đồng_bảo_trì_của_công_ty having count(id_hợp_đồng_bảo_trì) >= 2\n)",
+      "gold": "select t1.id_công_ty , t1.tên_công_ty from công_ty_bên_thứ_ba as t1 join kỹ_sư_bảo_trì as t2 on t1.id_công_ty = t2.id_công_ty group by t1.id_công_ty having count ( * ) >= 2 union select t3.id_công_ty , t3.tên_công_ty from công_ty_bên_thứ_ba as t3 join hợp_đồng_bảo_trì as t4 on t3.id_công_ty = t4.id_hợp_đồng_bảo_trì_của_công_ty group by t3.id_công_ty having count ( * ) >= 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết tên và id của những nhân viên đã ghi lại nhật ký lỗi nhưng chưa liên hệ với bất kỳ kỹ sư nào .",
+      "predicted": "select distinct nhân_viên.tên_nhân_viên, nhân_viên.id_nhân_viên\nfrom nhân_viên\njoin nhật_ký_lỗi on nhân_viên.id_nhân_viên = nhật_ký_lỗi.được_ghi_lại_bởi_nhân_viên_có_id\nwhere nhân_viên.id_nhân_viên not in (\n    select distinct chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc\n    from chuyến_thăm_của_kỹ_sư\n    where chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc is not null\n)",
+      "gold": "select t1.tên_nhân_viên , t1.id_nhân_viên from nhân_viên as t1 join nhật_ký_lỗi as t2 on t1.id_nhân_viên = t2.được_ghi_lại_bởi_nhân_viên_có_id except select t3.tên_nhân_viên , t3.id_nhân_viên from nhân_viên as t3 join chuyến_thăm_của_kỹ_sư as t4 on t3.id_nhân_viên = t4.id_nhân_viên_liên_lạc"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Kỹ sư nào đã đến nhiều lần nhất ? Hiển thị id , tên và họ của kỹ sư này .",
+      "predicted": "select kỹ_sư_bảo_trì.id_kỹ_sư, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ \nfrom kỹ_sư_bảo_trì \njoin chuyến_thăm_của_kỹ_sư on kỹ_sư_bảo_trì.id_kỹ_sư = chuyến_thăm_của_kỹ_sư.id_kỹ_sư \ngroup by kỹ_sư_bảo_trì.id_kỹ_sư, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ \norder by count(chuyến_thăm_của_kỹ_sư.id_kỹ_sư) desc \nlimit 1",
+      "gold": "select t1.id_kỹ_sư , t1.tên , t1.họ from kỹ_sư_bảo_trì as t1 join chuyến_thăm_của_kỹ_sư as t2 group by t1.id_kỹ_sư order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết những bộ phận nào bị nhiều hơn 2 lỗi . Hiển thị tên và id của những bộ phận này .",
+      "predicted": "select bộ_phận.id_bộ_phận, bộ_phận.tên_bộ_phận\nfrom lỗi_bộ_phận\njoin bộ_phận on lỗi_bộ_phận.id_bộ_phận = bộ_phận.id_bộ_phận\ngroup by bộ_phận.id_bộ_phận, bộ_phận.tên_bộ_phận\nhaving count(lỗi_bộ_phận.id_bộ_phận) > 2",
+      "gold": "select t1.tên_bộ_phận , t1.id_bộ_phận from bộ_phận as t1 join lỗi_bộ_phận as t2 on t1.id_bộ_phận = t2.id_bộ_phận group by t1.id_bộ_phận having count ( * ) > 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Liệt kê tên , họ , chi tiết và mô tả về kỹ năng của tất cả các kỹ sư .",
+      "predicted": "select kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ, kỹ_sư_bảo_trì.những_chi_tiết_khác, kỹ_năng.mô_tả_về_kỹ_năng\nfrom kỹ_sư_bảo_trì\njoin kỹ_năng_của_kỹ_sư on kỹ_sư_bảo_trì.id_kỹ_sư = kỹ_năng_của_kỹ_sư.id_kỹ_sư\njoin kỹ_năng on kỹ_năng_của_kỹ_sư.id_kỹ_năng = kỹ_năng.id_kỹ_năng",
+      "gold": "select t1.tên , t1.họ , t1.những_chi_tiết_khác , t3.mô_tả_về_kỹ_năng from kỹ_sư_bảo_trì as t1 join kỹ_năng_của_kỹ_sư as t2 on t1.id_kỹ_sư = t2.id_kỹ_sư join kỹ_năng as t3 on t2.id_kỹ_năng = t3.id_kỹ_năng"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Đối với tất cả các lỗi liên quan đến các bộ phận khác nhau , cho biết mô tả về những kỹ năng cần thiết của các kỹ sư để khắc phục chúng . Liệt kê tên của các lỗi và mô tả về kỹ năng tương ứng .",
+      "predicted": "select lỗi_bộ_phận.tên_viết_tắt_của_lỗi, kỹ_năng.mô_tả_về_kỹ_năng\nfrom lỗi_bộ_phận\njoin kỹ_năng_cần_để_sửa_chữa on lỗi_bộ_phận.id_bộ_phận_bị_lỗi = kỹ_năng_cần_để_sửa_chữa.id_bộ_phận_bị_lỗi\njoin kỹ_năng on kỹ_năng_cần_để_sửa_chữa.id_kỹ_năng = kỹ_năng.id_kỹ_năng",
+      "gold": "select t1.tên_viết_tắt_của_lỗi , t3.mô_tả_về_kỹ_năng from lỗi_bộ_phận as t1 join kỹ_năng_cần_để_sửa_chữa as t2 on t1.id_bộ_phận_bị_lỗi = t2.id_bộ_phận_bị_lỗi join kỹ_năng as t3 on t2.id_kỹ_năng = t3.id_kỹ_năng"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi bộ phận có thể được sử dụng trong bao nhiêu tài sản ? Liệt kê tên của tất cả các bộ phận và số lượng tài sản có thể sử dụng từng bộ phận .",
+      "predicted": "select bộ_phận.tên_bộ_phận, count(bộ_phận_của_tài_sản.id_tài_sản) as số_lượng_tài_sản\nfrom bộ_phận\nleft join bộ_phận_của_tài_sản on bộ_phận.id_bộ_phận = bộ_phận_của_tài_sản.id_bộ_phận\ngroup by bộ_phận.tên_bộ_phận",
+      "gold": "select t1.tên_bộ_phận , count ( * ) from bộ_phận as t1 join bộ_phận_của_tài_sản as t2 on t1.id_bộ_phận = t2.id_bộ_phận group by t1.tên_bộ_phận"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết mô tả lỗi và tình trạng lỗi của tất cả các lỗi được ghi lại trong nhật ký .",
+      "predicted": "select nhật_ký_lỗi.mô_tả_về_lỗi, nhật_ký_của_lỗi_bộ_phận.tình_trạng_lỗi \nfrom nhật_ký_lỗi \njoin nhật_ký_của_lỗi_bộ_phận on nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi = nhật_ký_của_lỗi_bộ_phận.id_mục_nhập_của_nhật_ký_lỗi",
+      "gold": "select t1.mô_tả_về_lỗi , t2.tình_trạng_lỗi from nhật_ký_lỗi as t1 join nhật_ký_của_lỗi_bộ_phận as t2 on t1.id_mục_nhập_của_nhật_ký_lỗi = t2.id_mục_nhập_của_nhật_ký_lỗi"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Nhật ký lỗi nào đòi hỏi nhiều lượt ghé thăm từ các kỹ sư nhất ? Liệt kê id của nhật ký lỗi này và số lượng lượt ghé thăm tương ứng .",
+      "predicted": "select nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi, count(chuyến_thăm_của_kỹ_sư.id_kỹ_sư_ghé_thăm) as số_lượt_ghé_thăm\nfrom nhật_ký_lỗi\njoin chuyến_thăm_của_kỹ_sư on nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi = chuyến_thăm_của_kỹ_sư.id_mục_nhập_của_nhật_ký_lỗi\ngroup by nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi\norder by số_lượt_ghé_thăm desc\nlimit 1",
+      "gold": "select count ( * ) , t1.id_mục_nhập_của_nhật_ký_lỗi from nhật_ký_lỗi as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_mục_nhập_của_nhật_ký_lỗi = t2.id_mục_nhập_của_nhật_ký_lỗi group by t1.id_mục_nhập_của_nhật_ký_lỗi order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết danh sách không trùng lặp bao gồm họ của tất cả các kỹ sư .",
+      "predicted": "select distinct họ from kỹ_sư_bảo_trì",
+      "gold": "select distinct họ from kỹ_sư_bảo_trì"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết các tình trạng lỗi khác nhau đã được ghi lại .",
+      "predicted": "select distinct tình_trạng_lỗi from chuyến_thăm_của_kỹ_sư",
+      "gold": "select distinct tình_trạng_lỗi from nhật_ký_của_lỗi_bộ_phận"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những kỹ sư nào chưa bao giờ ghé thăm để bảo trì tài sản ? Cho biết tên và họ của những kỹ sư này .",
+      "predicted": "select tên, họ \nfrom kỹ_sư_bảo_trì \nwhere id_kỹ_sư not in (\n    select distinct id_kỹ_sư_ghé_thăm \n    from chuyến_thăm_của_kỹ_sư\n)",
+      "gold": "select tên , họ from kỹ_sư_bảo_trì where id_kỹ_sư not in ( select id_kỹ_sư from chuyến_thăm_của_kỹ_sư )"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Liệt kê id tài sản , chi tiết , thương hiệu và mẫu mã của từng tài sản .",
+      "predicted": "select id_tài_sản, chi_tiết_tài_sản, thương_hiệu_tài_sản, mẫu_mã_tài_sản from tài_sản",
+      "gold": "select id_tài_sản , chi_tiết_tài_sản , thương_hiệu_tài_sản , mẫu_mã_tài_sản from tài_sản"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Tài sản đầu tiên được mua vào thời điểm nào ?",
+      "predicted": "select ngày_mua_tài_sản from tài_sản order by ngày_mua_tài_sản asc limit 1",
+      "gold": "select ngày_mua_tài_sản from tài_sản order by ngày_mua_tài_sản asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Lỗi bộ phận nào đòi hỏi số lượng kỹ năng nhiều nhất để khắc phục ? Liệt kê id và tên của bộ phận gặp phải loại lỗi này .",
+      "predicted": "select b.id_bộ_phận, b.tên_bộ_phận\nfrom bộ_phận b\njoin lỗi_bộ_phận l on b.id_bộ_phận = l.id_bộ_phận_bị_lỗi\njoin kỹ_năng_cần_để_sửa_chữa k on l.id_bộ_phận_bị_lỗi = k.id_bộ_phận_bị_lỗi\ngroup by b.id_bộ_phận, b.tên_bộ_phận\norder by count(k.id_kỹ_năng) desc\nlimit 1",
+      "gold": "select t1.id_bộ_phận , t1.tên_bộ_phận from bộ_phận as t1 join lỗi_bộ_phận as t2 on t1.id_bộ_phận = t2.id_bộ_phận join kỹ_năng_cần_để_sửa_chữa as t3 on t2.id_bộ_phận_bị_lỗi = t3.id_bộ_phận_bị_lỗi group by t1.id_bộ_phận order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết tên của bộ phận gặp phải ít lỗi nhất .",
+      "predicted": "select bộ_phận.tên_bộ_phận \nfrom bộ_phận \nleft join lỗi_bộ_phận on bộ_phận.id_bộ_phận = lỗi_bộ_phận.id_bộ_phận \ngroup by bộ_phận.id_bộ_phận, bộ_phận.tên_bộ_phận \norder by count(lỗi_bộ_phận.id_bộ_phận) asc \nlimit 1",
+      "gold": "select t1.tên_bộ_phận from bộ_phận as t1 join lỗi_bộ_phận as t2 on t1.id_bộ_phận = t2.id_bộ_phận group by t1.tên_bộ_phận order by count ( * ) asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Trong số những kỹ sư đã ghé thăm , kỹ sư nào có số lượt ghé thăm ít nhất ? Liệt kê id , tên và họ của kỹ sư này .",
+      "predicted": "select kỹ_sư_bảo_trì.id_kỹ_sư, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ\nfrom kỹ_sư_bảo_trì\njoin chuyến_thăm_của_kỹ_sư on kỹ_sư_bảo_trì.id_kỹ_sư = chuyến_thăm_của_kỹ_sư.id_kỹ_sư_ghé_thăm\ngroup by kỹ_sư_bảo_trì.id_kỹ_sư, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ\norder by count(chuyến_thăm_của_kỹ_sư.id_kỹ_sư_ghé_thăm) asc\nlimit 1",
+      "gold": "select t1.id_kỹ_sư , t1.tên , t1.họ from kỹ_sư_bảo_trì as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_kỹ_sư = t2.id_kỹ_sư group by t1.id_kỹ_sư order by count ( * ) asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những nhân viên đã liên lạc với những kỹ sư nào ? Liệt kê tên của tất cả các nhân viên cũng như là tên và họ của những kỹ sư mà họ đã liên lạc .",
+      "predicted": "select distinct nhân_viên.tên_nhân_viên, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ\nfrom chuyến_thăm_của_kỹ_sư\njoin nhân_viên on chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc = nhân_viên.id_nhân_viên\njoin kỹ_sư_bảo_trì on chuyến_thăm_của_kỹ_sư.id_kỹ_sư = kỹ_sư_bảo_trì.id_kỹ_sư",
+      "gold": "select t1.tên_nhân_viên , t3.tên , t3.họ from nhân_viên as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_nhân_viên = t2.id_nhân_viên_liên_lạc join kỹ_sư_bảo_trì as t3 on t2.id_kỹ_sư = t3.id_kỹ_sư"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Nhật ký lỗi nào bao gồm nhiều bộ phận bị lỗi nhất ? Liệt kê id , mô tả và thời gian ghi lại của nhật ký lỗi này .",
+      "predicted": "select nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi, nhật_ký_lỗi.mô_tả_về_lỗi, nhật_ký_lỗi.thời_gian_mục_nhập_của_nhật_ký_lỗi\nfrom nhật_ký_lỗi\njoin nhật_ký_của_lỗi_bộ_phận on nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi = nhật_ký_của_lỗi_bộ_phận.id_mục_nhập_của_nhật_ký_lỗi\ngroup by nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi, nhật_ký_lỗi.mô_tả_về_lỗi, nhật_ký_lỗi.thời_gian_mục_nhập_của_nhật_ký_lỗi\norder by count(nhật_ký_của_lỗi_bộ_phận.id_bộ_phận_bị_lỗi) desc\nlimit 1",
+      "gold": "select t1.id_mục_nhập_của_nhật_ký_lỗi , t1.mô_tả_về_lỗi , t1.thời_gian_mục_nhập_của_nhật_ký_lỗi from nhật_ký_lỗi as t1 join nhật_ký_của_lỗi_bộ_phận as t2 on t1.id_mục_nhập_của_nhật_ký_lỗi = t2.id_mục_nhập_của_nhật_ký_lỗi group by t1.id_mục_nhập_của_nhật_ký_lỗi order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Kỹ năng nào được sử dụng để sửa nhiều loại lỗi nhất ? Liệt kê id và mô tả của kỹ năng này .",
+      "predicted": "select kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng\nfrom kỹ_năng\njoin kỹ_năng_cần_để_sửa_chữa on kỹ_năng.id_kỹ_năng = kỹ_năng_cần_để_sửa_chữa.id_kỹ_năng\ngroup by kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng\norder by count(distinct kỹ_năng_cần_để_sửa_chữa.id_bộ_phận_bị_lỗi) desc\nlimit 1",
+      "gold": "select t1.id_kỹ_năng , t1.mô_tả_về_kỹ_năng from kỹ_năng as t1 join kỹ_năng_cần_để_sửa_chữa as t2 on t1.id_kỹ_năng = t2.id_kỹ_năng group by t1.id_kỹ_năng order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết những mẫu mã khác nhau của tất cả các tài sản .",
+      "predicted": "select distinct mẫu_mã_tài_sản from tài_sản",
+      "gold": "select distinct mẫu_mã_tài_sản from tài_sản"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Liệt kê thương hiệu , mẫu mã và chi tiết của tất cả các tài sản theo thứ tự ngày thanh lý tăng dần .",
+      "predicted": "select thương_hiệu_tài_sản, mẫu_mã_tài_sản, chi_tiết_tài_sản \nfrom tài_sản \norder by ngày_thanh_lý_tài_sản asc",
+      "gold": "select thương_hiệu_tài_sản , mẫu_mã_tài_sản , chi_tiết_tài_sản from tài_sản order by ngày_thanh_lý_tài_sản asc"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Bộ phận nào có số tiền phải trả ít nhất ? Liệt kê id của bộ phận này và số tiền tương ứng phải trả .",
+      "predicted": "select id_bộ_phận, số_tiền_phải_trả from bộ_phận order by số_tiền_phải_trả asc limit 1",
+      "gold": "select id_bộ_phận , số_tiền_phải_trả from bộ_phận order by số_tiền_phải_trả asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Công ty nào đã bắt đầu các hợp đồng bảo trì sớm nhất ? Cho biết tên của công ty này .",
+      "predicted": "select tên_công_ty \nfrom công_ty_bên_thứ_ba \nwhere id_công_ty = (\n    select hợp_đồng_bảo_trì.id_hợp_đồng_bảo_trì_của_công_ty \n    from hợp_đồng_bảo_trì \n    order by ngày_bắt_đầu_hợp_đồng asc \n    limit 1\n)",
+      "gold": "select t1.tên_công_ty from công_ty_bên_thứ_ba as t1 join hợp_đồng_bảo_trì as t2 on t1.id_công_ty = t2.id_hợp_đồng_bảo_trì_của_công_ty order by t2.ngày_bắt_đầu_hợp_đồng asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Công ty nào đã kết thúc các hợp đồng bảo trì muộn nhất ? Cho biết tên của công ty này .",
+      "predicted": "select công_ty_bên_thứ_ba.tên_công_ty \nfrom công_ty_bên_thứ_ba \njoin hợp_đồng_bảo_trì on công_ty_bên_thứ_ba.id_công_ty = hợp_đồng_bảo_trì.id_hợp_đồng_bảo_trì_của_công_ty \nwhere hợp_đồng_bảo_trì.ngày_kết_thúc_hợp_đồng = (\n    select max(ngày_kết_thúc_hợp_đồng) \n    from hợp_đồng_bảo_trì\n)",
+      "gold": "select t1.tên_công_ty from công_ty_bên_thứ_ba as t1 join hợp_đồng_bảo_trì as t2 on t1.id_công_ty = t2.id_hợp_đồng_bảo_trì_của_công_ty order by t2.ngày_kết_thúc_hợp_đồng desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết giới tính có nhiều nhân viên nhất .",
+      "predicted": "select giới_tính, count(*) from nhân_viên group by giới_tính order by count(*) desc limit 1",
+      "gold": "select giới_tính from nhân_viên group by giới_tính order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi nhân viên đã liên lạc với bao nhiêu kỹ sư ? Cho biết tên của những nhân viên này và số lượng kỹ sư mà họ đã liên lạc .",
+      "predicted": "select nhân_viên.tên_nhân_viên, count(distinct chuyến_thăm_của_kỹ_sư.id_kỹ_sư) as số_lượng_kỹ_sư_liên_lạc\nfrom nhân_viên\nleft join chuyến_thăm_của_kỹ_sư on nhân_viên.id_nhân_viên = chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc\ngroup by nhân_viên.tên_nhân_viên",
+      "gold": "select t1.tên_nhân_viên , count ( * ) from as as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_nhân_viên = t2.id_nhân_viên_liên_lạc group by t1.tên_nhân_viên"
+    }
+  ]
+}

@@ -6,11 +6,18 @@ Based on Spider evaluation approach with improvements for Vietnamese Text-to-SQL
 import re
 import json
 import sqlparse
+import numpy as np
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple, Set
 from difflib import SequenceMatcher
-from collections import defaultdict
+from collections import defaultdict, Counter
 import unicodedata
+from scipy.spatial.distance import jensenshannon
+try:
+    from underthesea import pos_tag
+except ImportError:
+    print("Warning: underthesea not installed. POS_match feature will not work.")
+    pos_tag = None
 
 class EnhancedEvaluationMetrics:
     """
@@ -26,9 +33,12 @@ class EnhancedEvaluationMetrics:
     
     def __init__(self):
         """Initialize EnhancedEvaluationMetrics."""
-        self.difficulty_classifier = QueryDifficultyClassifier()
-        self.error_analyzer = SQLErrorAnalyzer()
-    
+        # self.difficulty_classifier = QueryDifficultyClassifier()  # Temporarily disabled
+        # self.error_analyzer = SQLErrorAnalyzer()  # Temporarily disabled
+
+        # Fallback complexity analyzer
+        self.difficulty_classifier = None
+
     def exact_match_accuracy(self, predicted_queries: List[str], gold_queries: List[str]) -> Dict[str, Any]:
         """
         Calculate exact match accuracy with detailed analysis.
@@ -373,12 +383,19 @@ class EnhancedEvaluationMetrics:
         query_complexity_scores = []
 
         for query in queries:
-            difficulty = self.difficulty_classifier.classify_query(query)
+            # Use fallback methods instead of self.difficulty_classifier
+            if self.difficulty_classifier is None:
+                difficulty = self._classify_query_difficulty_fallback(query)
+                score = self._calculate_complexity_score_fallback(query)
+            else:
+                difficulty = self.difficulty_classifier.classify_query(query)
+                score = self.difficulty_classifier.calculate_complexity_score(query)
+
             complexity_categories[difficulty] += 1
             query_complexity_scores.append({
                 'query': query,
                 'complexity': difficulty,
-                'score': self.difficulty_classifier.calculate_complexity_score(query)
+                'score': score
             })
 
         return {
@@ -964,475 +981,335 @@ class EnhancedEvaluationMetrics:
         """Parse WHERE clause and extract conditions."""
         return self._parse_where_clause_with_aliases(where_clause, schema_columns)
 
-
-class QueryDifficultyClassifier:
-    """Classifier to determine SQL query complexity."""
-
-    def __init__(self):
-        """Initialize query difficulty classifier."""
-        pass
-
-    def classify_query(self, query: str) -> str:
+    def pos_match(self, question1: str, question2: str) -> float:
         """
-        Classify query complexity.
+        Calculate POS_match score between two Vietnamese questions using Jensen-Shannon divergence.
+
+        POS_match(q1, q2) = 1 - D_JS(P1 || P2)
+
+        Where:
+        - P1, P2 are POS tag distributions of questions q1, q2
+        - D_JS is Jensen-Shannon divergence
+
+        Args:
+            question1 (str): First Vietnamese question
+            question2 (str): Second Vietnamese question
+
+        Returns:
+            float: POS match score between 0 and 1 (1 = identical POS distributions)
+        """
+        if pos_tag is None:
+            raise ImportError("underthesea library is required for POS tagging. Install with: pip install underthesea")
+
+        try:
+            # Get POS tag distributions for both questions
+            pos_dist1 = self._get_pos_distribution(question1)
+            pos_dist2 = self._get_pos_distribution(question2)
+
+            # Calculate Jensen-Shannon divergence
+            js_divergence = self._jensen_shannon_divergence(pos_dist1, pos_dist2)
+
+            # Convert to similarity score
+            pos_match_score = 1.0 - js_divergence
+
+            return max(0.0, min(1.0, pos_match_score))  # Ensure score is in [0, 1]
+
+        except Exception as e:
+            print(f"Error calculating POS match: {e}")
+            return 0.0
+
+    def _get_pos_distribution(self, text: str) -> np.ndarray:
+        """
+        Extract POS tag distribution from Vietnamese text.
+
+        Args:
+            text (str): Vietnamese text
+
+        Returns:
+            np.ndarray: Normalized POS tag distribution
+        """
+        if not text or not text.strip():
+            return np.array([])
+
+        try:
+            # Perform POS tagging using underthesea
+            pos_tags = pos_tag(text)
+
+            # Extract just the POS tags
+            tags = [tag[1] for tag in pos_tags if len(tag) >= 2]
+
+            if not tags:
+                return np.array([])
+
+            # Count tag frequencies
+            tag_counts = Counter(tags)
+
+            # Define standard Vietnamese POS tag set for consistency
+            standard_pos_tags = [
+                'N',      # Noun
+                'V',      # Verb
+                'A',      # Adjective
+                'R',      # Adverb
+                'P',      # Pronoun
+                'L',      # Determiner
+                'M',      # Numeral
+                'E',      # Preposition
+                'C',      # Conjunction
+                'I',      # Interjection
+                'T',      # Particle
+                'Y',      # Abbreviation
+                'S',      # Affix
+                'X',      # Unknown
+                'CH',     # Punctuation
+                'FW'      # Foreign word
+            ]
+
+            # Create distribution vector
+            total_tags = sum(tag_counts.values())
+            distribution = np.zeros(len(standard_pos_tags))
+
+            for i, pos_tag in enumerate(standard_pos_tags):
+                count = tag_counts.get(pos_tag, 0)
+                distribution[i] = count / total_tags if total_tags > 0 else 0.0
+
+            return distribution
+
+        except Exception as e:
+            print(f"Error getting POS distribution: {e}")
+            return np.array([])
+
+    def _jensen_shannon_divergence(self, p: np.ndarray, q: np.ndarray) -> float:
+        """
+        Calculate Jensen-Shannon divergence between two probability distributions.
+
+        D_JS(P || Q) = 0.5 * D_KL(P || M) + 0.5 * D_KL(Q || M)
+        where M = 0.5 * (P + Q)
+
+        Args:
+            p (np.ndarray): First probability distribution
+            q (np.ndarray): Second probability distribution
+
+        Returns:
+            float: Jensen-Shannon divergence (0 to 1)
+        """
+        if len(p) == 0 or len(q) == 0:
+            return 1.0  # Maximum divergence for empty distributions
+
+        if len(p) != len(q):
+            # Pad shorter distribution with zeros
+            max_len = max(len(p), len(q))
+            p_padded = np.zeros(max_len)
+            q_padded = np.zeros(max_len)
+
+            p_padded[:len(p)] = p
+            q_padded[:len(q)] = q
+
+            p, q = p_padded, q_padded
+
+        # Ensure distributions are normalized
+        p = p / np.sum(p) if np.sum(p) > 0 else np.ones_like(p) / len(p)
+        q = q / np.sum(q) if np.sum(q) > 0 else np.ones_like(q) / len(q)
+
+        # Add small epsilon to avoid log(0)
+        epsilon = 1e-10
+        p = p + epsilon
+        q = q + epsilon
+
+        # Renormalize after adding epsilon
+        p = p / np.sum(p)
+        q = q / np.sum(q)
+
+        # Calculate middle distribution M
+        m = 0.5 * (p + q)
+
+        # Calculate KL divergences
+        kl_pm = self._kl_divergence(p, m)
+        kl_qm = self._kl_divergence(q, m)
+
+        # Jensen-Shannon divergence
+        js_div = 0.5 * kl_pm + 0.5 * kl_qm
+
+        return js_div
+
+    def _kl_divergence(self, p: np.ndarray, q: np.ndarray) -> float:
+        """
+        Calculate Kullback-Leibler divergence D_KL(P || Q).
+
+        D_KL(P || Q) = sum(P(i) * log(P(i) / Q(i)))
+
+        Args:
+            p (np.ndarray): First probability distribution
+            q (np.ndarray): Second probability distribution
+
+        Returns:
+            float: KL divergence
+        """
+        # Handle the case where P(i) = 0: 0 * log(0/x) := 0
+        kl = 0.0
+        for i in range(len(p)):
+            if p[i] > 0 and q[i] > 0:
+                kl += p[i] * np.log(p[i] / q[i])
+
+        return kl
+
+    def batch_pos_match(self, questions1: List[str], questions2: List[str]) -> List[float]:
+        """
+        Calculate POS_match scores for batches of question pairs.
+
+        Args:
+            questions1 (List[str]): First set of Vietnamese questions
+            questions2 (List[str]): Second set of Vietnamese questions
+
+        Returns:
+            List[float]: List of POS match scores
+        """
+        if len(questions1) != len(questions2):
+            raise ValueError("Both question lists must have the same length")
+
+        scores = []
+        for q1, q2 in zip(questions1, questions2):
+            score = self.pos_match(q1, q2)
+            scores.append(score)
+
+        return scores
+
+    def pos_match_analysis(self, questions1: List[str], questions2: List[str]) -> Dict[str, Any]:
+        """
+        Comprehensive POS match analysis with detailed statistics.
+
+        Args:
+            questions1 (List[str]): First set of Vietnamese questions
+            questions2 (List[str]): Second set of Vietnamese questions
+
+        Returns:
+            Dict[str, Any]: Detailed POS match analysis
+        """
+        if len(questions1) != len(questions2):
+            raise ValueError("Both question lists must have the same length")
+
+        scores = self.batch_pos_match(questions1, questions2)
+
+        # Calculate statistics
+        analysis = {
+            'pos_match_scores': scores,
+            'statistics': {
+                'mean': np.mean(scores),
+                'median': np.median(scores),
+                'std': np.std(scores),
+                'min': np.min(scores),
+                'max': np.max(scores)
+            },
+            'distribution': {
+                'high_similarity': len([s for s in scores if s >= 0.8]),
+                'medium_similarity': len([s for s in scores if 0.5 <= s < 0.8]),
+                'low_similarity': len([s for s in scores if s < 0.5])
+            },
+            'pos_analysis': []
+        }
+
+        # Detailed POS analysis for sample pairs
+        sample_indices = np.random.choice(len(questions1), min(5, len(questions1)), replace=False)
+
+        for idx in sample_indices:
+            q1, q2 = questions1[idx], questions2[idx]
+            pos_dist1 = self._get_pos_distribution(q1)
+            pos_dist2 = self._get_pos_distribution(q2)
+
+            analysis['pos_analysis'].append({
+                'index': int(idx),
+                'question1': q1,
+                'question2': q2,
+                'pos_match_score': scores[idx],
+                'pos_distribution1': pos_dist1.tolist() if len(pos_dist1) > 0 else [],
+                'pos_distribution2': pos_dist2.tolist() if len(pos_dist2) > 0 else []
+            })
+
+        return analysis
+
+    def _classify_query_difficulty_fallback(self, query: str) -> str:
+        """
+        Fallback method to classify query difficulty when difficulty_classifier is disabled.
 
         Args:
             query (str): SQL query to classify
 
         Returns:
-            str: Complexity category ('simple', 'moderate', 'complex', 'very_complex')
+            str: Difficulty level ('simple', 'moderate', 'complex', 'very_complex')
         """
-        score = self.calculate_complexity_score(query)
-
-        if score < 3:
+        if not query or not query.strip():
             return 'simple'
-        elif score < 6:
+
+        query_lower = query.lower().strip()
+
+        # Count complexity indicators
+        complexity_score = 0
+
+        # Subqueries (+2 each)
+        complexity_score += len(re.findall(r'\bselect\b', query_lower)) - 1
+
+        # Joins (+1 each)
+        joins = len(re.findall(r'\b(join|inner join|left join|right join|full join)\b', query_lower))
+        complexity_score += joins
+
+        # Aggregations (+1 each)
+        aggregations = len(re.findall(r'\b(count|sum|avg|min|max|group by|having)\b', query_lower))
+        complexity_score += aggregations
+
+        # Conditions (+0.5 each)
+        conditions = len(re.findall(r'\b(where|and|or|like|in|not in|exists|not exists)\b', query_lower))
+        complexity_score += conditions * 0.5
+
+        # Order, limit, distinct (+0.5 each)
+        others = len(re.findall(r'\b(order by|limit|distinct|union|intersect|except)\b', query_lower))
+        complexity_score += others * 0.5
+
+        # Classify based on score
+        if complexity_score <= 2:
+            return 'simple'
+        elif complexity_score <= 5:
             return 'moderate'
-        elif score < 9:
+        elif complexity_score <= 8:
             return 'complex'
         else:
             return 'very_complex'
 
-    def calculate_complexity_score(self, query: str) -> float:
+    def _calculate_complexity_score_fallback(self, query: str) -> float:
         """
-        Calculate complexity score based on SQL query features.
+        Fallback method to calculate complexity score when difficulty_classifier is disabled.
 
         Args:
             query (str): SQL query
 
         Returns:
-            float: Complexity score (higher means more complex)
+            float: Complexity score (0.0 to 10.0)
         """
-        query = query.upper()
+        if not query or not query.strip():
+            return 0.0
+
+        query_lower = query.lower().strip()
         score = 0.0
 
-        # Base query elements
-        if 'SELECT' in query:
-            score += 1.0
+        # Base score for having a query
+        score += 1.0
 
-        if 'WHERE' in query:
-            score += 1.0
+        # Subqueries (2 points each)
+        subqueries = len(re.findall(r'\bselect\b', query_lower)) - 1
+        score += subqueries * 2.0
 
-        # Joins
-        join_count = query.count('JOIN')
-        score += join_count * 0.5
+        # Joins (1.5 points each)
+        joins = len(re.findall(r'\b(join|inner join|left join|right join|full join)\b', query_lower))
+        score += joins * 1.5
 
-        # Aggregations
-        aggregation_functions = ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX']
-        for func in aggregation_functions:
-            if func in query:
-                score += 0.5
+        # Aggregations (1 point each)
+        aggregations = len(re.findall(r'\b(count|sum|avg|min|max|group by|having)\b', query_lower))
+        score += aggregations * 1.0
 
-        # Group by and having
-        if 'GROUP BY' in query:
-            score += 1.0
+        # Conditions (0.5 points each)
+        conditions = len(re.findall(r'\b(where|and|or|like|in|not in|exists|not exists)\b', query_lower))
+        score += conditions * 0.5
 
-        if 'HAVING' in query:
-            score += 1.5
+        # Other complexity factors (0.3 points each)
+        others = len(re.findall(r'\b(order by|limit|distinct|union|intersect|except)\b', query_lower))
+        score += others * 0.3
 
-        # Order by and limit
-        if 'ORDER BY' in query:
-            score += 0.5
-
-        if 'LIMIT' in query:
-            score += 0.2
-
-        # Subqueries
-        subquery_count = query.count('(SELECT')
-        score += subquery_count * 2.0
-
-        # Set operations
-        set_operations = ['UNION', 'INTERSECT', 'EXCEPT']
-        for op in set_operations:
-            if op in query:
-                score += 1.5
-
-        # Window functions
-        if 'OVER' in query or 'PARTITION BY' in query:
-            score += 2.0
-
-        # Common Table Expressions (CTE)
-        if 'WITH' in query and ' AS (' in query:
-            score += 1.5
-
-        # Nested queries by counting parentheses pairs
-        open_paren_count = query.count('(')
-        close_paren_count = query.count(')')
-        paren_count = min(open_paren_count, close_paren_count)
-        score += max(0, (paren_count - subquery_count)) * 0.2
-
-        return score
-
-
-class SQLErrorAnalyzer:
-    """Analyzer for SQL query errors."""
-
-    def __init__(self):
-        """Initialize SQL error analyzer."""
-        pass
-
-    def analyze_query_errors(self, query: str) -> Dict[str, Any]:
-        """
-        Analyze potential errors in SQL query.
-
-        Args:
-            query (str): SQL query to analyze
-
-        Returns:
-            Dict[str, Any]: Identified errors
-        """
-        errors = {
-            'syntax_errors': [],
-            'semantic_issues': [],
-            'warning_flags': []
-        }
-
-        # Check for basic syntax errors
-        try:
-            parsed = sqlparse.parse(query)
-            if not parsed or not parsed[0].tokens:
-                errors['syntax_errors'].append('Invalid SQL syntax - parsing failed')
-        except Exception as e:
-            errors['syntax_errors'].append(f'SQL parsing error: {str(e)}')
-
-        # Check missing clauses
-        query_upper = query.upper()
-        if 'SELECT' not in query_upper:
-            errors['syntax_errors'].append('Missing SELECT clause')
-
-        if 'FROM' not in query_upper and not re.search(r'SELECT\s+\d+', query_upper):
-            errors['semantic_issues'].append('Missing FROM clause (may be intentional for scalar queries)')
-
-        # Check for unbalanced parentheses
-        open_paren_count = query.count('(')
-        close_paren_count = query.count(')')
-        if open_paren_count != close_paren_count:
-            errors['syntax_errors'].append(f'Unbalanced parentheses: {open_paren_count} opening vs {close_paren_count} closing')
-
-        # Check for unclosed quotes
-        single_quotes = query.count("'")
-        if single_quotes % 2 != 0:
-            errors['syntax_errors'].append('Unclosed single quotes')
-
-        double_quotes = query.count('"')
-        if double_quotes % 2 != 0:
-            errors['syntax_errors'].append('Unclosed double quotes')
-
-        # Check for common semantic issues
-        if 'GROUP BY' in query_upper and 'SELECT' in query_upper:
-            # Check for aggregation with GROUP BY
-            select_clause = re.search(r'SELECT\s+(.*?)\s+FROM', query_upper, re.DOTALL)
-            if select_clause:
-                select_items = select_clause.group(1)
-                has_aggregation = any(agg in select_items for agg in ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX'])
-                if not has_aggregation:
-                    errors['warning_flags'].append('GROUP BY without aggregation functions in SELECT')
-
-        # Check for potential cartesian products
-        from_clause = re.search(r'FROM\s+(.*?)(?:\s+WHERE|\s+GROUP|\s+ORDER|\s+HAVING|$)', query_upper, re.DOTALL)
-        if from_clause:
-            from_tables = from_clause.group(1)
-            if ',' in from_tables and 'JOIN' not in from_tables and 'WHERE' not in query_upper:
-                errors['warning_flags'].append('Potential cartesian product - multiple tables without join condition')
-
-        # Check for mismatched comparison operators
-        if re.search(r'WHERE\s+.*?=\s*NULL', query_upper) or re.search(r'HAVING\s+.*?=\s*NULL', query_upper):
-            errors['semantic_issues'].append('Comparing with NULL using = instead of IS NULL')
-
-        return errors
-
-
-class SQLAliasNormalizer:
-    """
-    Comprehensive SQL alias normalizer that handles all alias scenarios:
-    1. Different aliases between gold and predicted queries
-    2. Only one query uses aliases
-    3. Both queries use different alias patterns
-    4. Schema-aware column validation
-    """
-
-    def __init__(self, schema: dict):
-        """
-        Initialize with database schema.
-
-        Args:
-            schema (dict): Database schema from tables.json
-        """
-        self.schema = schema
-        self.table_to_columns = self._build_table_column_mapping()
-        self.column_to_table = self._build_column_table_mapping()
-
-    def _build_table_column_mapping(self) -> Dict[str, Set[str]]:
-        """Build mapping from table name to its columns."""
-        mapping = {}
-
-        table_names = self.schema.get('table_names', [])
-        column_names = self.schema.get('column_names', [])
-
-        for table_idx, table_name in enumerate(table_names):
-            mapping[table_name] = set()
-
-        for col_info in column_names:
-            if len(col_info) >= 2:
-                table_idx, column_name = col_info[0], col_info[1]
-                if table_idx >= 0 and table_idx < len(table_names):
-                    table_name = table_names[table_idx]
-                    mapping[table_name].add(column_name)
-
-        return mapping
-
-    def _build_column_table_mapping(self) -> Dict[str, Set[str]]:
-        """Build mapping from column name to possible tables (handle duplicate column names)."""
-        mapping = {}
-
-        table_names = self.schema.get('table_names', [])
-        column_names = self.schema.get('column_names', [])
-
-        for col_info in column_names:
-            if len(col_info) >= 2:
-                table_idx, column_name = col_info[0], col_info[1]
-                if table_idx >= 0 and table_idx < len(table_names):
-                    table_name = table_names[table_idx]
-                    if column_name not in mapping:
-                        mapping[column_name] = set()
-                    mapping[column_name].add(table_name)
-
-        return mapping
-
-    def normalize_sql_with_schema(self, sql: str) -> str:
-        """
-        Normalize SQL query by standardizing all aliases and column references.
-
-        This method:
-        1. Extracts all table references (with/without aliases)
-        2. Maps aliases to actual table names using schema
-        3. Standardizes all aliases to t1, t2, t3... format
-        4. Validates column references against schema
-        5. Normalizes column references to just column names where unambiguous
-
-        Args:
-            sql (str): SQL query to normalize
-
-        Returns:
-            str: Schema-aware normalized SQL
-        """
-        try:
-            # Step 1: Parse and extract table information
-            table_info = self._extract_table_info_comprehensive(sql)
-
-            # Step 2: Validate table names against schema
-            validated_tables = self._validate_tables_against_schema(table_info)
-
-            # Step 3: Create standardized alias mapping
-            alias_mapping = self._create_standard_alias_mapping(validated_tables)
-
-            # Step 4: Apply alias normalization
-            normalized_sql = self._apply_alias_normalization(sql, alias_mapping)
-
-            # Step 5: Normalize column references based on schema
-            normalized_sql = self._normalize_column_references_with_schema(normalized_sql, alias_mapping)
-
-            return normalized_sql
-
-        except Exception as e:
-            print(f"Error in schema-aware normalization: {e}")
-            return sql
-
-    def _extract_table_info_comprehensive(self, sql: str) -> List[Dict[str, str]]:
-        """
-        Extract comprehensive table information including aliases.
-
-        Returns list of dicts with keys: 'table_name', 'alias', 'context' (FROM/JOIN)
-        """
-        table_info = []
-        sql_lower = sql.lower()
-
-        # Pattern 1: FROM/JOIN table_name AS alias
-        pattern1 = r'\b(from|join)\s+(\w+)\s+as\s+(\w+)\b'
-        matches = re.finditer(pattern1, sql_lower)
-        for match in matches:
-            context, table_name, alias = match.groups()
-            table_info.append({
-                'table_name': table_name,
-                'alias': alias,
-                'context': context,
-                'has_explicit_alias': True
-            })
-
-        # Pattern 2: FROM/JOIN table_name alias (without AS)
-        pattern2 = r'\b(from|join)\s+(\w+)\s+(\w+)\b(?!\s*(?:on|where|group|order|having|limit|join|inner|left|right|outer))'
-        matches = re.finditer(pattern2, sql_lower)
-        for match in matches:
-            context, table_name, potential_alias = match.groups()
-            # Verify it's not a keyword
-            if potential_alias not in ['on', 'where', 'group', 'order', 'having', 'limit', 'join', 'inner', 'left', 'right', 'outer']:
-                table_info.append({
-                    'table_name': table_name,
-                    'alias': potential_alias,
-                    'context': context,
-                    'has_explicit_alias': True
-                })
-
-        # Pattern 3: FROM/JOIN table_name (no alias)
-        pattern3 = r'\b(from|join)\s+(\w+)\b(?!\s+(?!on|where|group|order|having|limit|join|inner|left|right|outer)\w+)'
-        matches = re.finditer(pattern3, sql_lower)
-        for match in matches:
-            context, table_name = match.groups()
-            # Check if this table already found with alias
-            already_found = any(t['table_name'] == table_name for t in table_info)
-            if not already_found:
-                table_info.append({
-                    'table_name': table_name,
-                    'alias': None,
-                    'context': context,
-                    'has_explicit_alias': False
-                })
-
-        return table_info
-
-    def _validate_tables_against_schema(self, table_info: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        """Validate table names against schema and filter valid ones."""
-        valid_tables = []
-        schema_table_names = set(self.schema.get('table_names', []))
-
-        for table_entry in table_info:
-            table_name = table_entry['table_name']
-            if table_name in schema_table_names:
-                valid_tables.append(table_entry)
-            else:
-                print(f"Warning: Table '{table_name}' not found in schema")
-
-        return valid_tables
-
-    def _create_standard_alias_mapping(self, validated_tables: List[Dict[str, str]]) -> Dict[str, str]:
-        """
-        Create mapping from current references to standardized aliases.
-
-        Returns dict mapping: current_reference -> standard_alias
-        """
-        mapping = {}
-        alias_counter = 1
-
-        # Sort tables by appearance order for consistency
-        for table_entry in validated_tables:
-            table_name = table_entry['table_name']
-            current_alias = table_entry['alias']
-            standard_alias = f"t{alias_counter}"
-
-            # Map table name to standard alias
-            mapping[table_name] = standard_alias
-
-            # If there's a current alias, map it too
-            if current_alias:
-                mapping[current_alias] = standard_alias
-
-            alias_counter += 1
-
-        return mapping
-
-    def _apply_alias_normalization(self, sql: str, alias_mapping: Dict[str, str]) -> str:
-        """Apply alias normalization to SQL query."""
-        normalized_sql = sql
-
-        # Sort by length (longest first) to avoid partial replacements
-        sorted_mappings = sorted(alias_mapping.items(), key=lambda x: len(x[0]), reverse=True)
-
-        for current_ref, standard_alias in sorted_mappings:
-            # Replace table references in FROM/JOIN clauses
-            # Pattern: FROM/JOIN table_name [AS alias] -> FROM/JOIN table_name AS standard_alias
-
-            # Case 1: table_name AS current_alias -> table_name AS standard_alias
-            pattern1 = rf'\b{re.escape(current_ref)}\s+as\s+\w+\b'
-            replacement1 = f"{current_ref} as {standard_alias}"
-            normalized_sql = re.sub(pattern1, replacement1, normalized_sql, flags=re.IGNORECASE)
-
-            # Case 2: table_name current_alias -> table_name standard_alias (no AS)
-            pattern2 = rf'\b{re.escape(current_ref)}\s+(?!as\s+)\w+\b(?!\s*\.)'
-            replacement2 = f"{current_ref} {standard_alias}"
-            normalized_sql = re.sub(pattern2, replacement2, normalized_sql, flags=re.IGNORECASE)
-
-            # Case 3: table_name (no alias) -> table_name AS standard_alias
-            pattern3 = rf'\b(from|join)\s+{re.escape(current_ref)}\b(?!\s+(?:as\s+)?\w+)'
-            replacement3 = rf'\1 {current_ref} as {standard_alias}'
-            normalized_sql = re.sub(pattern3, replacement3, normalized_sql, flags=re.IGNORECASE)
-
-            # Replace column references: current_ref.column -> standard_alias.column
-            pattern4 = rf'\b{re.escape(current_ref)}\.'
-            replacement4 = f"{standard_alias}."
-            normalized_sql = re.sub(pattern4, replacement4, normalized_sql, flags=re.IGNORECASE)
-
-        return normalized_sql
-
-    def _normalize_column_references_with_schema(self, sql: str, alias_mapping: Dict[str, str]) -> str:
-        """
-        Normalize column references using schema information.
-
-        For unambiguous columns (appear in only one table), remove table prefix.
-        For ambiguous columns, keep table prefix for clarity.
-        """
-        normalized_sql = sql
-
-        # Find all column references with table/alias prefix
-        pattern = r'\b(\w+)\.(\w+)\b'
-        matches = re.findall(pattern, normalized_sql, re.IGNORECASE)
-
-        for table_ref, column_name in matches:
-            # Check if column is unambiguous (appears in only one table)
-            possible_tables = self.column_to_table.get(column_name, set())
-
-            if len(possible_tables) == 1:
-                # Unambiguous column - can remove table prefix
-                old_ref = f"{table_ref}.{column_name}"
-                normalized_sql = normalized_sql.replace(old_ref, column_name)
-            # For ambiguous columns, keep the standardized table prefix
-
-        return normalized_sql
-
-    def normalize_column_list(self, columns: List[str]) -> List[str]:
-        """
-        Normalize a list of column references for comparison.
-
-        Args:
-            columns (List[str]): List of column references (may include table prefixes)
-
-        Returns:
-            List[str]: Normalized column list (just column names, sorted)
-        """
-        normalized = []
-
-        for col_ref in columns:
-            if '.' in col_ref:
-                # Extract column name from table.column or alias.column
-                parts = col_ref.split('.')
-                if len(parts) == 2:
-                    table_part, column_part = parts
-                    # Always use just the column name for consistency
-                    normalized.append(column_part.strip())
-                else:
-                    normalized.append(col_ref.strip())
-            else:
-                # No table prefix - use as is
-                normalized.append(col_ref.strip())
-
-        return sorted(set(normalized))  # Remove duplicates and sort for consistent comparison
-
-    def _resolve_table_reference(self, table_ref: str) -> Optional[str]:
-        """
-        Resolve a table reference (could be table name or alias) to actual table name.
-
-        Args:
-            table_ref (str): Table reference from SQL
-
-        Returns:
-            Optional[str]: Actual table name if found, None otherwise
-        """
-        schema_tables = set(self.schema.get('table_names', []))
-
-        # Check if it's a direct table name
-        if table_ref in schema_tables:
-            return table_ref
-
-        # Could be an alias - for now, return None
-        # In a more sophisticated implementation, we'd track alias mappings
-        return None
-
+        return min(score, 10.0)  # Cap at 10.0

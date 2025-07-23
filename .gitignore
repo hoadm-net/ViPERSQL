@@ -50,27 +50,36 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Logs
-logs/
-*.log
+# ViPERSQL specific
+# Debug and temporary files
+debug_*.py
+*_debug.py
+temp_*.py
+scratch_*.py
 
-# Experimental results (để tránh push kết quả thực nghiệm)
-results/
-outputs/
-experiments/
+# Logs and temporary outputs
+logs/*.log
+logs/debug/*
+logs/system/*
+*.tmp
 
-# Large model files
-*.pt
-*.pth
+# Results and intermediate files (keep structure, ignore content)
+results/*/intermediate_*
+results/*/*.tmp
+
+# Model caches and large files
+models/
+*.model
 *.bin
 *.safetensors
 
-# Test files
-test_*.py
-*_test.py
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
 
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
+# Test coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/

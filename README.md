@@ -6,55 +6,75 @@ A comprehensive Vietnamese Text-to-SQL system that converts natural language que
 
 ### Core Capabilities
 - **Multiple Strategies**: Zero-shot, Few-shot, and Chain-of-Thought (CoT) approaches
-- **Advanced Example Selection**: Random, Skill-based KNN, DICL (Domain-Independent Context Learning), and ASTRES (AST-based Retrieval and Example Selection) for few-shot learning
+- **Advanced Example Selection**: Random, Skill-based KNN, DICL (Domain-Independent Context Learning), ASTRES (AST-based Retrieval and Example Selection), and **ViR2 (Two-Stage Example Selection)** for few-shot learning
 - **Multi-level Vietnamese Support**: Standard, syllable, and word-level text segmentation
 - **Enhanced Evaluation**: Component-wise F1 scores with precision/recall analysis
 - **Multiple LLM Support**: OpenAI GPT and Anthropic Claude models
 - **Unified CLI Interface**: Single entry point for all operations
 
 ### Advanced Features
+- **ViR2 Two-Stage Selection**: PhoBERT semantic retrieval + beam search with POS matching and diversity optimization
 - **Template Management**: Flexible prompt engineering system
 - **Intermediate Results**: Automatic saving during long runs
 - **Comprehensive Reports**: Detailed evaluation with error analysis
 - **Modular Architecture**: Clean, extensible codebase with strategy pattern
-- **Configuration Management**: Environment-based configuration with overrides
+- **Configuration Management**: YAML-based configuration with environment overrides
 
 ## 📁 Project Structure
 
 ```
 ViPERSQL/
-├── mint/                           # Core system package
-│   ├── strategies/                 # SQL generation strategies
-│   │   ├── zero_shot.py           # Zero-shot strategy
-│   │   ├── few_shot.py            # Few-shot strategy
-│   │   └── cot.py                 # Chain-of-thought strategy
-│   ├── selectors/                 # Example selection strategies
-│   │   ├── random_selector.py     # Random selection
-│   │   ├── skill_knn_selector.py  # Skill-based KNN selection
-│   │   ├── dicl_selector.py       # DICL selection
-│   │   └── astres_selector.py     # ASTRES selection
-│   ├── config.py                  # Configuration management
-│   ├── llm_interface.py           # Unified LLM provider interface
-│   ├── template_manager.py        # Prompt template system
-│   ├── evaluator.py               # Enhanced evaluation engine
-│   ├── enhanced_metrics.py        # Advanced metrics calculation
-│   └── utils.py                   # Utility functions
+├── vipersql.py                    # Main CLI entry point
+├── requirements.txt               # Python dependencies
+├── configs/                       # Configuration files
+│   └── default.yaml              # Default YAML configuration
+├── docs/                          # Documentation
+│   ├── README.md                 # Documentation index
+│   ├── API.md                    # API documentation
+│   ├── PROJECT_STRUCTURE.md      # Detailed structure guide
+│   ├── EVALUATION_README.md       # Evaluation guide
+│   ├── README_DATASET.md         # Dataset documentation
+│   └── README_SCRIPTS.md         # Scripts documentation
+├── mint/                          # Core system package
+│   ├── core/                     # Core system components
+│   │   ├── evaluator.py          # Enhanced evaluation engine
+│   │   ├── llm_interface.py      # Unified LLM provider interface
+│   │   └── template_manager.py   # Prompt template system
+│   ├── strategies/               # SQL generation strategies
+│   │   ├── zero_shot.py          # Zero-shot strategy
+│   │   ├── few_shot.py           # Few-shot strategy
+│   │   └── cot.py                # Chain-of-thought strategy
+│   ├── selectors/                # Example selection strategies
+│   │   ├── random_selector.py    # Random selection
+│   │   ├── skill_knn_selector.py # Skill-based KNN selection
+│   │   ├── dicl_selector.py      # DICL selection
+│   │   ├── astres_selector.py    # ASTRES selection
+│   │   └── vir2_selector.py      # ViR2 Two-Stage selection
+│   ├── metrics/                  # Evaluation metrics
+│   │   ├── enhanced_metrics.py   # Advanced metrics calculation
+│   │   └── pos_match.py          # POS matching utilities
+│   ├── data/                     # Data processing utilities
+│   ├── config.py                 # Configuration management
+│   ├── constants.py              # System constants
+│   └── utils.py                  # Utility functions
 ├── dataset/                       # Vietnamese Text-to-SQL dataset
 │   └── ViText2SQL/
-│       ├── std-level/             # Standard Vietnamese
-│       ├── syllable-level/        # Syllable-segmented
-│       └── word-level/            # Word-segmented
+│       ├── std-level/            # Standard Vietnamese
+│       ├── syllable-level/       # Syllable-segmented
+│       └── word-level/           # Word-segmented
 ├── templates/                     # Prompt templates
-│   ├── vietnamese_nl2sql.txt      # Zero-shot template
-│   ├── few_shot_vietnamese_nl2sql.txt  # Few-shot template
-│   ├── cot_vietnamese_nl2sql.txt  # Chain-of-thought template
+│   ├── vietnamese_nl2sql.txt     # Zero-shot template
+│   ├── few_shot_vietnamese_nl2sql.txt # Few-shot template
+│   ├── cot_vietnamese_nl2sql.txt # Chain-of-thought template
 │   └── skill_extraction_vietnamese.txt # Skill extraction template
 ├── scripts/                       # Utility scripts
 │   ├── skill_knn_preprocessing.py # Skill extraction preprocessing
-│   ├── build_dicl_candidates.py   # DICL candidate building
-│   └── sql_type_analyzer.py       # SQL complexity analysis
-├── results/                       # Evaluation results
-└── vipersql.py                    # Main CLI entry point
+│   ├── build_dicl_candidates.py  # DICL candidate building
+│   └── sql_type_analyzer.py      # SQL complexity analysis
+├── tests/                        # Test files
+├── tools/                        # Development tools
+├── logs/                         # System logs
+└── results/                      # Evaluation results
 ```
 
 ## 🛠 Installation
@@ -114,6 +134,15 @@ python vipersql.py --strategy few-shot --example-selection-strategy dicl --sampl
 
 # ASTRES example selection
 python vipersql.py --strategy few-shot --example-selection-strategy astres --samples 10
+
+# ViR2 example selection with custom parameters
+python vipersql.py --strategy few-shot --example-selection-strategy vir2 --samples 10
+
+# ViR2 Two-Stage Selection
+python vipersql.py --strategy few-shot --example-selection-strategy vir2 --samples 10
+
+# ViR2 with different dataset levels
+python vipersql.py --strategy few-shot --example-selection-strategy vir2 --level syllable --samples 10
 ```
 
 ## 🧠 Strategies
@@ -154,6 +183,18 @@ Uses training examples to guide SQL generation with multiple selection strategie
 - **Structural Understanding**: Converts SQL queries to AST for precise structural similarity comparison
 - **Intelligent Re-ranking**: Re-ranks semantically similar examples by AST structural similarity for optimal selection
 - **Candidate Reuse**: Leverages DICL candidate building script to create high-quality candidate pools
+
+#### ViR2 (Two-Stage Example Selection)
+- **Stage 1 - PhoBERT Semantic Retrieval**: Uses PhoBERT-base-v2 to encode Vietnamese questions and retrieve top-M (default: 50) semantically similar examples from a pre-computed meaning pool
+- **Stage 2 - Beam Search Re-ranking**: Applies beam search with POS matching and diversity optimization to select the optimal k examples from the candidate pool
+- **POS Matching Component**: Leverages Vietnamese Part-of-Speech tagging to measure grammatical structure similarity between questions
+- **Diversity Optimization**: Ensures selected examples are diverse to provide comprehensive learning signals, using semantic embedding distances
+- **Configurable Parameters**: 
+  - `candidate_pool_size` (M): Stage 1 pool size (default: 50)
+  - `beam_size` (B): Beam search width (default: 5)  
+  - `diversity_weight` (λ): Balance between POS matching and diversity (default: 0.3)
+- **Formula**: `Score(S, q_new) = (1/|S|) * Σ POS_match(q_new, q_e) + λ * Diversity(S)`
+- **Performance**: Combines semantic understanding with structural analysis for optimal example selection
 
 ### 3. Chain-of-Thought (CoT)
 Step-by-step reasoning approach that breaks down complex problems:

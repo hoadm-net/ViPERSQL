@@ -6,8 +6,8 @@ Uses enhanced evaluation metrics for better analysis.
 """
 
 from typing import Dict, Any, List, Optional
-from .config import ViPERConfig
-from .enhanced_metrics import EnhancedEvaluationMetrics
+from ..config import ViPERConfig
+from ..metrics.enhanced_metrics import EnhancedEvaluationMetrics
 import re
 import json
 import os

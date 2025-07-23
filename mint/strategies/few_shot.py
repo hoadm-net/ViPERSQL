@@ -27,6 +27,13 @@ class FewShotStrategy(BaseStrategy):
         elif self.selection_strategy == 'astres':
             from ..selectors import ASTRESSelector
             return ASTRESSelector(self.config)
+        elif self.selection_strategy == 'vir2':
+            from ..selectors import ViR2Selector
+            selector = ViR2Selector(self.config)
+            # Load training data for ViR2
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
         elif self.selection_strategy == 'random':
             from ..selectors import RandomSelector
             return RandomSelector(self.config)

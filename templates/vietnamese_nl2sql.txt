@@ -23,4 +23,4 @@ Important Guidelines:
 
 Vietnamese Question: {question}
 
-SQL Query: 
+SQL Query:

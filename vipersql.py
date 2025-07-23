@@ -31,14 +31,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
 
-# Import MINT components
+# Import MINT components with updated structure
 from mint import (
     ViPERConfig, 
     create_strategy, 
     load_dataset,
-    load_tables_info,
-    UnifiedEvaluator
+    load_tables_info
 )
+from mint.core import UnifiedEvaluator
 from mint.constants import (
     SEPARATOR_LENGTH, LONG_SEPARATOR_LENGTH,
     QUESTION_PREVIEW_LENGTH, SQL_PREVIEW_LENGTH,
@@ -267,8 +267,8 @@ def parse_args():
                         help='Number of samples to process (default: all)')
 
     parser.add_argument('--example-selection-strategy', type=str, default='random',
-                        choices=['random', 'skill_knn', 'dicl', 'astres'],
-                        help='Example selection strategy for few-shot (random, skill_knn, dicl, or astres)')
+                        choices=['random', 'skill_knn', 'dicl', 'astres', 'vir2'],
+                        help='Example selection strategy for few-shot (random, skill_knn, dicl, astres, or vir2)')
 
     parser.add_argument('--config', type=str, default='.env',
                         help='Path to configuration file')

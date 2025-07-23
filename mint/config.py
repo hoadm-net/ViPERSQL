@@ -57,7 +57,12 @@ class ViPERConfig:
     # Few-shot Settings
     few_shot_examples: int = field(default=DEFAULT_FEW_SHOT_EXAMPLES)
     few_shot_template: str = field(default="few_shot_vietnamese_nl2sql.txt")
-    example_selection_strategy: str = field(default="random")  # 'random' or 'skill_knn'
+    example_selection_strategy: str = field(default="random")  # 'random', 'skill_knn', 'dicl', 'astres', 'vir2'
+
+    # ViR2 Selector Settings
+    vir2_candidate_pool_size: int = field(default=50)  # M parameter - Stage 1 retrieval size
+    vir2_beam_size: int = field(default=5)            # B parameter - Beam search size
+    vir2_diversity_weight: float = field(default=0.3)  # λ parameter - Diversity weight
 
     # Chain-of-Thought Settings
     cot_reasoning_steps: bool = field(default=True)

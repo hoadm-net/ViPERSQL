@@ -9,16 +9,26 @@ tqdm>=4.64.0
 numpy>=1.21.0
 pandas>=1.5.0
 scikit-learn>=1.1.0
+scipy>=1.9.0
 
 # Machine Learning / NLP
 torch>=2.0.0
 transformers>=4.20.0
+sentence-transformers>=2.2.0
 
 # SQL parsing and validation
 sqlparse>=0.4.2
 
 # Text processing
 Levenshtein>=0.20.0
+underthesea>=6.7.0
+
+# Vietnamese language model
+transformers>=4.20.0
+torch>=2.0.0
+
+# For PhoBERT
+sentence-transformers>=2.2.0
 
 # Evaluation metrics
 nltk>=3.7

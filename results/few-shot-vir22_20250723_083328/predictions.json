@@ -1,0 +1,16 @@
+{
+  "predictions": [
+    {
+      "db_id": "architecture",
+      "question": "Có tất cả bao nhiêu kiến trúc sư nữ ?",
+      "predicted": "SELECT COUNT(*) \nFROM kiến_trúc_sư \nWHERE giới_tính = 'nữ';",
+      "gold": "select count ( * ) from kiến_trúc_sư where giới_tính = \"female\""
+    },
+    {
+      "db_id": "architecture",
+      "question": "Liệt kê tên , quốc tịch và id của tất cả các kiến trúc sư nam theo thứ tự tên .",
+      "predicted": "SELECT tên, quốc_tịch, id\nFROM kiến_trúc_sư\nWHERE giới_tính = 'nam'\nORDER BY tên;",
+      "gold": "select tên , quốc_tịch , id from kiến_trúc_sư where giới_tính = \"male\" order by tên"
+    }
+  ]
+}

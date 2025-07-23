@@ -7,11 +7,13 @@ from .random_selector import RandomSelector
 from .skill_knn_selector import SkillKNNSelector
 from .dicl_selector import DICLSelector
 from .astres_selector import ASTRESSelector
+from .vir2_selector import ViR2Selector
 
 __all__ = [
     'BaseSelector',
     'RandomSelector',
     'SkillKNNSelector',
     'DICLSelector',
-    'ASTRESSelector'
+    'ASTRESSelector',
+    'ViR2Selector'
 ]
