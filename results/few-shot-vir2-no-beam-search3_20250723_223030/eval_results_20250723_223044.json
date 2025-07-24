@@ -1,0 +1,451 @@
+{
+  "exact_match": {
+    "em_accuracy": 0.0,
+    "total_queries": 3,
+    "exact_matches": 0,
+    "match_indices": []
+  },
+  "component_f1": {
+    "f1_scores": {
+      "SELECT": 0.6666666666666666,
+      "FROM": 0.8333333333333334,
+      "WHERE": 1.0,
+      "GROUP BY": 0.8571428571428571,
+      "ORDER BY": 1.0,
+      "HAVING": 0.5714285714285715,
+      "KEYWORDS": 0.8275862068965518
+    },
+    "precision_scores": {
+      "SELECT": 0.6666666666666666,
+      "FROM": 0.8333333333333334,
+      "WHERE": 1.0,
+      "GROUP BY": 0.75,
+      "ORDER BY": 1.0,
+      "HAVING": 0.5,
+      "KEYWORDS": 0.8
+    },
+    "recall_scores": {
+      "SELECT": 0.6666666666666666,
+      "FROM": 0.8333333333333334,
+      "WHERE": 1.0,
+      "GROUP BY": 1.0,
+      "ORDER BY": 1.0,
+      "HAVING": 0.6666666666666666,
+      "KEYWORDS": 0.8571428571428571
+    },
+    "component_stats": {
+      "SELECT": {
+        "tp": 4,
+        "fp": 2,
+        "fn": 2,
+        "total": 3
+      },
+      "FROM": {
+        "tp": 5,
+        "fp": 1,
+        "fn": 1,
+        "total": 3
+      },
+      "WHERE": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "total": 3
+      },
+      "GROUP BY": {
+        "tp": 3,
+        "fp": 1,
+        "fn": 0,
+        "total": 3
+      },
+      "ORDER BY": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "total": 3
+      },
+      "HAVING": {
+        "tp": 2,
+        "fp": 2,
+        "fn": 1,
+        "total": 3
+      },
+      "KEYWORDS": {
+        "tp": 12,
+        "fp": 3,
+        "fn": 2,
+        "total": 3
+      }
+    },
+    "component_details": {
+      "SELECT": [
+        {
+          "query_index": 0,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "chi_tiết_tài_sản",
+            "id_tài_sản"
+          ],
+          "gold": [
+            "chi_tiết_tài_sản",
+            "id_tài_sản"
+          ],
+          "tp": 2,
+          "fp": 0,
+          "fn": 0
+        },
+        {
+          "query_index": 1,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "count(id_tài_sản) as số_lượng_tài_sản",
+            "id_hợp_đồng_bảo_trì"
+          ],
+          "gold": [
+            "count ( * )",
+            "id_hợp_đồng_bảo_trì"
+          ],
+          "tp": 1,
+          "fp": 1,
+          "fn": 1
+        },
+        {
+          "query_index": 2,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "id_tài_sản) as số_lượng_tài_sản",
+            "id_công_ty"
+          ],
+          "gold": [
+            "count ( * )",
+            "id_công_ty"
+          ],
+          "tp": 1,
+          "fp": 1,
+          "fn": 1
+        }
+      ],
+      "FROM": [
+        {
+          "query_index": 0,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "nhật_ký_lỗi",
+            "bộ_phận_của_tài_sản",
+            "tài_sản"
+          ],
+          "gold": [
+            "bộ_phận_của_tài_sản",
+            "tài_sản"
+          ],
+          "tp": 2,
+          "fp": 1,
+          "fn": 0
+        },
+        {
+          "query_index": 1,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "tài_sản"
+          ],
+          "gold": [
+            "hợp_đồng_bảo_trì",
+            "tài_sản"
+          ],
+          "tp": 1,
+          "fp": 0,
+          "fn": 1
+        },
+        {
+          "query_index": 2,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "công_ty_bên_thứ_ba",
+            "tài_sản"
+          ],
+          "gold": [
+            "công_ty_bên_thứ_ba",
+            "tài_sản"
+          ],
+          "tp": 2,
+          "fp": 0,
+          "fn": 0
+        }
+      ],
+      "WHERE": [],
+      "GROUP BY": [
+        {
+          "query_index": 0,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "chi_tiết_tài_sản",
+            "id_tài_sản"
+          ],
+          "gold": [
+            "id_tài_sản"
+          ],
+          "tp": 1,
+          "fp": 1,
+          "fn": 0
+        },
+        {
+          "query_index": 1,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "id_hợp_đồng_bảo_trì"
+          ],
+          "gold": [
+            "id_hợp_đồng_bảo_trì"
+          ],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0
+        },
+        {
+          "query_index": 2,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "id_công_ty"
+          ],
+          "gold": [
+            "id_công_ty"
+          ],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0
+        }
+      ],
+      "ORDER BY": [],
+      "HAVING": [
+        {
+          "query_index": 0,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "count(distinct id_bộ_phận) = 2",
+            "count(distinct id_mục_nhập_của_nhật_ký_lỗi) < 2"
+          ],
+          "gold": [
+            "count ( * ) = 2 intersect select id_tài_sản , chi_tiết_tài_sản from tài_sản t1 t1 join nhật_ký_lỗi t3 t2 on id_tài_sản = id_tài_sản group by id_tài_sản having count ( * ) < 2"
+          ],
+          "tp": 0,
+          "fp": 2,
+          "fn": 1
+        }
+      ],
+      "KEYWORDS": [
+        {
+          "query_index": 0,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "having",
+            "distinct",
+            "join",
+            "from",
+            "select",
+            "left join",
+            "group by"
+          ],
+          "gold": [
+            "having",
+            "join",
+            "intersect",
+            "from",
+            "select",
+            "group by"
+          ],
+          "tp": 5,
+          "fp": 2,
+          "fn": 1
+        },
+        {
+          "query_index": 1,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "from",
+            "select",
+            "group by"
+          ],
+          "gold": [
+            "join",
+            "from",
+            "select",
+            "group by"
+          ],
+          "tp": 3,
+          "fp": 0,
+          "fn": 1
+        },
+        {
+          "query_index": 2,
+          "db_id": "assets_maintenance",
+          "predicted": [
+            "join",
+            "left join",
+            "from",
+            "select",
+            "group by"
+          ],
+          "gold": [
+            "join",
+            "from",
+            "select",
+            "group by"
+          ],
+          "tp": 4,
+          "fp": 1,
+          "fn": 0
+        }
+      ]
+    },
+    "avg_f1": 0.8223082336382829
+  },
+  "difficulty_analysis": {
+    "distribution": {
+      "simple": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "moderate": {
+        "count": 2,
+        "percentage": 66.66666666666666
+      },
+      "complex": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "very_complex": {
+        "count": 1,
+        "percentage": 33.33333333333333
+      }
+    },
+    "query_details": [
+      {
+        "query": "select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join bộ_phận_của_tài_sản as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) = 2 intersect select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join nhật_ký_lỗi as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) < 2",
+        "complexity": "very_complex",
+        "score": 10.0
+      },
+      {
+        "query": "select count ( * ) , t1.id_hợp_đồng_bảo_trì from hợp_đồng_bảo_trì as t1 join tài_sản as t2 on t1.id_hợp_đồng_bảo_trì = t2.id_hợp_đồng_bảo_trì group by t1.id_hợp_đồng_bảo_trì",
+        "complexity": "moderate",
+        "score": 4.5
+      },
+      {
+        "query": "select count ( * ) , t1.id_công_ty from công_ty_bên_thứ_ba as t1 join tài_sản as t2 on t1.id_công_ty = t2.id_công_ty_cung_cấp group by t1.id_công_ty",
+        "complexity": "moderate",
+        "score": 4.5
+      }
+    ]
+  },
+  "error_analysis": {
+    "syntax_errors": {
+      "count": 0,
+      "percentage": 0.0,
+      "affected_queries": []
+    },
+    "semantic_errors": {
+      "count": 3,
+      "percentage": 100.0,
+      "affected_queries": [
+        0,
+        1,
+        2
+      ]
+    },
+    "column_selection_errors": {
+      "count": 3,
+      "percentage": 100.0,
+      "affected_queries": [
+        0,
+        1,
+        2
+      ]
+    },
+    "table_selection_errors": {
+      "count": 3,
+      "percentage": 100.0,
+      "affected_queries": [
+        0,
+        1,
+        2
+      ]
+    },
+    "condition_errors": {
+      "count": 0,
+      "percentage": 0.0,
+      "affected_queries": []
+    },
+    "join_errors": {
+      "count": 3,
+      "percentage": 100.0,
+      "affected_queries": [
+        0,
+        1,
+        2
+      ]
+    },
+    "aggregation_errors": {
+      "count": 3,
+      "percentage": 100.0,
+      "affected_queries": [
+        0,
+        1,
+        2
+      ]
+    },
+    "operator_errors": {
+      "count": 1,
+      "percentage": 33.33333333333333,
+      "affected_queries": [
+        1
+      ]
+    }
+  },
+  "query_categories": {
+    "perfect_match": [],
+    "high_similarity": [],
+    "partial_match": [],
+    "low_similarity": [
+      1,
+      2
+    ],
+    "complete_mismatch": [
+      0
+    ]
+  },
+  "experiment_config": {
+    "model_name": "gpt-4.1-mini",
+    "strategy": "few-shot",
+    "level": "std",
+    "split": "test",
+    "num_samples": 3,
+    "example_selection_strategy": "vir2-no-beam-search",
+    "timestamp": "20250723_223030"
+  },
+  "predictions": [
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những tài sản nào có 2 bộ phận và có ít hơn 2 nhật kí lỗi ? Liệt kê id và chi tiết của những tài sản này .",
+      "predicted": "select tài_sản.id_tài_sản, tài_sản.chi_tiết_tài_sản\nfrom tài_sản\njoin bộ_phận_của_tài_sản on tài_sản.id_tài_sản = bộ_phận_của_tài_sản.id_tài_sản\nleft join nhật_ký_lỗi on tài_sản.id_tài_sản = nhật_ký_lỗi.id_tài_sản\ngroup by tài_sản.id_tài_sản, tài_sản.chi_tiết_tài_sản\nhaving count(distinct bộ_phận_của_tài_sản.id_bộ_phận) = 2\nand count(distinct nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi) < 2",
+      "gold": "select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join bộ_phận_của_tài_sản as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) = 2 intersect select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join nhật_ký_lỗi as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) < 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi hợp đồng bảo trì có bao nhiêu tài sản ? Liệt kê id hợp đồng và số lượng tài sản trong từng hợp đồng .",
+      "predicted": "select id_hợp_đồng_bảo_trì, count(id_tài_sản) as số_lượng_tài_sản\nfrom tài_sản\ngroup by id_hợp_đồng_bảo_trì",
+      "gold": "select count ( * ) , t1.id_hợp_đồng_bảo_trì from hợp_đồng_bảo_trì as t1 join tài_sản as t2 on t1.id_hợp_đồng_bảo_trì = t2.id_hợp_đồng_bảo_trì group by t1.id_hợp_đồng_bảo_trì"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Đếm số lượng tài sản được cung cấp bởi từng công ty bên thứ ba . Hiển thị đồng thời id của những công ty này .",
+      "predicted": "select công_ty_bên_thứ_ba.id_công_ty, count(tài_sản.id_tài_sản) as số_lượng_tài_sản\nfrom công_ty_bên_thứ_ba\nleft join tài_sản on công_ty_bên_thứ_ba.id_công_ty = tài_sản.id_công_ty_cung_cấp\ngroup by công_ty_bên_thứ_ba.id_công_ty",
+      "gold": "select count ( * ) , t1.id_công_ty from công_ty_bên_thứ_ba as t1 join tài_sản as t2 on t1.id_công_ty = t2.id_công_ty_cung_cấp group by t1.id_công_ty"
+    }
+  ],
+  "timing_info": {
+    "sql_generation_time": 13.389809131622314,
+    "evaluation_time": 0.07430458068847656,
+    "total_execution_time": 13.464114904403687,
+    "start_time": "2025-07-23 22:30:30",
+    "end_time": "2025-07-23 22:30:44"
+  }
+}

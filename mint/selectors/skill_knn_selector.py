@@ -16,7 +16,7 @@ from transformers import AutoTokenizer, AutoModel
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .base_selector import BaseSelector
-from ..llm_interface import LLMInterface
+from ..core.llm_interface import LLMInterface
 
 
 class BERTEmbedder:

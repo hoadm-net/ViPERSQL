@@ -57,7 +57,7 @@ class ViPERSQLCLI:
     def __init__(self, config: ViPERConfig):
         """Initialize CLI with configuration."""
         self.config = config
-        self.strategy = create_strategy(config.strategy, **config.to_dict())
+        self.strategy = create_strategy(config.strategy, config)
         self.evaluator = UnifiedEvaluator(config)
         
         print("🚀 ViPERSQL - Vietnamese Text-to-SQL System")
@@ -267,8 +267,8 @@ def parse_args():
                         help='Number of samples to process (default: all)')
 
     parser.add_argument('--example-selection-strategy', type=str, default='random',
-                        choices=['random', 'skill_knn', 'dicl', 'astres', 'vir2'],
-                        help='Example selection strategy for few-shot (random, skill_knn, dicl, astres, or vir2)')
+                        choices=['random', 'skill_knn', 'dicl', 'astres', 'vir2', 'vir2-no-pos', 'vir2-no-diversity', 'vir2-no-beam-search'],
+                        help='Example selection strategy for few-shot (random, skill_knn, dicl, astres, vir2, vir2-no-pos, vir2-no-diversity, or vir2-no-beam-search)')
 
     parser.add_argument('--config', type=str, default='.env',
                         help='Path to configuration file')

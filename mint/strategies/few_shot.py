@@ -34,6 +34,27 @@ class FewShotStrategy(BaseStrategy):
             dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
             selector.load_training_data(dataset_path)
             return selector
+        elif self.selection_strategy == 'vir2-no-pos':
+            from ..selectors import ViR2NoPOSSelector
+            selector = ViR2NoPOSSelector(self.config)
+            # Load training data for ViR2 No POS
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
+        elif self.selection_strategy == 'vir2-no-diversity':
+            from ..selectors import ViR2NoDiversitySelector
+            selector = ViR2NoDiversitySelector(self.config)
+            # Load training data for ViR2 No Diversity
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
+        elif self.selection_strategy == 'vir2-no-beam-search':
+            from ..selectors import ViR2NoBeamSearchSelector
+            selector = ViR2NoBeamSearchSelector(self.config)
+            # Load training data for ViR2 No Beam Search
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
         elif self.selection_strategy == 'random':
             from ..selectors import RandomSelector
             return RandomSelector(self.config)

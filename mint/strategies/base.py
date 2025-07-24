@@ -40,9 +40,9 @@ class BaseStrategy(ABC):
         self.strategy_name = self._get_strategy_name()
         
         # Import dependencies here to avoid circular imports
-        from ..llm_interface import LLMInterface
-        from ..template_manager import TemplateManager
-        
+        from ..core.llm_interface import LLMInterface
+        from ..core.template_manager import TemplateManager
+
         self.llm = LLMInterface(config)
         self.templates = TemplateManager(config)
         
@@ -282,4 +282,4 @@ class BaseStrategy(ABC):
     
     def __str__(self) -> str:
         """String representation."""
-        return f"{self.__class__.__name__}(strategy={self.strategy_name})" 
+        return f"{self.__class__.__name__}(strategy={self.strategy_name})"

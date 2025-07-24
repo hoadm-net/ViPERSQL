@@ -8,8 +8,8 @@ import time
 from typing import Dict, Any, Optional
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
-from .config import ViPERConfig
-from .constants import FALLBACK_TEMPERATURE, FALLBACK_MAX_TOKENS
+from ..config import ViPERConfig
+from ..constants import FALLBACK_TEMPERATURE, FALLBACK_MAX_TOKENS
 import re
 
 

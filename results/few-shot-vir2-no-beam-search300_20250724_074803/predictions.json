@@ -1,0 +1,1804 @@
+{
+  "predictions": [
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những tài sản nào có 2 bộ phận và có ít hơn 2 nhật kí lỗi ? Liệt kê id và chi tiết của những tài sản này .",
+      "predicted": "select tài_sản.id_tài_sản, tài_sản.chi_tiết_tài_sản\nfrom tài_sản\njoin bộ_phận_của_tài_sản on tài_sản.id_tài_sản = bộ_phận_của_tài_sản.id_tài_sản\nleft join nhật_ký_lỗi on tài_sản.id_tài_sản = nhật_ký_lỗi.id_tài_sản\ngroup by tài_sản.id_tài_sản, tài_sản.chi_tiết_tài_sản\nhaving count(distinct bộ_phận_của_tài_sản.id_bộ_phận) = 2\nand count(distinct nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi) < 2",
+      "gold": "select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join bộ_phận_của_tài_sản as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) = 2 intersect select t1.id_tài_sản , t1.chi_tiết_tài_sản from tài_sản as t1 join nhật_ký_lỗi as t2 on t1.id_tài_sản = t2.id_tài_sản group by t1.id_tài_sản having count ( * ) < 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi hợp đồng bảo trì có bao nhiêu tài sản ? Liệt kê id hợp đồng và số lượng tài sản trong từng hợp đồng .",
+      "predicted": "select id_hợp_đồng_bảo_trì, count(id_tài_sản) as số_lượng_tài_sản\nfrom tài_sản\ngroup by id_hợp_đồng_bảo_trì",
+      "gold": "select count ( * ) , t1.id_hợp_đồng_bảo_trì from hợp_đồng_bảo_trì as t1 join tài_sản as t2 on t1.id_hợp_đồng_bảo_trì = t2.id_hợp_đồng_bảo_trì group by t1.id_hợp_đồng_bảo_trì"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Đếm số lượng tài sản được cung cấp bởi từng công ty bên thứ ba . Hiển thị đồng thời id của những công ty này .",
+      "predicted": "select công_ty_bên_thứ_ba.id_công_ty, count(tài_sản.id_tài_sản) as số_lượng_tài_sản\nfrom công_ty_bên_thứ_ba\nleft join tài_sản on công_ty_bên_thứ_ba.id_công_ty = tài_sản.id_công_ty_cung_cấp\ngroup by công_ty_bên_thứ_ba.id_công_ty",
+      "gold": "select count ( * ) , t1.id_công_ty from công_ty_bên_thứ_ba as t1 join tài_sản as t2 on t1.id_công_ty = t2.id_công_ty_cung_cấp group by t1.id_công_ty"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Công ty bên thứ ba nào có ít nhất 2 kỹ sư bảo trì hoặc có ít nhất 2 hợp đồng bảo trì ? Liệt kê tên và id của những công ty này .",
+      "predicted": "select tên_công_ty, id_công_ty from công_ty_bên_thứ_ba where id_công_ty in (\n    select id_công_ty from kỹ_sư_bảo_trì group by id_công_ty having count(id_kỹ_sư) >= 2\n) union\nselect tên_công_ty, id_công_ty from công_ty_bên_thứ_ba where id_công_ty in (\n    select id_hợp_đồng_bảo_trì_của_công_ty from hợp_đồng_bảo_trì group by id_hợp_đồng_bảo_trì_của_công_ty having count(id_hợp_đồng_bảo_trì) >= 2\n)",
+      "gold": "select t1.id_công_ty , t1.tên_công_ty from công_ty_bên_thứ_ba as t1 join kỹ_sư_bảo_trì as t2 on t1.id_công_ty = t2.id_công_ty group by t1.id_công_ty having count ( * ) >= 2 union select t3.id_công_ty , t3.tên_công_ty from công_ty_bên_thứ_ba as t3 join hợp_đồng_bảo_trì as t4 on t3.id_công_ty = t4.id_hợp_đồng_bảo_trì_của_công_ty group by t3.id_công_ty having count ( * ) >= 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết tên và id của những nhân viên đã ghi lại nhật ký lỗi nhưng chưa liên hệ với bất kỳ kỹ sư nào .",
+      "predicted": "select distinct nhân_viên.tên_nhân_viên, nhân_viên.id_nhân_viên\nfrom nhân_viên\njoin nhật_ký_lỗi on nhân_viên.id_nhân_viên = nhật_ký_lỗi.được_ghi_lại_bởi_nhân_viên_có_id\nwhere nhân_viên.id_nhân_viên not in (\n    select distinct chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc\n    from chuyến_thăm_của_kỹ_sư\n    where chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc is not null\n)",
+      "gold": "select t1.tên_nhân_viên , t1.id_nhân_viên from nhân_viên as t1 join nhật_ký_lỗi as t2 on t1.id_nhân_viên = t2.được_ghi_lại_bởi_nhân_viên_có_id except select t3.tên_nhân_viên , t3.id_nhân_viên from nhân_viên as t3 join chuyến_thăm_của_kỹ_sư as t4 on t3.id_nhân_viên = t4.id_nhân_viên_liên_lạc"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Kỹ sư nào đã đến nhiều lần nhất ? Hiển thị id , tên và họ của kỹ sư này .",
+      "predicted": "select t1.id_kỹ_sư, t1.tên, t1.họ \nfrom kỹ_sư_bảo_trì as t1 \njoin chuyến_thăm_của_kỹ_sư as t2 on t1.id_kỹ_sư = t2.id_kỹ_sư \ngroup by t1.id_kỹ_sư, t1.tên, t1.họ \norder by count(*) desc \nlimit 1",
+      "gold": "select t1.id_kỹ_sư , t1.tên , t1.họ from kỹ_sư_bảo_trì as t1 join chuyến_thăm_của_kỹ_sư as t2 group by t1.id_kỹ_sư order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết những bộ phận nào bị nhiều hơn 2 lỗi . Hiển thị tên và id của những bộ phận này .",
+      "predicted": "select bộ_phận.id_bộ_phận, bộ_phận.tên_bộ_phận \nfrom lỗi_bộ_phận \njoin bộ_phận on lỗi_bộ_phận.id_bộ_phận = bộ_phận.id_bộ_phận \ngroup by bộ_phận.id_bộ_phận, bộ_phận.tên_bộ_phận \nhaving count(*) > 2",
+      "gold": "select t1.tên_bộ_phận , t1.id_bộ_phận from bộ_phận as t1 join lỗi_bộ_phận as t2 on t1.id_bộ_phận = t2.id_bộ_phận group by t1.id_bộ_phận having count ( * ) > 2"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Liệt kê tên , họ , chi tiết và mô tả về kỹ năng của tất cả các kỹ sư .",
+      "predicted": "select kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ, kỹ_sư_bảo_trì.những_chi_tiết_khác, kỹ_năng.mô_tả_về_kỹ_năng\nfrom kỹ_sư_bảo_trì\njoin kỹ_năng_của_kỹ_sư on kỹ_sư_bảo_trì.id_kỹ_sư = kỹ_năng_của_kỹ_sư.id_kỹ_sư\njoin kỹ_năng on kỹ_năng_của_kỹ_sư.id_kỹ_năng = kỹ_năng.id_kỹ_năng",
+      "gold": "select t1.tên , t1.họ , t1.những_chi_tiết_khác , t3.mô_tả_về_kỹ_năng from kỹ_sư_bảo_trì as t1 join kỹ_năng_của_kỹ_sư as t2 on t1.id_kỹ_sư = t2.id_kỹ_sư join kỹ_năng as t3 on t2.id_kỹ_năng = t3.id_kỹ_năng"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Đối với tất cả các lỗi liên quan đến các bộ phận khác nhau , cho biết mô tả về những kỹ năng cần thiết của các kỹ sư để khắc phục chúng . Liệt kê tên của các lỗi và mô tả về kỹ năng tương ứng .",
+      "predicted": "select lỗi_bộ_phận.tên_viết_tắt_của_lỗi, kỹ_năng.mô_tả_về_kỹ_năng\nfrom lỗi_bộ_phận\njoin kỹ_năng_cần_để_sửa_chữa on lỗi_bộ_phận.id_bộ_phận_bị_lỗi = kỹ_năng_cần_để_sửa_chữa.id_bộ_phận_bị_lỗi\njoin kỹ_năng on kỹ_năng_cần_để_sửa_chữa.id_kỹ_năng = kỹ_năng.id_kỹ_năng",
+      "gold": "select t1.tên_viết_tắt_của_lỗi , t3.mô_tả_về_kỹ_năng from lỗi_bộ_phận as t1 join kỹ_năng_cần_để_sửa_chữa as t2 on t1.id_bộ_phận_bị_lỗi = t2.id_bộ_phận_bị_lỗi join kỹ_năng as t3 on t2.id_kỹ_năng = t3.id_kỹ_năng"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi bộ phận có thể được sử dụng trong bao nhiêu tài sản ? Liệt kê tên của tất cả các bộ phận và số lượng tài sản có thể sử dụng từng bộ phận .",
+      "predicted": "select b.tên_bộ_phận, count(distinct bct.id_tài_sản) as số_lượng_tài_sản\nfrom bộ_phận b\nleft join bộ_phận_của_tài_sản bct on b.id_bộ_phận = bct.id_bộ_phận\ngroup by b.tên_bộ_phận",
+      "gold": "select t1.tên_bộ_phận , count ( * ) from bộ_phận as t1 join bộ_phận_của_tài_sản as t2 on t1.id_bộ_phận = t2.id_bộ_phận group by t1.tên_bộ_phận"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết mô tả lỗi và tình trạng lỗi của tất cả các lỗi được ghi lại trong nhật ký .",
+      "predicted": "select nhật_ký_lỗi.mô_tả_về_lỗi, nhật_ký_của_lỗi_bộ_phận.tình_trạng_lỗi \nfrom nhật_ký_lỗi \njoin nhật_ký_của_lỗi_bộ_phận on nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi = nhật_ký_của_lỗi_bộ_phận.id_mục_nhập_của_nhật_ký_lỗi",
+      "gold": "select t1.mô_tả_về_lỗi , t2.tình_trạng_lỗi from nhật_ký_lỗi as t1 join nhật_ký_của_lỗi_bộ_phận as t2 on t1.id_mục_nhập_của_nhật_ký_lỗi = t2.id_mục_nhập_của_nhật_ký_lỗi"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Nhật ký lỗi nào đòi hỏi nhiều lượt ghé thăm từ các kỹ sư nhất ? Liệt kê id của nhật ký lỗi này và số lượng lượt ghé thăm tương ứng .",
+      "predicted": "select nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi, count(chuyến_thăm_của_kỹ_sư.id_kỹ_sư_ghé_thăm) as số_lượt_ghé_thăm\nfrom nhật_ký_lỗi\njoin chuyến_thăm_của_kỹ_sư on nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi = chuyến_thăm_của_kỹ_sư.id_mục_nhập_của_nhật_ký_lỗi\ngroup by nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi\norder by số_lượt_ghé_thăm desc\nlimit 1",
+      "gold": "select count ( * ) , t1.id_mục_nhập_của_nhật_ký_lỗi from nhật_ký_lỗi as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_mục_nhập_của_nhật_ký_lỗi = t2.id_mục_nhập_của_nhật_ký_lỗi group by t1.id_mục_nhập_của_nhật_ký_lỗi order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết danh sách không trùng lặp bao gồm họ của tất cả các kỹ sư .",
+      "predicted": "select distinct họ from kỹ_sư_bảo_trì",
+      "gold": "select distinct họ from kỹ_sư_bảo_trì"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết các tình trạng lỗi khác nhau đã được ghi lại .",
+      "predicted": "select distinct tình_trạng_lỗi from chuyến_thăm_của_kỹ_sư",
+      "gold": "select distinct tình_trạng_lỗi from nhật_ký_của_lỗi_bộ_phận"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những kỹ sư nào chưa bao giờ ghé thăm để bảo trì tài sản ? Cho biết tên và họ của những kỹ sư này .",
+      "predicted": "select tên, họ from kỹ_sư_bảo_trì where id_kỹ_sư not in (select distinct id_kỹ_sư from chuyến_thăm_của_kỹ_sư)",
+      "gold": "select tên , họ from kỹ_sư_bảo_trì where id_kỹ_sư not in ( select id_kỹ_sư from chuyến_thăm_của_kỹ_sư )"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Liệt kê id tài sản , chi tiết , thương hiệu và mẫu mã của từng tài sản .",
+      "predicted": "select id_tài_sản, chi_tiết_tài_sản, thương_hiệu_tài_sản, mẫu_mã_tài_sản from tài_sản",
+      "gold": "select id_tài_sản , chi_tiết_tài_sản , thương_hiệu_tài_sản , mẫu_mã_tài_sản from tài_sản"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Tài sản đầu tiên được mua vào thời điểm nào ?",
+      "predicted": "select ngày_mua_tài_sản from tài_sản order by ngày_mua_tài_sản asc limit 1",
+      "gold": "select ngày_mua_tài_sản from tài_sản order by ngày_mua_tài_sản asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Lỗi bộ phận nào đòi hỏi số lượng kỹ năng nhiều nhất để khắc phục ? Liệt kê id và tên của bộ phận gặp phải loại lỗi này .",
+      "predicted": "select lỗi_bộ_phận.id_bộ_phận, bộ_phận.tên_bộ_phận\nfrom lỗi_bộ_phận\njoin bộ_phận on lỗi_bộ_phận.id_bộ_phận = bộ_phận.id_bộ_phận\nwhere lỗi_bộ_phận.id_bộ_phận_bị_lỗi = (\n    select id_bộ_phận_bị_lỗi\n    from kỹ_năng_cần_để_sửa_chữa\n    group by id_bộ_phận_bị_lỗi\n    order by count(id_kỹ_năng) desc\n    limit 1\n)",
+      "gold": "select t1.id_bộ_phận , t1.tên_bộ_phận from bộ_phận as t1 join lỗi_bộ_phận as t2 on t1.id_bộ_phận = t2.id_bộ_phận join kỹ_năng_cần_để_sửa_chữa as t3 on t2.id_bộ_phận_bị_lỗi = t3.id_bộ_phận_bị_lỗi group by t1.id_bộ_phận order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết tên của bộ phận gặp phải ít lỗi nhất .",
+      "predicted": "select tên_bộ_phận \nfrom bộ_phận \nleft join lỗi_bộ_phận on bộ_phận.id_bộ_phận = lỗi_bộ_phận.id_bộ_phận \ngroup by bộ_phận.id_bộ_phận, tên_bộ_phận \norder by count(lỗi_bộ_phận.id_bộ_phận) asc \nlimit 1",
+      "gold": "select t1.tên_bộ_phận from bộ_phận as t1 join lỗi_bộ_phận as t2 on t1.id_bộ_phận = t2.id_bộ_phận group by t1.tên_bộ_phận order by count ( * ) asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Trong số những kỹ sư đã ghé thăm , kỹ sư nào có số lượt ghé thăm ít nhất ? Liệt kê id , tên và họ của kỹ sư này .",
+      "predicted": "select kỹ_sư_bảo_trì.id_kỹ_sư, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ\nfrom kỹ_sư_bảo_trì\njoin chuyến_thăm_của_kỹ_sư on kỹ_sư_bảo_trì.id_kỹ_sư = chuyến_thăm_của_kỹ_sư.id_kỹ_sư_ghé_thăm\ngroup by kỹ_sư_bảo_trì.id_kỹ_sư, kỹ_sư_bảo_trì.tên, kỹ_sư_bảo_trì.họ\nhaving count(chuyến_thăm_của_kỹ_sư.id_kỹ_sư_ghé_thăm) = (\n    select min(số_lượt)\n    from (\n        select count(id_kỹ_sư_ghé_thăm) as số_lượt\n        from chuyến_thăm_của_kỹ_sư\n        group by id_kỹ_sư_ghé_thăm\n    ) as lượt_ghé_thăm\n)",
+      "gold": "select t1.id_kỹ_sư , t1.tên , t1.họ from kỹ_sư_bảo_trì as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_kỹ_sư = t2.id_kỹ_sư group by t1.id_kỹ_sư order by count ( * ) asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Những nhân viên đã liên lạc với những kỹ sư nào ? Liệt kê tên của tất cả các nhân viên cũng như là tên và họ của những kỹ sư mà họ đã liên lạc .",
+      "predicted": "select t1.tên_nhân_viên, t3.tên, t3.họ \nfrom chuyến_thăm_của_kỹ_sư as t2 \njoin nhân_viên as t1 on t2.id_nhân_viên_liên_lạc = t1.id_nhân_viên \njoin kỹ_sư_bảo_trì as t3 on t2.id_kỹ_sư = t3.id_kỹ_sư",
+      "gold": "select t1.tên_nhân_viên , t3.tên , t3.họ from nhân_viên as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_nhân_viên = t2.id_nhân_viên_liên_lạc join kỹ_sư_bảo_trì as t3 on t2.id_kỹ_sư = t3.id_kỹ_sư"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Nhật ký lỗi nào bao gồm nhiều bộ phận bị lỗi nhất ? Liệt kê id , mô tả và thời gian ghi lại của nhật ký lỗi này .",
+      "predicted": "select nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi, nhật_ký_lỗi.mô_tả_về_lỗi, nhật_ký_lỗi.thời_gian_mục_nhập_của_nhật_ký_lỗi\nfrom nhật_ký_lỗi\njoin nhật_ký_của_lỗi_bộ_phận on nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi = nhật_ký_của_lỗi_bộ_phận.id_mục_nhập_của_nhật_ký_lỗi\ngroup by nhật_ký_lỗi.id_mục_nhập_của_nhật_ký_lỗi, nhật_ký_lỗi.mô_tả_về_lỗi, nhật_ký_lỗi.thời_gian_mục_nhập_của_nhật_ký_lỗi\norder by count(nhật_ký_của_lỗi_bộ_phận.id_bộ_phận_bị_lỗi) desc\nlimit 1",
+      "gold": "select t1.id_mục_nhập_của_nhật_ký_lỗi , t1.mô_tả_về_lỗi , t1.thời_gian_mục_nhập_của_nhật_ký_lỗi from nhật_ký_lỗi as t1 join nhật_ký_của_lỗi_bộ_phận as t2 on t1.id_mục_nhập_của_nhật_ký_lỗi = t2.id_mục_nhập_của_nhật_ký_lỗi group by t1.id_mục_nhập_của_nhật_ký_lỗi order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Kỹ năng nào được sử dụng để sửa nhiều loại lỗi nhất ? Liệt kê id và mô tả của kỹ năng này .",
+      "predicted": "select kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng\nfrom kỹ_năng\njoin kỹ_năng_cần_để_sửa_chữa on kỹ_năng.id_kỹ_năng = kỹ_năng_cần_để_sửa_chữa.id_kỹ_năng\ngroup by kỹ_năng.id_kỹ_năng, kỹ_năng.mô_tả_về_kỹ_năng\norder by count(distinct kỹ_năng_cần_để_sửa_chữa.id_bộ_phận_bị_lỗi) desc\nlimit 1",
+      "gold": "select t1.id_kỹ_năng , t1.mô_tả_về_kỹ_năng from kỹ_năng as t1 join kỹ_năng_cần_để_sửa_chữa as t2 on t1.id_kỹ_năng = t2.id_kỹ_năng group by t1.id_kỹ_năng order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết những mẫu mã khác nhau của tất cả các tài sản .",
+      "predicted": "select distinct mẫu_mã_tài_sản from tài_sản",
+      "gold": "select distinct mẫu_mã_tài_sản from tài_sản"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Liệt kê thương hiệu , mẫu mã và chi tiết của tất cả các tài sản theo thứ tự ngày thanh lý tăng dần .",
+      "predicted": "select thương_hiệu_tài_sản, mẫu_mã_tài_sản, chi_tiết_tài_sản \nfrom tài_sản \norder by ngày_thanh_lý_tài_sản asc",
+      "gold": "select thương_hiệu_tài_sản , mẫu_mã_tài_sản , chi_tiết_tài_sản from tài_sản order by ngày_thanh_lý_tài_sản asc"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Bộ phận nào có số tiền phải trả ít nhất ? Liệt kê id của bộ phận này và số tiền tương ứng phải trả .",
+      "predicted": "select id_bộ_phận, số_tiền_phải_trả from bộ_phận order by số_tiền_phải_trả asc limit 1",
+      "gold": "select id_bộ_phận , số_tiền_phải_trả from bộ_phận order by số_tiền_phải_trả asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Công ty nào đã bắt đầu các hợp đồng bảo trì sớm nhất ? Cho biết tên của công ty này .",
+      "predicted": "select tên_công_ty \nfrom công_ty_bên_thứ_ba \nwhere id_công_ty = (\n    select hợp_đồng_bảo_trì.id_hợp_đồng_bảo_trì_của_công_ty \n    from hợp_đồng_bảo_trì \n    order by ngày_bắt_đầu_hợp_đồng asc \n    limit 1\n)",
+      "gold": "select t1.tên_công_ty from công_ty_bên_thứ_ba as t1 join hợp_đồng_bảo_trì as t2 on t1.id_công_ty = t2.id_hợp_đồng_bảo_trì_của_công_ty order by t2.ngày_bắt_đầu_hợp_đồng asc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Công ty nào đã kết thúc các hợp đồng bảo trì muộn nhất ? Cho biết tên của công ty này .",
+      "predicted": "select công_ty_bên_thứ_ba.tên_công_ty\nfrom công_ty_bên_thứ_ba\njoin hợp_đồng_bảo_trì on hợp_đồng_bảo_trì.id_hợp_đồng_bảo_trì_của_công_ty = công_ty_bên_thứ_ba.id_công_ty\nwhere hợp_đồng_bảo_trì.ngày_kết_thúc_hợp_đồng = (\n    select max(ngày_kết_thúc_hợp_đồng) from hợp_đồng_bảo_trì\n)",
+      "gold": "select t1.tên_công_ty from công_ty_bên_thứ_ba as t1 join hợp_đồng_bảo_trì as t2 on t1.id_công_ty = t2.id_hợp_đồng_bảo_trì_của_công_ty order by t2.ngày_kết_thúc_hợp_đồng desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết giới tính có nhiều nhân viên nhất .",
+      "predicted": "select giới_tính, count(*) \nfrom nhân_viên \ngroup by giới_tính \norder by count(*) desc \nlimit 1",
+      "gold": "select giới_tính from nhân_viên group by giới_tính order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Mỗi nhân viên đã liên lạc với bao nhiêu kỹ sư ? Cho biết tên của những nhân viên này và số lượng kỹ sư mà họ đã liên lạc .",
+      "predicted": "select nhân_viên.tên_nhân_viên, count(distinct chuyến_thăm_của_kỹ_sư.id_kỹ_sư) as số_lượng_kỹ_sư_liên_lạc\nfrom nhân_viên\nleft join chuyến_thăm_của_kỹ_sư on nhân_viên.id_nhân_viên = chuyến_thăm_của_kỹ_sư.id_nhân_viên_liên_lạc\ngroup by nhân_viên.tên_nhân_viên",
+      "gold": "select t1.tên_nhân_viên , count ( * ) from as as t1 join chuyến_thăm_của_kỹ_sư as t2 on t1.id_nhân_viên = t2.id_nhân_viên_liên_lạc group by t1.tên_nhân_viên"
+    },
+    {
+      "db_id": "assets_maintenance",
+      "question": "Cho biết mẫu mã của những tài sản không phát sinh bất cứ lỗi nào .",
+      "predicted": "select tài_sản.mẫu_mã_tài_sản \nfrom tài_sản \nwhere tài_sản.id_tài_sản not in (\n    select nhật_ký_lỗi.id_tài_sản \n    from nhật_ký_lỗi\n)",
+      "gold": "select mẫu_mã_tài_sản from tài_sản where id_tài_sản not in ( select id_tài_sản from nhật_ký_lỗi )"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Có bao nhiêu cuốn sách ?",
+      "predicted": "select count ( * ) from sách",
+      "gold": "select count ( * ) from sách"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê tác giả của các cuốn sách theo thứ tự bảng chữ cái tăng dần .",
+      "predicted": "select tác_giả from sách order by tác_giả asc",
+      "gold": "select tác_giả from sách order by tác_giả asc"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê tiêu đề của các cuốn sách theo thứ tự tăng dần về số lượng phát hành .",
+      "predicted": "select tiêu_đề from sách order by số_lượng_phát_hành asc",
+      "gold": "select tiêu_đề from sách order by số_lượng_phát_hành asc"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Tiêu đề của những cuốn sách mà tác giả không phải là ' Elaine Lee ' ?",
+      "predicted": "select tiêu_đề from sách where tác_giả <> 'Elaine Lee'",
+      "gold": "select tiêu_đề from sách where tác_giả != \"Elaine Lee\""
+    },
+    {
+      "db_id": "book_2",
+      "question": "Cho biết tiêu đề và số lượng phát hành của từng cuốn sách .",
+      "predicted": "select tiêu_đề, số_lượng_phát_hành from sách",
+      "gold": "select tiêu_đề , số_lượng_phát_hành from sách"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê ngày xuất bản của các cuốn sách theo thứ tự giá bán giảm dần .",
+      "predicted": "select ấn_phẩm.ngày_xuất_bản from ấn_phẩm order by ấn_phẩm.giá_bán desc",
+      "gold": "select ngày_xuất_bản from ấn_phẩm order by giá_bán desc"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê các nhà xuất bản khác nhau của các ấn phẩm có giá cao hơn 5000000 .",
+      "predicted": "select nhà_xuất_bản from ấn_phẩm where giá_bán > 5000000 group by nhà_xuất_bản",
+      "gold": "select distinct nhà_xuất_bản from ấn_phẩm where giá_bán > 5000000"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê nhà xuất bản của ấn phẩm có giá cao nhất .",
+      "predicted": "select nhà_xuất_bản from ấn_phẩm order by giá_bán desc limit 1",
+      "gold": "select nhà_xuất_bản from ấn_phẩm order by giá_bán desc limit 1"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê ngày xuất bản của 3 ấn phẩm với giá thấp nhất .",
+      "predicted": "select ngày_xuất_bản from ấn_phẩm order by giá_bán asc limit 3",
+      "gold": "select ngày_xuất_bản from ấn_phẩm order by giá_bán asc limit 3"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị tiêu đề và ngày xuất bản của các cuốn sách .",
+      "predicted": "select sách.tiêu_đề, ấn_phẩm.ngày_xuất_bản from sách join ấn_phẩm on sách.id_sách = ấn_phẩm.id_sách",
+      "gold": "select t1.tiêu_đề , t2.ngày_xuất_bản from sách as t1 join ấn_phẩm as t2 on t1.id_sách = t2.id_sách"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị các tác giả đã xuất bản một cuốn sách có giá hơn 4000000 .",
+      "predicted": "select distinct sách.tác_giả from sách join ấn_phẩm on sách.id_sách = ấn_phẩm.id_sách where ấn_phẩm.giá_bán > 4000000",
+      "gold": "select t1.tác_giả from sách as t1 join ấn_phẩm as t2 on t1.id_sách = t2.id_sách where t2.giá_bán > 4000000"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị tên sách theo thứ tự giảm dần của giá xuất bản .",
+      "predicted": "select sách.tiêu_đề from sách join ấn_phẩm on sách.id_sách = ấn_phẩm.id_sách order by ấn_phẩm.giá_bán desc",
+      "gold": "select t1.tiêu_đề from sách as t1 join ấn_phẩm as t2 on t1.id_sách = t2.id_sách order by t2.giá_bán desc"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị các nhà xuất bản có nhiều hơn một ấn phẩm .",
+      "predicted": "select nhà_xuất_bản from ấn_phẩm group by nhà_xuất_bản having count(*) > 1",
+      "gold": "select nhà_xuất_bản from ấn_phẩm group by nhà_xuất_bản having count ( * ) > 1"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị các nhà xuất bản khác nhau cùng với số lượng ấn phẩm mà họ có .",
+      "predicted": "select nhà_xuất_bản, count(*) from ấn_phẩm group by nhà_xuất_bản",
+      "gold": "select nhà_xuất_bản , count ( * ) from ấn_phẩm group by nhà_xuất_bản"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị ngày xuất bản phổ biến nhất .",
+      "predicted": "select ngày_xuất_bản from ấn_phẩm group by ngày_xuất_bản order by count(*) desc limit 1",
+      "gold": "select ngày_xuất_bản from ấn_phẩm group by ngày_xuất_bản order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê các tác giả đã viết nhiều hơn một cuốn sách .",
+      "predicted": "select tác_giả from sách group by tác_giả having count(id_sách) > 1",
+      "gold": "select tác_giả from sách group by tác_giả having count ( * ) > 1"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Liệt kê tên những quyển sách không được xuất bản .",
+      "predicted": "select tiêu_đề from sách where id_sách not in (select id_sách from ấn_phẩm)",
+      "gold": "select tiêu_đề from sách where id_sách not in ( select id_sách from ấn_phẩm )"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị các nhà xuất bản có ấn phẩm với giá cao hơn 10000000 và ấn phẩm với giá thấp hơn 5000000 .",
+      "predicted": "select nhà_xuất_bản from ấn_phẩm where giá_bán > 10000000 intersect select nhà_xuất_bản from ấn_phẩm where giá_bán < 5000000",
+      "gold": "select nhà_xuất_bản from ấn_phẩm where giá_bán > 10000000 intersect select nhà_xuất_bản from ấn_phẩm where giá_bán < 5000000"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Có bao nhiêu giá trị khác nhau cho ngày xuất bản các ấn phẩm ?",
+      "predicted": "select count(distinct ngày_xuất_bản) from ấn_phẩm",
+      "gold": "select count ( distinct ngày_xuất_bản ) from ấn_phẩm"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Có bao nhiêu giá trị khác nhau cho ngày xuất bản có trong hồ sơ ?",
+      "predicted": "select count(distinct ngày_xuất_bản) from ấn_phẩm",
+      "gold": "select count ( distinct ngày_xuất_bản ) from ấn_phẩm"
+    },
+    {
+      "db_id": "book_2",
+      "question": "Hiển thị giá của các ấn phẩm có nhà xuất bản là ' Person ' hoặc ' Wiley ' .",
+      "predicted": "select giá_bán from ấn_phẩm where nhà_xuất_bản = \"Person\" or nhà_xuất_bản = \"Wiley\"",
+      "gold": "select giá_bán from ấn_phẩm where nhà_xuất_bản = \"Person\" or nhà_xuất_bản = \"Wiley\""
+    },
+    {
+      "db_id": "company_1",
+      "question": "Liệt kê tên của tất cả các bộ phận và sắp xếp kết quả theo ngày bắt đầu của họ .",
+      "predicted": "select tên_bộ_phận from bộ_phận order by ngày_bắt_đầu_quản_lý",
+      "gold": "select tên_bộ_phận from bộ_phận order by ngày_bắt_đầu_quản_lý"
+    },
+    {
+      "db_id": "company_1",
+      "question": "Tìm tên của tất cả những người phụ thuộc có quan hệ vợ / chồng với một số nhân viên .",
+      "predicted": "select tên_người_phụ_thuộc from người_phụ_thuộc where mối_quan_hệ = \"vợ / chồng\"",
+      "gold": "select tên_người_phụ_thuộc from người_phụ_thuộc where mối_quan_hệ = \"Spouse\""
+    },
+    {
+      "db_id": "company_1",
+      "question": "Có bao nhiêu người phụ thuộc có giới tính nữ ?",
+      "predicted": "select count ( * ) from người_phụ_thuộc where giới_tính = \"nữ\"",
+      "gold": "select count ( * ) from người_phụ_thuộc where giới_tính = \"F\""
+    },
+    {
+      "db_id": "company_1",
+      "question": "Tìm tên của những bộ phận được đặt tại Houston .",
+      "predicted": "select tên_bộ_phận \nfrom bộ_phận \njoin địa_điểm_của_bộ_phận on bộ_phận.mã_số_bộ_phận = địa_điểm_của_bộ_phận.mã_số_bộ_phận \nwhere địa_điểm_bộ_phận = \"Houston\"",
+      "gold": "select t1.tên_bộ_phận from bộ_phận as t1 join địa_điểm_của_bộ_phận as t2 on t1.mã_số_bộ_phận = t2.mã_số_bộ_phận where t2.địa_điểm_bộ_phận = \"Houston\""
+    },
+    {
+      "db_id": "company_1",
+      "question": "Cho biết tên và họ của những nhân viên kiếm được hơn 30000 tiền lương .",
+      "predicted": "select tên, họ from nhân_viên where lương > 30000",
+      "gold": "select tên , họ from nhân_viên where lương > 30000"
+    },
+    {
+      "db_id": "company_1",
+      "question": "Tìm số lượng các nhân viên có mức lương thấp hơn 50000 ở mỗi giới tính .",
+      "predicted": "select count(*) , giới_tính from nhân_viên where lương < 50000 group by giới_tính",
+      "gold": "select count ( * ) , giới_tính from nhân_viên where lương < 50000 group by giới_tính"
+    },
+    {
+      "db_id": "company_1",
+      "question": "Liệt kê tên , họ và địa chỉ của tất cả các nhân viên theo thứ tự tăng dần về ngày sinh của từng nhân viên .",
+      "predicted": "select tên, họ, địa_chỉ from nhân_viên order by ngày_sinh asc",
+      "gold": "select tên , họ , địa_chỉ from nhân_viên order by ngày_sinh"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Có bao nhiêu giáo viên ?",
+      "predicted": "select count ( * ) from giáo_viên",
+      "gold": "select count ( * ) from giáo_viên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Tổng số giáo viên là bao nhiêu ?",
+      "predicted": "select count ( * ) from giáo_viên",
+      "gold": "select count ( * ) from giáo_viên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Cho biết tên của giáo viên và sắp xếp kết quả theo thứ tự tăng dần về độ tuổi .",
+      "predicted": "select tên from giáo_viên order by tuổi asc",
+      "gold": "select tên from giáo_viên order by tuổi asc"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Liệt kê tên của các giáo viên theo thứ tự tăng dần về độ tuổi của từng người .",
+      "predicted": "select tên from giáo_viên order by tuổi asc",
+      "gold": "select tên from giáo_viên order by tuổi asc"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Liệt kê độ tuổi và quê hương của tất cả các giáo viên",
+      "predicted": "select tuổi, quê_quán from giáo_viên",
+      "gold": "select tuổi , quê_quán from giáo_viên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Cho biết độ tuổi và quê hương của mỗi giáo viên .",
+      "predicted": "select tuổi, quê_quán from giáo_viên",
+      "gold": "select tuổi , quê_quán from giáo_viên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Liệt kê tên của các giáo viên có quê hương không phải là ' Khu đô thị Little Lever ' .",
+      "predicted": "select tên from giáo_viên where quê_quán <> \"Khu đô thị Little Lever\"",
+      "gold": "select tên from giáo_viên where quê_quán != \"Little Lever Urban Distric\""
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Các giáo viên có quê hương không phải ở ' Khu đô thị Little Lever ' có tên là gì ?",
+      "predicted": "select tên from giáo_viên except select tên from giáo_viên where quê_quán = 'Khu đô thị Little Lever'",
+      "gold": "select tên from giáo_viên where quê_quán != \"Little Lever Urban Distric\""
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của các giáo viên ở độ tuổi 32 hoặc 33 ?",
+      "predicted": "select tên from giáo_viên where tuổi in (32, 33)",
+      "gold": "select tên from giáo_viên where tuổi = 32 or tuổi = 33"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Tên của các giáo viên ở độ tuổi 32 hoặc 33 là gì ?",
+      "predicted": "select tên from giáo_viên where tuổi = 32 or tuổi = 33",
+      "gold": "select tên from giáo_viên where tuổi = 32 or tuổi = 33"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Quê hương của giáo viên trẻ nhất là ở đâu ?",
+      "predicted": "select quê_quán from giáo_viên order by tuổi asc limit 1",
+      "gold": "select quê_quán from giáo_viên order by tuổi asc limit 1"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Giáo viên trẻ nhất từ đâu đến ?",
+      "predicted": "select quê_quán from giáo_viên where tuổi = (select min(tuổi) from giáo_viên)",
+      "gold": "select quê_quán from giáo_viên order by tuổi asc limit 1"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị những quê hương khác nhau của các giáo viên và số lượng giáo viên đến từ mỗi quê hương .",
+      "predicted": "select quê_quán, count(*) from giáo_viên group by quê_quán",
+      "gold": "select quê_quán , count ( * ) from giáo_viên group by quê_quán"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "mỗi quê hương có bao nhiêu giáo viên .",
+      "predicted": "select quê_quán, count(*) from giáo_viên group by quê_quán",
+      "gold": "select quê_quán , count ( * ) from giáo_viên group by quê_quán"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Liệt kê quê hương phổ biến nhất mà các giáo viên đến từ .",
+      "predicted": "select giáo_viên.quê_quán from giáo_viên group by giáo_viên.quê_quán order by count(*) desc limit 1",
+      "gold": "select quê_quán from giáo_viên group by quê_quán order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Nơi nào là quê hương của nhiều giáo viên nhất ?",
+      "predicted": "select quê_quán from giáo_viên group by quê_quán order by count(*) desc limit 1",
+      "gold": "select quê_quán from giáo_viên group by quê_quán order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị những nơi là quê hương của ít nhất hai giáo viên .",
+      "predicted": "select quê_quán from giáo_viên group by quê_quán having count(id_giáo_viên) >= 2",
+      "gold": "select quê_quán from giáo_viên group by quê_quán having count ( * ) >= 2"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Những nơi nào là quê hương của ít nhất 2 giáo viên ?",
+      "predicted": "select quê_quán from giáo_viên group by quê_quán having count(id_giáo_viên) >= 2",
+      "gold": "select quê_quán from giáo_viên group by quê_quán having count ( * ) >= 2"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của tất cả các giáo viên cũng như là các khoá học họ được sắp xếp để dạy .",
+      "predicted": "select giáo_viên.tên, khoá_học.khoá_học from giáo_viên join sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên join khoá_học on sắp_xếp_khoá_học.id_khoá_học = khoá_học.id_khoá_học",
+      "gold": "select t3.tên , t2.khoá_học from sắp_xếp_khoá_học as t1 join khoá_học as t2 on t1.id_khoá_học = t2.id_khoá_học join giáo_viên as t3 on t1.id_giáo_viên = t3.id_giáo_viên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Tên của các giáo viên và các khoá học họ đã dạy ?",
+      "predicted": "select giáo_viên.tên, khoá_học.khoá_học from giáo_viên join sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên join khoá_học on sắp_xếp_khoá_học.id_khoá_học = khoá_học.id_khoá_học",
+      "gold": "select t3.tên , t2.khoá_học from sắp_xếp_khoá_học as t1 join khoá_học as t2 on t1.id_khoá_học = t2.id_khoá_học join giáo_viên as t3 on t1.id_giáo_viên = t3.id_giáo_viên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của các giáo viên cũng như là các khoá học họ được sắp xếp để dạy theo thứ tự bảng chữ cái tăng dần của tên giáo viên .",
+      "predicted": "select giáo_viên.tên, khoá_học.khoá_học \nfrom giáo_viên \njoin sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên \njoin khoá_học on sắp_xếp_khoá_học.id_khoá_học = khoá_học.id_khoá_học \norder by giáo_viên.tên asc",
+      "gold": "select t3.tên , t2.khoá_học from sắp_xếp_khoá_học as t1 join khoá_học as t2 on t1.id_khoá_học = t2.id_khoá_học join giáo_viên as t3 on t1.id_giáo_viên = t3.id_giáo_viên order by t3.tên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của các giáo viên và các khoá học họ dạy theo thứ tự bảng chữ cái tăng dần của tên giáo viên",
+      "predicted": "select giáo_viên.tên, khoá_học.khoá_học \nfrom giáo_viên \njoin sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên \njoin khoá_học on sắp_xếp_khoá_học.id_khoá_học = khoá_học.id_khoá_học \norder by giáo_viên.tên asc",
+      "gold": "select t3.tên , t2.khoá_học from sắp_xếp_khoá_học as t1 join khoá_học as t2 on t1.id_khoá_học = t2.id_khoá_học join giáo_viên as t3 on t1.id_giáo_viên = t3.id_giáo_viên order by t3.tên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của các giáo viên đã giảng dạy các khoá học ' Toán ' .",
+      "predicted": "select distinct giáo_viên.tên from giáo_viên join sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên join khoá_học on sắp_xếp_khoá_học.id_khoá_học = khoá_học.id_khoá_học where khoá_học.khoá_học = 'Toán'",
+      "gold": "select t3.tên from sắp_xếp_khoá_học as t1 join khoá_học as t2 on t1.id_khoá_học = t2.id_khoá_học join giáo_viên as t3 on t1.id_giáo_viên = t3.id_giáo_viên where t2.khoá_học = \"Math\""
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Tên của những giáo viên dạy bộ môn ' Toán ' ?",
+      "predicted": "select distinct giáo_viên.tên \nfrom giáo_viên \njoin sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên \njoin khoá_học on sắp_xếp_khoá_học.id_khoá_học = khoá_học.id_khoá_học \nwhere khoá_học.khoá_học = 'Toán'",
+      "gold": "select t3.tên from sắp_xếp_khoá_học as t1 join khoá_học as t2 on t1.id_khoá_học = t2.id_khoá_học join giáo_viên as t3 on t1.id_giáo_viên = t3.id_giáo_viên where t2.khoá_học = \"Math\""
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của giáo viên và số lượng các khoá học họ dạy .",
+      "predicted": "select giáo_viên.tên, count(sắp_xếp_khoá_học.id_khoá_học) from giáo_viên join sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên group by giáo_viên.tên",
+      "gold": "select t2.tên , count ( * ) from sắp_xếp_khoá_học as t1 join giáo_viên as t2 on t1.id_giáo_viên = t2.id_giáo_viên group by t2.tên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Cho biết tên của các giáo viên cũng như là họ đã dạy bao nhiêu khoá học ?",
+      "predicted": "select giáo_viên.tên, count(sắp_xếp_khoá_học.id_khoá_học) as số_lượng_khoá_học\nfrom giáo_viên\njoin sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên\ngroup by giáo_viên.tên",
+      "gold": "select t2.tên , count ( * ) from sắp_xếp_khoá_học as t1 join giáo_viên as t2 on t1.id_giáo_viên = t2.id_giáo_viên group by t2.tên"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Hiển thị tên của giáo viên dạy ít nhất hai khoá học .",
+      "predicted": "select giáo_viên.tên from giáo_viên join sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên group by giáo_viên.tên having count(sắp_xếp_khoá_học.id_khoá_học) >= 2",
+      "gold": "select t2.tên from sắp_xếp_khoá_học as t1 join giáo_viên as t2 on t1.id_giáo_viên = t2.id_giáo_viên group by t2.tên having count ( * ) >= 2"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Tên của các giáo viên dạy ít nhất hai khoá học",
+      "predicted": "select giáo_viên.tên \nfrom giáo_viên \njoin sắp_xếp_khoá_học on giáo_viên.id_giáo_viên = sắp_xếp_khoá_học.id_giáo_viên \ngroup by giáo_viên.id_giáo_viên, giáo_viên.tên \nhaving count(distinct sắp_xếp_khoá_học.id_khoá_học) >= 2",
+      "gold": "select t2.tên from sắp_xếp_khoá_học as t1 join giáo_viên as t2 on t1.id_giáo_viên = t2.id_giáo_viên group by t2.tên having count ( * ) >= 2"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Liệt kê tên của các giáo viên chưa được sắp xếp để dạy các khoá học .",
+      "predicted": "select tên from giáo_viên where id_giáo_viên not in (select id_giáo_viên from sắp_xếp_khoá_học)",
+      "gold": "select tên from giáo_viên where id_giáo_viên not in ( select id_giáo_viên from sắp_xếp_khoá_học )"
+    },
+    {
+      "db_id": "course_teach",
+      "question": "Tên của các giáo viên chưa được sắp xếp dạy khoá học nào",
+      "predicted": "select tên from giáo_viên where id_giáo_viên not in (select id_giáo_viên from sắp_xếp_khoá_học)",
+      "gold": "select tên from giáo_viên where id_giáo_viên not in ( select id_giáo_viên from sắp_xếp_khoá_học )"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Có bao nhiêu thành viên tất cả ?",
+      "predicted": "select count ( * ) from thành_viên",
+      "gold": "select count ( * ) from thành_viên"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Liệt kê tên của tất cả các thành viên theo thứ tự bảng chữ cái tăng dần .",
+      "predicted": "select tên from thành_viên order by tên asc",
+      "gold": "select tên from thành_viên order by tên asc"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Cho biết tên và quốc gia của các thành viên .",
+      "predicted": "select tên, quốc_gia from thành_viên",
+      "gold": "select tên , quốc_gia from thành_viên"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên của các thành viên đến từ ' Hoa Kỳ ' hoặc ' Canada ' .",
+      "predicted": "select tên from thành_viên where quốc_gia = \"Hoa Kỳ\" or quốc_gia = \"Canada\"",
+      "gold": "select tên from thành_viên where quốc_gia = \"United States\" or quốc_gia = \"Canada\""
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên của các quốc gia khác nhau và số lượng thành viên đến từ mỗi quốc gia .",
+      "predicted": "select quốc_gia, count(*) from thành_viên group by quốc_gia",
+      "gold": "select quốc_gia , count ( * ) from thành_viên group by quốc_gia"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Quốc gia nào là nơi có nhiều thành viên nhất đến từ đó ?",
+      "predicted": "select quốc_gia from thành_viên group by quốc_gia order by count(*) desc limit 1",
+      "gold": "select quốc_gia from thành_viên group by quốc_gia order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Cho biết tên của những quốc gia có nhiều hơn hai thành viên ?",
+      "predicted": "select quốc_gia from thành_viên group by quốc_gia having count ( * ) > 2",
+      "gold": "select quốc_gia from thành_viên group by quốc_gia having count ( * ) > 2"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên người lãnh đạo và địa điểm của các trường đại học .",
+      "predicted": "select tên_lãnh_đạo, địa_điểm_trường_đại_học from trường_đại_học",
+      "gold": "select tên_lãnh_đạo , địa_điểm_trường_đại_học from trường_đại_học"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên của các thành viên và tên của các trường đại học mà họ đang theo học .",
+      "predicted": "select thành_viên.tên, trường_đại_học.tên from thành_viên join trường_đại_học on thành_viên.id_đại_học = trường_đại_học.id_đại_học",
+      "gold": "select t2.tên , t1.tên from trường_đại_học as t1 join thành_viên as t2 on t1.id_đại_học = t2.id_đại_học"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Liêt kê tên của các thành viên và địa điểm của các trường đại học mà họ theo học theo thứ tự bảng chữ cái tăng dần của tên thành viên .",
+      "predicted": "select thành_viên.tên, trường_đại_học.địa_điểm_trường_đại_học \nfrom thành_viên \njoin trường_đại_học on thành_viên.id_đại_học = trường_đại_học.id_đại_học \norder by thành_viên.tên asc",
+      "gold": "select t2.tên , t1.địa_điểm_trường_đại_học from trường_đại_học as t1 join thành_viên as t2 on t1.id_đại_học = t2.id_đại_học order by t2.tên asc"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên những người lãnh đạo của các trường đại học có liên kết với các thành viên đến từ quốc gia Canada .",
+      "predicted": "select distinct trường_đại_học.tên_lãnh_đạo \nfrom trường_đại_học \njoin thành_viên on trường_đại_học.id_đại_học = thành_viên.id_đại_học \nwhere thành_viên.quốc_gia = \"Canada\"",
+      "gold": "select distinct t1.tên_lãnh_đạo from trường_đại_học as t1 join thành_viên as t2 on t1.id_đại_học = t2.id_đại_học where t2.quốc_gia = \"Canada\""
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên của các thành viên và những chủ đề trang trí mà họ có .",
+      "predicted": "select thành_viên.tên, vòng.chủ_đề_trang_trí from thành_viên join vòng on thành_viên.id_thành_viên = vòng.id_thành_viên",
+      "gold": "select t1.tên , t2.chủ_đề_trang_trí from thành_viên as t1 join vòng as t2 on t1.id_thành_viên = t2.id_thành_viên"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên của các thành viên đã đạt được thứ hạng cao hơn 3 .",
+      "predicted": "select distinct thành_viên.tên from vòng join thành_viên on vòng.id_thành_viên = thành_viên.id_thành_viên where vòng.xếp_hạng_từng_vòng > 3",
+      "gold": "select t1.tên from thành_viên as t1 join vòng as t2 on t1.id_thành_viên = t2.id_thành_viên where t2.xếp_hạng_từng_vòng > 3"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Hiển thị tên của các thành viên theo thứ tự tăng dần về thứ hạng của mỗi người .",
+      "predicted": "select tên from thành_viên join vòng on thành_viên.id_thành_viên = vòng.id_thành_viên order by vòng.xếp_hạng_từng_vòng asc",
+      "gold": "select t1.tên from thành_viên as t1 join vòng as t2 on t1.id_thành_viên = t2.id_thành_viên order by xếp_hạng_từng_vòng asc"
+    },
+    {
+      "db_id": "decoration_competition",
+      "question": "Liệt kê tên của các thành viên không tham gia vào bất kỳ vòng thi nào .",
+      "predicted": "select tên from thành_viên where id_thành_viên not in (select id_thành_viên from vòng)",
+      "gold": "select tên from thành_viên where id_thành_viên not in ( select id_thành_viên from vòng )"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Có bao nhiêu cuộc bầu cử ?",
+      "predicted": "select count ( * ) from cuộc_bầu_cử",
+      "gold": "select count ( * ) from cuộc_bầu_cử"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Liệt kê số lượng phiếu bầu của các cuộc bầu cử theo thứ tự giảm dần .",
+      "predicted": "select số_lượng_phiếu_bầu from cuộc_bầu_cử order by số_lượng_phiếu_bầu desc",
+      "gold": "select số_lượng_phiếu_bầu from cuộc_bầu_cử order by số_lượng_phiếu_bầu desc"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Liệt kê ngày và tỷ lệ phiếu bầu của các cuộc bầu cử .",
+      "predicted": "select ngày, tỉ_lệ_phiếu_bầu from cuộc_bầu_cử",
+      "gold": "select ngày , tỉ_lệ_phiếu_bầu from cuộc_bầu_cử"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Tỷ lệ phiếu bầu tối thiểu và tối đa của các cuộc bầu cử là bao nhiêu ?",
+      "predicted": "select min(tỉ_lệ_phiếu_bầu), max(tỉ_lệ_phiếu_bầu) from cuộc_bầu_cử",
+      "gold": "select min ( tỉ_lệ_phiếu_bầu ) , max ( tỉ_lệ_phiếu_bầu ) from cuộc_bầu_cử"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Cho biết tên và đảng của mỗi người đại diện .",
+      "predicted": "select tên, đảng from đại_diện",
+      "gold": "select tên , đảng from đại_diện"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Cho biết tên của những người đại diện mà đảng của họ không phải là ' Đảng Cộng hoà ' .",
+      "predicted": "select tên from đại_diện where đảng <> 'Đảng Cộng hoà'",
+      "gold": "select tên from đại_diện where đảng != \"Republican\""
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Tuổi thọ của các đại diện từ tiểu bang New York hoặc tiểu bang Indiana là bao nhiêu ?",
+      "predicted": "select tuổi_thọ from đại_diện where tiểu_bang = \"New York\" or tiểu_bang = \"Indiana\"",
+      "gold": "select tuổi_thọ from đại_diện where tiểu_bang = \"New York\" or tiểu_bang = \"Indiana\""
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Tên của các đại diện và ngày bầu cử mà họ đã tham gia ?",
+      "predicted": "select đại_diện.tên, cuộc_bầu_cử.ngày from cuộc_bầu_cử join đại_diện on cuộc_bầu_cử.id_đại_diện = đại_diện.id_đại_diện",
+      "gold": "select t2.tên , t1.ngày from cuộc_bầu_cử as t1 join đại_diện as t2 on t1.id_đại_diện = t2.id_đại_diện"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Tên của các đại diện có hơn 10000 phiếu trong cuộc bầu cử ?",
+      "predicted": "select đại_diện.tên from đại_diện join cuộc_bầu_cử on đại_diện.id_đại_diện = cuộc_bầu_cử.id_đại_diện where cuộc_bầu_cử.số_lượng_phiếu_bầu > 10000",
+      "gold": "select t2.tên from cuộc_bầu_cử as t1 join đại_diện as t2 on t1.id_đại_diện = t2.id_đại_diện where số_lượng_phiếu_bầu > 10000"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Săp xếp tên của các đại diện theo thứ tự giảm dần về số lượng phiếu bầu .",
+      "predicted": "select đại_diện.tên from đại_diện join cuộc_bầu_cử on đại_diện.id_đại_diện = cuộc_bầu_cử.id_đại_diện order by cuộc_bầu_cử.số_lượng_phiếu_bầu desc",
+      "gold": "select t2.tên from cuộc_bầu_cử as t1 join đại_diện as t2 on t1.id_đại_diện = t2.id_đại_diện order by số_lượng_phiếu_bầu desc"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Cho biết đảng của người đại diện có số phiếu bầu ít nhất .",
+      "predicted": "select đại_diện.đảng \nfrom cuộc_bầu_cử \njoin đại_diện on cuộc_bầu_cử.id_đại_diện = đại_diện.id_đại_diện \norder by cuộc_bầu_cử.số_lượng_phiếu_bầu asc \nlimit 1",
+      "gold": "select t2.đảng from cuộc_bầu_cử as t1 join đại_diện as t2 on t1.id_đại_diện = t2.id_đại_diện order by số_lượng_phiếu_bầu asc limit 1"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Liệt kê tuổi thọ của tất cả những người đại diện theo thứ tự tỷ lệ phiếu bầu giảm dần .",
+      "predicted": "select đại_diện.tuổi_thọ \nfrom đại_diện \njoin cuộc_bầu_cử on đại_diện.id_đại_diện = cuộc_bầu_cử.id_đại_diện \norder by cuộc_bầu_cử.tỉ_lệ_phiếu_bầu desc",
+      "gold": "select t2.tuổi_thọ from cuộc_bầu_cử as t1 join đại_diện as t2 on t1.id_đại_diện = t2.id_đại_diện order by tỉ_lệ_phiếu_bầu desc"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Số phiếu trung bình của những người đại diện cho đảng ' Cộng hoà ' là bao nhiêu ?",
+      "predicted": "select avg(số_lượng_phiếu_bầu) from cuộc_bầu_cử as cb join đại_diện as dd on cb.id_đại_diện = dd.id_đại_diện where dd.đảng = 'Cộng hoà'",
+      "gold": "select avg ( t1.số_lượng_phiếu_bầu ) from cuộc_bầu_cử as t1 join đại_diện as t2 on t1.id_đại_diện = t2.id_đại_diện where t2.đảng = \"Republican\""
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Cho biết các đảng khác nhau của tất cả những người đại diện . Hiển thị tên đảng và số lượng người đại diện mà mỗi đảng có .",
+      "predicted": "select đại_diện.đảng, count(distinct đại_diện.id_đại_diện) as số_lượng_đại_diện\nfrom đại_diện\ngroup by đại_diện.đảng",
+      "gold": "select đảng , count ( * ) from đại_diện group by đảng"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Đảng nào có nhiều người đại diện nhất ?",
+      "predicted": "select đại_diện.đảng from đại_diện group by đại_diện.đảng order by count(*) desc limit 1",
+      "gold": "select đảng , count ( * ) from đại_diện group by đảng order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Những đảng nào có ít nhất ba người đại diện ?",
+      "predicted": "select đảng from đại_diện group by đảng having count(id_đại_diện) >= 3",
+      "gold": "select đảng from đại_diện group by đảng having count ( * ) >= 3"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Những bang nào có ít nhất hai người đại diện ?",
+      "predicted": "select tiểu_bang from đại_diện group by tiểu_bang having count(id_đại_diện) >= 2",
+      "gold": "select tiểu_bang from đại_diện group by tiểu_bang having count ( * ) >= 2"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Liệt kê tên của những người đại diện chưa tham gia cuộc bầu cử nào được liệt kê ở đây .",
+      "predicted": "select tên from đại_diện where id_đại_diện not in (select id_đại_diện from cuộc_bầu_cử)",
+      "gold": "select tên from đại_diện where id_đại_diện not in ( select id_đại_diện from cuộc_bầu_cử )"
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Hiển thị các đảng có cả người đại diện ở tiểu bang New York và người đại diện ở tiểu bang Pennsylvania .",
+      "predicted": "select đảng from đại_diện where tiểu_bang = \"New York\" intersect select đảng from đại_diện where tiểu_bang = \"Pennsylvania\"",
+      "gold": "select đảng from đại_diện where tiểu_bang = \"New York\" intersect select đảng from đại_diện where tiểu_bang = \"Pennsylvania\""
+    },
+    {
+      "db_id": "election_representative",
+      "question": "Có tất cả bao nhiêu đảng khác nhau ?",
+      "predicted": "select count(distinct đảng) from đại_diện",
+      "gold": "select count ( distinct đảng ) from đại_diện"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Tổng cộng có bao nhiêu quốc gia ?",
+      "predicted": "select count(*) from quốc_gia",
+      "gold": "select count ( * ) from quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Đếm số lượng quốc gia .",
+      "predicted": "select count(*) from quốc_gia",
+      "gold": "select count ( * ) from quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tên quốc gia và thủ đô của tất cả các quốc gia .",
+      "predicted": "select tên_quốc_gia, thủ_đô from quốc_gia",
+      "gold": "select tên_quốc_gia , thủ_đô from quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Liệt kê tên và thủ đô của từng quốc gia .",
+      "predicted": "select tên_quốc_gia, thủ_đô from quốc_gia",
+      "gold": "select tên_quốc_gia , thủ_đô from quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tất cả các ngôn ngữ bản địa chính thức có chứa cụm từ ' tiếng Anh ' trong tên .",
+      "predicted": "select distinct ngôn_ngữ_bản_địa_chính_thức from quốc_gia where ngôn_ngữ_bản_địa_chính_thức like \"%tiếng Anh%\"",
+      "gold": "select ngôn_ngữ_bản_địa_chính_thức from quốc_gia where ngôn_ngữ_bản_địa_chính_thức like \"%English%\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những ngôn ngữ bản địa chính thức có chứa cụm từ ' tiếng Anh ' trong tên là những ngôn ngữ nào ?",
+      "predicted": "select ngôn_ngữ_bản_địa_chính_thức from quốc_gia where ngôn_ngữ_bản_địa_chính_thức like \"%tiếng Anh%\"",
+      "gold": "select ngôn_ngữ_bản_địa_chính_thức from quốc_gia where ngôn_ngữ_bản_địa_chính_thức like \"%English%\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị các vị trí khác nhau trong tất cả các trận đấu .",
+      "predicted": "select distinct vị_trí from trận_đấu_trong_mùa_giải",
+      "gold": "select distinct vị_trí from trận_đấu_trong_mùa_giải"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những vị trí khác nhau trong các trận đấu là những vị trí nào ?",
+      "predicted": "select distinct vị_trí from trận_đấu_trong_mùa_giải",
+      "gold": "select distinct vị_trí from trận_đấu_trong_mùa_giải"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị các cầu thủ đến từ trường đại học UCLA .",
+      "predicted": "select cầu_thủ from cầu_thủ where cầu_thủ.id_cầu_thủ in (\n    select cầu_thủ from trận_đấu_trong_mùa_giải where trường_đại_học = \"UCLA\"\n)",
+      "gold": "select cầu_thủ from trận_đấu_trong_mùa_giải where trường_đại_học = \"UCLA\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những cầu thủ nào đến từ UCLA ?",
+      "predicted": "select cầu_thủ.cầu_thủ \nfrom cầu_thủ \njoin đội on cầu_thủ.đội = đội.id_đội \nwhere đội.tên = \"UCLA\"",
+      "gold": "select cầu_thủ from trận_đấu_trong_mùa_giải where trường_đại_học = \"UCLA\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị những vị trí khác nhau của các cầu thủ đến từ trường đại học UCLA hoặc Duke .",
+      "predicted": "select distinct vị_trí from trận_đấu_trong_mùa_giải where trường_đại_học in ('UCLA', 'Duke')",
+      "gold": "select distinct vị_trí from trận_đấu_trong_mùa_giải where trường_đại_học = \"UCLA\" or trường_đại_học = \"Duke\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những cầu thủ đến từ các trường đại học UCLA hoặc Duke chơi ở các vị trí khác nhau nào ?",
+      "predicted": "select distinct vị_trí \nfrom trận_đấu_trong_mùa_giải \nwhere trường_đại_học in (\"UCLA\", \"Duke\")",
+      "gold": "select distinct vị_trí from trận_đấu_trong_mùa_giải where trường_đại_học = \"UCLA\" or trường_đại_học = \"Duke\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị mã số tuyển chọn tân binh và mùa tuyển chọn của các cầu thủ có vị trí là ' hậu vệ ' .",
+      "predicted": "select mã_số_tuyển_chọn_tân_binh, mùa_tuyển_chọn from trận_đấu_trong_mùa_giải where vị_trí = 'hậu vệ'",
+      "gold": "select mã_số_tuyển_chọn_tân_binh , mùa_tuyển_chọn from trận_đấu_trong_mùa_giải where vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Mã số tuyển chọn tân binh và mùa tuyển chọn cho các cầu thủ ở vị trí ' hậu vệ ' ?",
+      "predicted": "select mã_số_tuyển_chọn_tân_binh, mùa_tuyển_chọn from trận_đấu_trong_mùa_giải where vị_trí = 'hậu vệ'",
+      "gold": "select mã_số_tuyển_chọn_tân_binh , mùa_tuyển_chọn from trận_đấu_trong_mùa_giải where vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Có bao nhiêu đội khác nhau tham gia vào các trận đấu ?",
+      "predicted": "select count(distinct đội) from trận_đấu_trong_mùa_giải",
+      "gold": "select count ( distinct đội ) from trận_đấu_trong_mùa_giải"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Đếm số lượng các đội khác nhau tham gia vào các trận đấu .",
+      "predicted": "select count(distinct đội) from trận_đấu_trong_mùa_giải",
+      "gold": "select count ( distinct đội ) from trận_đấu_trong_mùa_giải"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị các cầu thủ và số năm họ đã chơi .",
+      "predicted": "select cầu_thủ, số_năm_đã_chơi from cầu_thủ",
+      "gold": "select cầu_thủ , số_năm_đã_chơi from cầu_thủ"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Liệt kê tên các cầu thủ khác nhau và số năm mà họ đã chơi ?",
+      "predicted": "select distinct cầu_thủ, số_năm_đã_chơi from cầu_thủ",
+      "gold": "select cầu_thủ , số_năm_đã_chơi from cầu_thủ"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tên của tất cả các đội .",
+      "predicted": "select tên from đội",
+      "gold": "select tên from đội"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Liệt kê tên của từng đội .",
+      "predicted": "select tên from đội",
+      "gold": "select tên from đội"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị mùa bóng , cầu thủ và tên quốc gia của cầu thủ đó .",
+      "predicted": "select trận_đấu_trong_mùa_giải.mùa_giải, trận_đấu_trong_mùa_giải.cầu_thủ, quốc_gia.tên_quốc_gia\nfrom trận_đấu_trong_mùa_giải\njoin quốc_gia on trận_đấu_trong_mùa_giải.quốc_gia = quốc_gia.id_quốc_gia",
+      "gold": "select t2.mùa_giải , t2.cầu_thủ , t1.tên_quốc_gia from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Đối với mỗi cầu thủ , cho biết tên , mùa bóng và quốc gia mà cầu thủ đó đến từ ?",
+      "predicted": "select cầu_thủ.cầu_thủ, trận_đấu_trong_mùa_giải.mùa_giải, quốc_gia.tên_quốc_gia \nfrom cầu_thủ \njoin trận_đấu_trong_mùa_giải on cầu_thủ.id_cầu_thủ = trận_đấu_trong_mùa_giải.cầu_thủ \njoin quốc_gia on trận_đấu_trong_mùa_giải.quốc_gia = quốc_gia.id_quốc_gia",
+      "gold": "select t2.mùa_giải , t2.cầu_thủ , t1.tên_quốc_gia from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những cầu thủ nào đến từ Indonesia ?",
+      "predicted": "select cầu_thủ from cầu_thủ join đội on cầu_thủ.đội = đội.id_đội join quốc_gia on đội.id_đội = cầu_thủ.đội join quốc_gia as qg on đội.id_đội = cầu_thủ.đội where qg.tên_quốc_gia = \"Indonesia\"",
+      "gold": "select t2.cầu_thủ from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t1.tên_quốc_gia = \"Indonesia\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những cầu thủ đến từ Indonesia là những cầu thủ nào ?",
+      "predicted": "select cầu_thủ from cầu_thủ join đội on cầu_thủ.đội = đội.id_đội join quốc_gia on đội.id_đội = quốc_gia.id_quốc_gia where quốc_gia.tên_quốc_gia = \"Indonesia\"",
+      "gold": "select t2.cầu_thủ from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t1.tên_quốc_gia = \"Indonesia\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết các vị trí khác nhau của các cầu thủ đến từ quốc gia với thủ đô là Dublin .",
+      "predicted": "select distinct trận_đấu_trong_mùa_giải.vị_trí\nfrom trận_đấu_trong_mùa_giải\njoin quốc_gia on trận_đấu_trong_mùa_giải.quốc_gia = quốc_gia.id_quốc_gia\nwhere quốc_gia.thủ_đô = 'Dublin'",
+      "gold": "select distinct t2.vị_trí from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t1.thủ_đô = \"Dublin\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết các vị trí khác nhau của các cầu thủ chơi cho đất nước với thủ đô là Dublin .",
+      "predicted": "select distinct trận_đấu_trong_mùa_giải.vị_trí\nfrom trận_đấu_trong_mùa_giải\njoin quốc_gia on trận_đấu_trong_mùa_giải.quốc_gia = quốc_gia.id_quốc_gia\nwhere quốc_gia.thủ_đô = 'Dublin'",
+      "gold": "select distinct t2.vị_trí from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t1.thủ_đô = \"Dublin\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết ngôn ngữ chính thức của các quốc gia có các cầu thủ đến từ đại học Maryland hoặc Duke .",
+      "predicted": "select distinct quốc_gia.ngôn_ngữ_bản_địa_chính_thức\nfrom quốc_gia\njoin trận_đấu_trong_mùa_giải on quốc_gia.id_quốc_gia = trận_đấu_trong_mùa_giải.quốc_gia\nwhere trận_đấu_trong_mùa_giải.trường_đại_học in ('Maryland', 'Duke')",
+      "gold": "select t1.ngôn_ngữ_bản_địa_chính_thức from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.trường_đại_học = \"Maryland\" or t2.trường_đại_học = \"Duke\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Ngôn ngữ bản địa chính thức của các quốc gia có cầu thủ đến từ các trường đại học Maryland hoặc Duke là ngôn ngữ nào ?",
+      "predicted": "select distinct quốc_gia.ngôn_ngữ_bản_địa_chính_thức \nfrom quốc_gia \njoin trận_đấu_trong_mùa_giải on quốc_gia.id_quốc_gia = trận_đấu_trong_mùa_giải.quốc_gia \nwhere trận_đấu_trong_mùa_giải.trường_đại_học in (\"Maryland\", \"Duke\")",
+      "gold": "select t1.ngôn_ngữ_bản_địa_chính_thức from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.trường_đại_học = \"Maryland\" or t2.trường_đại_học = \"Duke\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Có bao nhiêu ngôn ngữ chính thức khác nhau được sử dụng bởi các quốc gia có một số cầu thủ chơi ở vị trí ' hậu vệ ' ?",
+      "predicted": "select count(distinct quốc_gia.ngôn_ngữ_bản_địa_chính_thức)\nfrom quốc_gia\njoin trận_đấu_trong_mùa_giải on quốc_gia.id_quốc_gia = trận_đấu_trong_mùa_giải.quốc_gia\nwhere trận_đấu_trong_mùa_giải.vị_trí = 'hậu vệ'",
+      "gold": "select count ( distinct t1.ngôn_ngữ_bản_địa_chính_thức ) from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Đếm số lượng ngôn ngữ chính thức được sử dụng bởi các quốc gia có cầu thủ đảm nhận vị trí ' hậu vệ ' .",
+      "predicted": "select count(distinct quốc_gia.ngôn_ngữ_bản_địa_chính_thức) from quốc_gia join trận_đấu_trong_mùa_giải on quốc_gia.id_quốc_gia = trận_đấu_trong_mùa_giải.quốc_gia where trận_đấu_trong_mùa_giải.vị_trí = 'hậu vệ'",
+      "gold": "select count ( distinct t1.ngôn_ngữ_bản_địa_chính_thức ) from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị mùa giải , cầu thủ và tên của các đội mà những cầu thủ đó thuộc về .",
+      "predicted": "select t1.mùa_giải, t1.cầu_thủ, t3.tên from trận_đấu_trong_mùa_giải as t1 join cầu_thủ as t2 on t1.cầu_thủ = t2.cầu_thủ join đội as t3 on t2.đội = t3.id_đội",
+      "gold": "select t1.mùa_giải , t1.cầu_thủ , t2.tên from trận_đấu_trong_mùa_giải as t1 join đội as t2 on t1.đội = t2.id_đội"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết tên của tất cả các cầu thủ khác nhau , cũng như là những mùa giải họ đã tham gia thi đấu và tên đội bóng của họ trong từng mùa giải .",
+      "predicted": "select distinct cầu_thủ.cầu_thủ, trận_đấu_trong_mùa_giải.mùa_giải, đội.tên \nfrom cầu_thủ \njoin trận_đấu_trong_mùa_giải on cầu_thủ.cầu_thủ = trận_đấu_trong_mùa_giải.cầu_thủ \njoin đội on trận_đấu_trong_mùa_giải.đội = đội.id_đội",
+      "gold": "select t1.mùa_giải , t1.cầu_thủ , t2.tên from trận_đấu_trong_mùa_giải as t1 join đội as t2 on t1.đội = t2.id_đội"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị vị trí của các cầu thủ trong đội ' Ryley Goldner ' .",
+      "predicted": "select trận_đấu_trong_mùa_giải.vị_trí \nfrom trận_đấu_trong_mùa_giải \njoin đội on trận_đấu_trong_mùa_giải.đội = đội.id_đội \nwhere đội.tên = \"Ryley Goldner\"",
+      "gold": "select t1.vị_trí from trận_đấu_trong_mùa_giải as t1 join đội as t2 on t1.đội = t2.id_đội where t2.tên = \"Ryley Goldner\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết vị trí của các cầu thủ trong đội Ryley Goldner .",
+      "predicted": "select trận_đấu_trong_mùa_giải.vị_trí \nfrom trận_đấu_trong_mùa_giải \njoin đội on trận_đấu_trong_mùa_giải.đội = đội.id_đội \njoin cầu_thủ on trận_đấu_trong_mùa_giải.cầu_thủ = cầu_thủ.id_cầu_thủ \nwhere đội.tên = \"Ryley Goldner\"",
+      "gold": "select t1.vị_trí from trận_đấu_trong_mùa_giải as t1 join đội as t2 on t1.đội = t2.id_đội where t2.tên = \"Ryley Goldner\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Có bao nhiêu trường đại học riêng biệt có các cầu thủ chơi trong đội ' Columbus Crew ' ?",
+      "predicted": "select count(distinct trận_đấu_trong_mùa_giải.trường_đại_học) \nfrom trận_đấu_trong_mùa_giải \njoin đội on trận_đấu_trong_mùa_giải.đội = đội.id_đội \nwhere đội.tên = 'Columbus Crew'",
+      "gold": "select count ( distinct t1.trường_đại_học ) from trận_đấu_trong_mùa_giải as t1 join đội as t2 on t1.đội = t2.id_đội where t2.tên = \"Columbus Crew\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Đếm số lượng trường đại học khác nhau có các cầu thủ chơi cho Columbus Crew .",
+      "predicted": "select count(distinct trường_đại_học) from trận_đấu_trong_mùa_giải join đội on trận_đấu_trong_mùa_giải.đội = đội.id_đội where đội.tên = \"Columbus Crew\"",
+      "gold": "select count ( distinct t1.trường_đại_học ) from trận_đấu_trong_mùa_giải as t1 join đội as t2 on t1.đội = t2.id_đội where t2.tên = \"Columbus Crew\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tất cả các cầu thủ thi đấu cho đội ' Columbus Crew ' và số năm đã chơi của từng cầu thủ .",
+      "predicted": "select cầu_thủ, số_năm_đã_chơi from cầu_thủ join đội on cầu_thủ.đội = đội.id_đội where đội.tên = 'Columbus Crew'",
+      "gold": "select t1.cầu_thủ , t1.số_năm_đã_chơi from cầu_thủ as t1 join đội as t2 on t1.đội = t2.id_đội where t2.tên = \"Columbus Crew\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Liệt kê các cầu thủ đã chơi cho Columbus Crew và mỗi cầu thủ đã chơi được bao nhiêu năm ?",
+      "predicted": "select cầu_thủ.cầu_thủ, cầu_thủ.số_năm_đã_chơi \nfrom cầu_thủ \njoin đội on cầu_thủ.đội = đội.id_đội \nwhere đội.tên = 'Columbus Crew'",
+      "gold": "select t1.cầu_thủ , t1.số_năm_đã_chơi from cầu_thủ as t1 join đội as t2 on t1.đội = t2.id_đội where t2.tên = \"Columbus Crew\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị vị trí của tất cả các cầu thủ và số lượng cầu thủ chơi ở từng vị trí .",
+      "predicted": "select vị_trí, count(cầu_thủ) as số_lượng_cầu_thủ from trận_đấu_trong_mùa_giải group by vị_trí",
+      "gold": "select vị_trí , count ( * ) from trận_đấu_trong_mùa_giải group by vị_trí"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Có bao nhiêu cầu thủ chơi ở từng vị trí ?",
+      "predicted": "select vị_trí, count(*) from trận_đấu_trong_mùa_giải group by vị_trí",
+      "gold": "select vị_trí , count ( * ) from trận_đấu_trong_mùa_giải group by vị_trí"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tên các quốc gia và số lượng cầu thủ tương ứng với từng quốc gia .",
+      "predicted": "select quốc_gia.tên_quốc_gia, count(cầu_thủ.id_cầu_thủ) \nfrom quốc_gia \nleft join đội on đội.id_đội = quốc_gia.id_quốc_gia \nleft join cầu_thủ on cầu_thủ.đội = đội.id_đội \ngroup by quốc_gia.tên_quốc_gia",
+      "gold": "select tên_quốc_gia , count ( * ) from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia group by t1.tên_quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Có bao nhiêu cầu thủ đến từ mỗi quốc gia ?",
+      "predicted": "select quốc_gia.tên_quốc_gia, count(cầu_thủ.id_cầu_thủ) \nfrom cầu_thủ \njoin đội on cầu_thủ.đội = đội.id_đội \njoin quốc_gia on đội.id_đội = cầu_thủ.đội \ngroup by quốc_gia.tên_quốc_gia",
+      "gold": "select tên_quốc_gia , count ( * ) from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia group by t1.tên_quốc_gia"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Liệt kê tất cả các cầu thủ theo thứ tự bảng chữ cái tăng dần của các trường đại học .",
+      "predicted": "select cầu_thủ from trận_đấu_trong_mùa_giải order by trường_đại_học asc",
+      "gold": "select cầu_thủ from trận_đấu_trong_mùa_giải order by trường_đại_học asc"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết tất cả các cầu thủ đã chơi trong một số mùa giải ? Sắp xếp kết quả theo thứ tự bảng chữ cái tăng dần của các trường đại học mà từng cầu thủ theo học .",
+      "predicted": "select distinct cầu_thủ, trường_đại_học \nfrom trận_đấu_trong_mùa_giải \nwhere mùa_giải is not null \norder by trường_đại_học asc",
+      "gold": "select cầu_thủ from trận_đấu_trong_mùa_giải order by trường_đại_học asc"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết vị trí có nhiều cầu thủ nắm giữ nhất trong tất cả các mùa thi đấu ?",
+      "predicted": "select vị_trí \nfrom trận_đấu_trong_mùa_giải \ngroup by vị_trí \norder by count(cầu_thủ) desc \nlimit 1",
+      "gold": "select vị_trí from trận_đấu_trong_mùa_giải group by vị_trí order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Vị trí phổ biến nhất trong tất cả các mùa thi đấu là vị trí nào ?",
+      "predicted": "select vị_trí from trận_đấu_trong_mùa_giải group by vị_trí order by count(*) desc limit 1",
+      "gold": "select vị_trí from trận_đấu_trong_mùa_giải group by vị_trí order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị 3 trường đại học đứng đầu về số lượng cầu thủ trong các mùa giải thi đấu .",
+      "predicted": "select trận_đấu_trong_mùa_giải.trường_đại_học \nfrom trận_đấu_trong_mùa_giải \ngroup by trận_đấu_trong_mùa_giải.trường_đại_học \norder by count(distinct trận_đấu_trong_mùa_giải.cầu_thủ) desc \nlimit 3",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học order by count ( * ) desc limit 3"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Ba trường đại học có nhiều cầu thủ nhất là những trường đại học nào ?",
+      "predicted": "select trường_đại_học \nfrom trận_đấu_trong_mùa_giải \ngroup by trường_đại_học \norder by count(cầu_thủ) desc \nlimit 3",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học order by count ( * ) desc limit 3"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tên của các trường đại học có ít nhất 2 cầu thủ .",
+      "predicted": "select trường_đại_học \nfrom trận_đấu_trong_mùa_giải \ngroup by trường_đại_học \nhaving count(distinct cầu_thủ) >= 2",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học having count ( * ) >= 2"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những trường đại học có hai hoặc nhiều hơn 2 cầu thủ có tên là gì ?",
+      "predicted": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học having count(distinct cầu_thủ) >= 2",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học having count ( * ) >= 2"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Hiển thị tên của các trường đại học có ít nhất hai cầu thủ theo thứ tự bảng chữ cái giảm dần .",
+      "predicted": "select trường_đại_học \nfrom trận_đấu_trong_mùa_giải \ngroup by trường_đại_học \nhaving count(distinct cầu_thủ) >= 2 \norder by trường_đại_học desc",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học having count ( * ) >= 2 order by trường_đại_học desc"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết tên của các trường đại học có hai hoặc nhiều hơn 2 cầu thủ , đồng thời liệt kê kết quả theo thứ tự bảng chữ cái giảm dần .",
+      "predicted": "select trường_đại_học \nfrom trận_đấu_trong_mùa_giải \ngroup by trường_đại_học \nhaving count(distinct cầu_thủ) >= 2 \norder by trường_đại_học desc",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải group by trường_đại_học having count ( * ) >= 2 order by trường_đại_học desc"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những đội không có hồ sơ mùa giải thi đấu có tên là gì ?",
+      "predicted": "select tên from đội where id_đội not in (select distinct đội from trận_đấu_trong_mùa_giải)",
+      "gold": "select tên from đội where id_đội not in ( select đội from trận_đấu_trong_mùa_giải )"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết tên của các đội bóng không có hồ sơ mùa giải thi đấu .",
+      "predicted": "select đội.tên from đội left join trận_đấu_trong_mùa_giải on đội.id_đội = trận_đấu_trong_mùa_giải.đội where trận_đấu_trong_mùa_giải.mùa_giải is null",
+      "gold": "select tên from đội where id_đội not in ( select đội from trận_đấu_trong_mùa_giải )"
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết tên của các quốc gia có cả các cầu thủ chơi ở vị trí ' tiền đạo ' và các cầu thủ chơi ở vị trí ' hậu vệ ' .",
+      "predicted": "select distinct q1.tên_quốc_gia\nfrom quốc_gia q1\njoin trận_đấu_trong_mùa_giải t1 on q1.id_quốc_gia = t1.quốc_gia\nwhere t1.vị_trí = 'tiền đạo'\nintersect\nselect distinct q2.tên_quốc_gia\nfrom quốc_gia q2\njoin trận_đấu_trong_mùa_giải t2 on q2.id_quốc_gia = t2.quốc_gia\nwhere t2.vị_trí = 'hậu vệ'",
+      "gold": "select t1.tên_quốc_gia from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.vị_trí = \"Forward\" intersect select t1.tên_quốc_gia from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Những quốc gia có một số cầu thủ chơi ở vị trí ' tiền đạo ' và một số cầu thủ chơi vị trí ' hậu vệ ' có tên là gì ?",
+      "predicted": "select tên_quốc_gia from quốc_gia where id_quốc_gia in (\n    select quốc_gia from trận_đấu_trong_mùa_giải where vị_trí = 'tiền đạo'\n) intersect select tên_quốc_gia from quốc_gia where id_quốc_gia in (\n    select quốc_gia from trận_đấu_trong_mùa_giải where vị_trí = 'hậu vệ'\n)",
+      "gold": "select t1.tên_quốc_gia from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.vị_trí = \"Forward\" intersect select t1.tên_quốc_gia from quốc_gia as t1 join trận_đấu_trong_mùa_giải as t2 on t1.id_quốc_gia = t2.quốc_gia where t2.vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Trường đại học nào có các cầu thủ ở vị trí ' tiền vệ ' cũng như là các cầu thủ ở vị trí ' hậu vệ ' ?",
+      "predicted": "select distinct trường_đại_học from trận_đấu_trong_mùa_giải where vị_trí = 'tiền vệ' intersect select distinct trường_đại_học from trận_đấu_trong_mùa_giải where vị_trí = 'hậu vệ'",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải where vị_trí = \"Midfielder\" intersect select trường_đại_học from trận_đấu_trong_mùa_giải where vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "match_season",
+      "question": "Cho biết các trường đại học có một số cầu thủ chơi vị trí ' tiền vệ ' và một số cầu thủ chơi vị trí ' hậu vệ ' .",
+      "predicted": "select distinct trường_đại_học \nfrom trận_đấu_trong_mùa_giải as t1 \nwhere vị_trí = \"tiền vệ\" \nintersect \nselect distinct trường_đại_học \nfrom trận_đấu_trong_mùa_giải as t2 \nwhere vị_trí = \"hậu vệ\"",
+      "gold": "select trường_đại_học from trận_đấu_trong_mùa_giải where vị_trí = \"Midfielder\" intersect select trường_đại_học from trận_đấu_trong_mùa_giải where vị_trí = \"Defender\""
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Có bao nhiêu kẻ tội phạm ?",
+      "predicted": "select count(*) from tội_phạm",
+      "gold": "select count ( * ) from tội_phạm"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Liệt kê ngày bị bắt của kẻ tội phạm theo thứ tự giảm dần về số người bị hắn giết .",
+      "predicted": "select ngày from tội_phạm order by số_người_bị_giết desc",
+      "gold": "select ngày from tội_phạm order by số_người_bị_giết desc"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Liệt kê số người bị thương bởi những kẻ tội phạm theo thứ tự tăng dần .",
+      "predicted": "select số_người_bị_thương from tội_phạm order by số_người_bị_thương asc",
+      "gold": "select số_người_bị_thương from tội_phạm order by số_người_bị_thương asc"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Số người trung bình bị thương bởi tất cả các kẻ tội phạm là bao nhiêu ?",
+      "predicted": "select avg(số_người_bị_thương) from tội_phạm",
+      "gold": "select avg ( số_người_bị_thương ) from tội_phạm"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Cho biết địa điểm nơi kẻ phạm tội đã giết nhiều người nhất sống tại ?",
+      "predicted": "select cá_nhân.quê_quán from tội_phạm join cá_nhân on tội_phạm.id_cá_nhân = cá_nhân.id_cá_nhân order by tội_phạm.số_người_bị_giết desc limit 1",
+      "gold": "select địa_điểm from tội_phạm order by số_người_bị_giết desc limit 1"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Cho biết tên của tất cả cá nhân theo thứ tự tăng dần về chiều cao .",
+      "predicted": "select tên from cá_nhân order by chiều_cao asc",
+      "gold": "select tên from cá_nhân order by chiều_cao asc"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Cho biết tên của những kẻ phạm tội .",
+      "predicted": "select tên from cá_nhân join tội_phạm on cá_nhân.id_cá_nhân = tội_phạm.id_cá_nhân",
+      "gold": "select t1.tên from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Cho biết tên của những kẻ phạm tội đến từ quốc gia không phải là ' Trung Quốc ' .",
+      "predicted": "select cá_nhân.tên from tội_phạm join cá_nhân on tội_phạm.id_cá_nhân = cá_nhân.id_cá_nhân where tội_phạm.quốc_gia <> \"Trung Quốc\"",
+      "gold": "select t1.tên from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân where t2.quốc_gia != \"China\""
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Cho biết tên của kẻ phạm tội có trọng lượng lớn nhất .",
+      "predicted": "select tên from cá_nhân order by cân_nặng desc limit 1",
+      "gold": "select t1.tên from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân order by t1.cân_nặng desc limit 1"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Tổng số vụ giết người của những kẻ phạm tội có chiều cao trên 1,84 là bao nhiêu ?",
+      "predicted": "select sum(số_người_bị_giết) from tội_phạm join cá_nhân on tội_phạm.id_cá_nhân = cá_nhân.id_cá_nhân where cá_nhân.chiều_cao > 1.84",
+      "gold": "select sum ( t2.số_người_bị_giết ) from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân where t1.chiều_cao > 1.84"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Liệt kê tên của những kẻ phạm tội ở quốc gia ' Trung Quốc ' hoặc ' Nhật Bản ' .",
+      "predicted": "select cá_nhân.tên from cá_nhân join tội_phạm on cá_nhân.id_cá_nhân = tội_phạm.id_cá_nhân where tội_phạm.quốc_gia = 'Trung Quốc' or tội_phạm.quốc_gia = 'Nhật Bản'",
+      "gold": "select t1.tên from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân where t2.quốc_gia = \"China\" or t2.quốc_gia = \"Japan\""
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Cho biết chiều cao của những kẻ phạm tội và sắp xếp kết quả theo thứ tự giảm dần về số người mà từng kẻ phạm tội làm bị thương .",
+      "predicted": "select cá_nhân.chiều_cao \nfrom tội_phạm \njoin cá_nhân on tội_phạm.id_cá_nhân = cá_nhân.id_cá_nhân \norder by tội_phạm.số_người_bị_thương desc",
+      "gold": "select t1.chiều_cao from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân order by t2.số_người_bị_thương desc"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Những kẻ phạm tội đến từ những quốc gia nào ? Hiển thị tên của tất cả các quốc gia và số lượng kẻ phạm tội tương ứng ở từng quốc gia .",
+      "predicted": "select quốc_gia, count(*) from tội_phạm group by quốc_gia",
+      "gold": "select quốc_gia , count ( * ) from tội_phạm group by quốc_gia"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Quốc gia nào có nhiều tội phạm nhất ?",
+      "predicted": "select quốc_gia from tội_phạm group by quốc_gia order by count(*) desc limit 1",
+      "gold": "select quốc_gia , count ( * ) from tội_phạm group by quốc_gia order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Những quốc gia có ít nhất hai tội phạm là những quốc gia nào ?",
+      "predicted": "select quốc_gia from tội_phạm group by quốc_gia having count(id_tội_phạm) >= 2",
+      "gold": "select quốc_gia , count ( * ) from tội_phạm group by quốc_gia having count ( * ) >= 2"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Liệt kê tên của những kẻ phạm tội theo thứ tự giảm dần về năm phạm tội .",
+      "predicted": "select cá_nhân.tên from tội_phạm join cá_nhân on tội_phạm.id_cá_nhân = cá_nhân.id_cá_nhân order by tội_phạm.năm desc",
+      "gold": "select t1.tên from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân order by t2.năm desc"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Liệt kê tên của những người không phải là tội phạm .",
+      "predicted": "select tên from cá_nhân where id_cá_nhân not in (select id_cá_nhân from tội_phạm)",
+      "gold": "select tên from cá_nhân where id_cá_nhân not in ( select id_cá_nhân from tội_phạm )"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Hiển thị các quốc gia có đồng thời những kẻ phạm tội gây ra thương tích cho hơn 50 người và những kẻ phạm tội gây ra thương tích cho ít hơn 20 người .",
+      "predicted": "select quốc_gia from tội_phạm where số_người_bị_thương > 50\nintersect\nselect quốc_gia from tội_phạm where số_người_bị_thương < 20",
+      "gold": "select quốc_gia from tội_phạm where số_người_bị_thương > 50 intersect select quốc_gia from tội_phạm where số_người_bị_thương < 20"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Những kẻ phạm tội đến từ bao nhiêu địa điểm khác nhau ?",
+      "predicted": "select count(distinct địa_điểm) from tội_phạm",
+      "gold": "select count ( distinct địa_điểm ) from tội_phạm"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Hiển thị ngày phạm tội của kẻ phạm tội cao nhất ( tính theo chiều cao ) .",
+      "predicted": "select tội_phạm.ngày from tội_phạm join cá_nhân on tội_phạm.id_cá_nhân = cá_nhân.id_cá_nhân order by cá_nhân.chiều_cao desc limit 1",
+      "gold": "select t2.ngày from cá_nhân as t1 join tội_phạm as t2 on t1.id_cá_nhân = t2.id_cá_nhân order by t1.chiều_cao desc limit 1"
+    },
+    {
+      "db_id": "perpetrator",
+      "question": "Năm nào đã xảy ra vụ phạm tội gần đây nhất ?",
+      "predicted": "select năm from tội_phạm order by năm desc limit 1",
+      "gold": "select max ( năm ) from tội_phạm"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Liệt kê chính quyền địa phương và những dịch vụ được cung cấp bởi tất cả các ga tàu .",
+      "predicted": "select chính_quyền_địa_phương, dịch_vụ from nhà_ga",
+      "gold": "select chính_quyền_địa_phương , dịch_vụ from nhà_ga"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Hiển thị số hiệu và tên của tất cả các chuyến tàu theo thời gian xuất phát của các chuyến tàu từ sớm nhất đến muộn nhất .",
+      "predicted": "select số_hiệu_tàu, tên from tàu_hoả order by thời_gian asc",
+      "gold": "select số_hiệu_tàu , tên from tàu_hoả order by thời_gian"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Cho biết thời gian và số hiệu của tất cả các chuyến tàu đi đến ' Chennai ' và sắp xếp kết quả theo thời gian xuất phát của từng chuyến tàu .",
+      "predicted": "select thời_gian, số_hiệu_tàu from tàu_hoả where điểm_đến = 'Chennai' order by thời_gian",
+      "gold": "select thời_gian , số_hiệu_tàu from tàu_hoả where điểm_đến = \"Chennai\" order by thời_gian"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Có bao nhiêu chuyến tàu có cụm từ ' Tốc hành ' trong tên của nó ?",
+      "predicted": "select count(*) from tàu_hoả where tên like \"%Tốc hành%\"",
+      "gold": "select count ( * ) from tàu_hoả where tên like \"%Express%\""
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm số hiệu và thời gian của các chuyến tàu đi từ Chennai đến Guruvayur .",
+      "predicted": "select số_hiệu_tàu, thời_gian from tàu_hoả where điểm_khởi_hành = \"Chennai\" and điểm_đến = \"Guruvayur\"",
+      "gold": "select số_hiệu_tàu , thời_gian from tàu_hoả where điểm_khởi_hành = \"Chennai\" and điểm_đến = \"Guruvayur\""
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm số lượng chuyến tàu bắt đầu từ mỗi điểm khởi hành .",
+      "predicted": "select điểm_khởi_hành, count(*) from tàu_hoả group by điểm_khởi_hành",
+      "gold": "select điểm_khởi_hành , count ( * ) from tàu_hoả group by điểm_khởi_hành"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm tên của tàu có tuyến chạy qua nhiều ga tàu nhất .",
+      "predicted": "select tàu_hoả.tên \nfrom tàu_hoả \njoin lộ_trình on tàu_hoả.id = lộ_trình.id_tàu \ngroup by tàu_hoả.id, tàu_hoả.tên \norder by count(distinct lộ_trình.id_nhà_ga) desc \nlimit 1",
+      "gold": "select t1.tên from tàu_hoả as t1 join lộ_trình as t2 on t1.id = t2.id_tàu group by t2.id_tàu order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm số lượng tàu , tên mạng lưới và các dịch vụ của từng ga .",
+      "predicted": "select count(lộ_trình.id_tàu), nhà_ga.tên_mạng_lưới, nhà_ga.dịch_vụ \nfrom nhà_ga \njoin lộ_trình on nhà_ga.id = lộ_trình.id_nhà_ga \ngroup by nhà_ga.tên_mạng_lưới, nhà_ga.dịch_vụ",
+      "gold": "select count ( * ) , t1.tên_mạng_lưới , t1.dịch_vụ from nhà_ga as t1 join lộ_trình as t2 on t1.id = t2.id_nhà_ga group by t2.id_nhà_ga"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Nhiệt độ cao trung bình của mỗi ngày trong tuần là bao nhiêu ?",
+      "predicted": "select ngày_trong_tuần, avg(nhiệt_độ_cao) from thời_tiết_hàng_tuần group by ngày_trong_tuần",
+      "gold": "select avg ( nhiệt_độ_cao ) , ngày_trong_tuần from thời_tiết_hàng_tuần group by ngày_trong_tuần"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Cho biết nhiệt độ thấp cao nhất và lượng mưa trung bình tại ga tàu Amersham .",
+      "predicted": "select max(nhiệt_độ_thấp), avg(lượng_mưa) from thời_tiết_hàng_tuần join nhà_ga on thời_tiết_hàng_tuần.id_nhà_ga = nhà_ga.id where nhà_ga.tên_mạng_lưới = \"Amersham\"",
+      "gold": "select max ( t1.nhiệt_độ_thấp ) , avg ( t1.lượng_mưa ) from thời_tiết_hàng_tuần as t1 join nhà_ga as t2 on t1.id_nhà_ga = t2.id where t2.tên_mạng_lưới = \"Amersham\""
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm tên và thời gian của các chuyến tàu chạy qua các ga tàu của chính quyền địa phương Chiltern .",
+      "predicted": "select tàu_hoả.tên, tàu_hoả.thời_gian \nfrom tàu_hoả \njoin lộ_trình on tàu_hoả.id = lộ_trình.id_tàu \njoin nhà_ga on lộ_trình.id_nhà_ga = nhà_ga.id \nwhere nhà_ga.chính_quyền_địa_phương = \"Chiltern\"",
+      "gold": "select t3.tên , t3.thời_gian from nhà_ga as t1 join lộ_trình as t2 on t1.id = t2.id_nhà_ga join tàu_hoả as t3 on t2.id_tàu = t3.id where t1.chính_quyền_địa_phương = \"Chiltern\""
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Có bao nhiêu dịch vụ khác nhau được cung cấp bởi tất cả các ga tàu ?",
+      "predicted": "select count(distinct dịch_vụ) from nhà_ga",
+      "gold": "select count ( distinct dịch_vụ ) from nhà_ga"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm id và chính quyền địa phương của ga tàu có nhiệt độ cao trung bình cao nhất .",
+      "predicted": "select nhà_ga.id, nhà_ga.chính_quyền_địa_phương \nfrom nhà_ga \njoin thời_tiết_hàng_tuần on nhà_ga.id = thời_tiết_hàng_tuần.id_nhà_ga \ngroup by nhà_ga.id, nhà_ga.chính_quyền_địa_phương \norder by avg(thời_tiết_hàng_tuần.nhiệt_độ_cao) desc \nlimit 1",
+      "gold": "select t2.id , t2.chính_quyền_địa_phương from thời_tiết_hàng_tuần as t1 join nhà_ga as t2 on t1.id_nhà_ga = t2.id group by t1.id_nhà_ga order by avg ( nhiệt_độ_cao ) desc limit 1"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm id và chính quyền địa phương của ga tàu có lượng mưa tối đa cao hơn 50 .",
+      "predicted": "select nhà_ga.id, nhà_ga.chính_quyền_địa_phương from nhà_ga join thời_tiết_hàng_tuần on nhà_ga.id = thời_tiết_hàng_tuần.id_nhà_ga where thời_tiết_hàng_tuần.lượng_mưa > 50 group by nhà_ga.id, nhà_ga.chính_quyền_địa_phương",
+      "gold": "select t2.id , t2.chính_quyền_địa_phương from thời_tiết_hàng_tuần as t1 join nhà_ga as t2 on t1.id_nhà_ga = t2.id group by t1.id_nhà_ga having max ( t1.lượng_mưa ) > 50"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Hiển thị nhiệt độ thấp thấp nhất và tốc độ gió mạnh nhất tính theo dặm trên giờ .",
+      "predicted": "select min ( nhiệt_độ_thấp ) , max ( tốc_độ_gió_mph ) from thời_tiết_hàng_tuần",
+      "gold": "select min ( nhiệt_độ_thấp ) , max ( tốc_độ_gió_mph ) from thời_tiết_hàng_tuần"
+    },
+    {
+      "db_id": "station_weather",
+      "question": "Tìm điểm khởi hành mà từ đó có hơn 1 chuyến tàu bắt đầu .",
+      "predicted": "select điểm_khởi_hành from tàu_hoả group by điểm_khởi_hành having count(id) > 1",
+      "gold": "select điểm_khởi_hành from tàu_hoả group by điểm_khởi_hành having count ( * ) > 1"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Có bao nhiêu nhà thờ được mở trước năm 1850 ?",
+      "predicted": "select count(*) from nhà_thờ where nhà_thờ.ngày_mở_cửa < 1850",
+      "gold": "select count ( * ) from nhà_thờ where ngày_mở_cửa < 1850"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên , ngày mở và người tổ chức của tất cả các nhà thờ .",
+      "predicted": "select tên, ngày_mở_cửa, được_tổ_chức_bởi from nhà_thờ",
+      "gold": "select tên , ngày_mở_cửa , được_tổ_chức_bởi from nhà_thờ"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Liệt kê tên của tất cả các nhà thờ theo thứ tự giảm dần của ngày mở cửa .",
+      "predicted": "select tên from nhà_thờ order by ngày_mở_cửa desc",
+      "gold": "select tên from nhà_thờ order by ngày_mở_cửa desc"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị năm mở cửa có ít nhất hai nhà thờ được mở .",
+      "predicted": "select năm_mở_cửa from nhà_thờ group by năm_mở_cửa having count(*) >= 2",
+      "gold": "select ngày_mở_cửa from nhà_thờ group by ngày_mở_cửa having count ( * ) >= 2"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị nhà tổ chức và tên của các nhà thờ đã được mở từ 1830 đến 1840 .",
+      "predicted": "select được_tổ_chức_bởi, tên from nhà_thờ where năm(ngày_mở_cửa) between 1830 and 1840",
+      "gold": "select được_tổ_chức_bởi , tên from nhà_thờ where ngày_mở_cửa between 1830 and 1840"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tất cả các năm mở cửa và số lượng nhà thờ đã được mở trong năm đó .",
+      "predicted": "select năm_mở_cửa, count(*) from nhà_thờ group by năm_mở_cửa",
+      "gold": "select ngày_mở_cửa , count ( * ) from nhà_thờ group by ngày_mở_cửa"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên và năm mở cửa cho ba nhà thờ đã được mở gần đây nhất .",
+      "predicted": "select tên, ngày_mở_cửa from nhà_thờ order by ngày_mở_cửa desc limit 3",
+      "gold": "select tên , ngày_mở_cửa from nhà_thờ order by ngày_mở_cửa desc limit 3"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Có bao nhiêu người ' phụ nữ ' lớn tuổi hơn 30 trong hồ sơ ?",
+      "predicted": "select count(*) from cá_nhân where là_nam_hay_nữ = 'phụ nữ' and tuổi > 30",
+      "gold": "select count ( * ) from cá_nhân where là_nam_hay_nữ = \"F\" and tuổi > 30"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị những quốc gia có một số cá nhân trên 30 tuổi và một số cá nhân dưới 25 tuổi .",
+      "predicted": "select quốc_gia from cá_nhân where tuổi > 30 intersect select quốc_gia from cá_nhân where tuổi < 25",
+      "gold": "select quốc_gia from cá_nhân where tuổi < 25 intersect select quốc_gia from cá_nhân where tuổi > 30"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị độ tuổi nhỏ nhất , lớn nhất và trung bình của tất cả mọi cá nhân .",
+      "predicted": "select min(tuổi), max(tuổi), avg(tuổi) from cá_nhân",
+      "gold": "select min ( tuổi ) , max ( tuổi ) , avg ( tuổi ) from cá_nhân"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên và quốc gia của tất cả những cá nhân có độ tuổi thấp hơn trung bình .",
+      "predicted": "select tên, quốc_gia from cá_nhân where tuổi < (select avg(tuổi) from cá_nhân)",
+      "gold": "select tên , quốc_gia from cá_nhân where tuổi < ( select avg ( tuổi ) from cá_nhân )"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên của cá nhân nam và cá nhân nữ là cặp đôi trong tất cả các đám cưới diễn ra sau năm 2014 .",
+      "predicted": "select cá_nhân.tên from cá_nhân join lễ_cưới on cá_nhân.id_cá_nhân = lễ_cưới.id_nam where cá_nhân.là_nam_hay_nữ = \"nam\" and lễ_cưới.năm > 2014\nunion\nselect cá_nhân.tên from cá_nhân join lễ_cưới on cá_nhân.id_cá_nhân = lễ_cưới.id_nữ where cá_nhân.là_nam_hay_nữ = \"nữ\" and lễ_cưới.năm > 2014",
+      "gold": "select t2.tên , t3.tên from lễ_cưới as t1 join cá_nhân as t2 on t1.id_nam = t2.id_cá_nhân join cá_nhân as t3 on t1.id_nữ = t3.id_cá_nhân where t1.năm > 2014"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên và tuổi của tất cả những người ' đàn ông ' không tổ chức đám cưới .",
+      "predicted": "select tên, tuổi from cá_nhân where là_nam_hay_nữ = 'đàn ông' and id_cá_nhân not in (\n    select id_nam from lễ_cưới\n)",
+      "gold": "select tên , tuổi from cá_nhân where là_nam_hay_nữ = \"T\" and id_cá_nhân not in ( select id_nam from lễ_cưới )"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên của tất cả các nhà thờ nơi đã tổ chức các đám cưới ngoại trừ những nơi đã tổ chức đám cưới vào năm 2015 .",
+      "predicted": "select tên from nhà_thờ where id_nhà_thờ in (select id_nhà_thờ from lễ_cưới) and id_nhà_thờ not in (select id_nhà_thờ from lễ_cưới where năm = 2015)",
+      "gold": "select tên from nhà_thờ except select t1.tên from nhà_thờ as t1 join lễ_cưới as t2 on t1.id_nhà_thờ = t2.id_nhà_thờ where t2.năm = 2015"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên của tất cả các nhà thờ đã tổ chức ít nhất hai đám cưới .",
+      "predicted": "select nhà_thờ.tên \nfrom nhà_thờ \njoin lễ_cưới on nhà_thờ.id_nhà_thờ = lễ_cưới.id_nhà_thờ \ngroup by nhà_thờ.id_nhà_thờ, nhà_thờ.tên \nhaving count(*) >= 2",
+      "gold": "select t1.tên from nhà_thờ as t1 join lễ_cưới as t2 on t1.id_nhà_thờ = t2.id_nhà_thờ group by t1.id_nhà_thờ having count ( * ) >= 2"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên của tất cả các ' phụ nữ ' đến từ Canada và có một đám cưới vào năm 2016 .",
+      "predicted": "select cá_nhân.tên from cá_nhân join lễ_cưới on cá_nhân.id_cá_nhân = lễ_cưới.id_nữ where cá_nhân.quốc_gia = \"Canada\" and cá_nhân.là_nam_hay_nữ = \"nữ\" and lễ_cưới.năm = 2016",
+      "gold": "select t2.tên from lễ_cưới as t1 join cá_nhân as t2 on t1.id_nữ = t2.id_cá_nhân where t1.năm = 2016 and t2.là_nam_hay_nữ = \"F\" and t2.quốc_gia = \"Canada\""
+    },
+    {
+      "db_id": "wedding",
+      "question": "Có bao nhiêu đám cưới trong năm 2016 ?",
+      "predicted": "select count(*) from lễ_cưới where năm = 2016",
+      "gold": "select count ( * ) from lễ_cưới where năm = 2016"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tên của những nhà thờ đã tổ chức đám cưới cho tất cả những cá nhân trên 30 tuổi .",
+      "predicted": "select distinct nhà_thờ.tên \nfrom nhà_thờ \njoin lễ_cưới on nhà_thờ.id_nhà_thờ = lễ_cưới.id_nhà_thờ \njoin cá_nhân on (cá_nhân.id_cá_nhân = lễ_cưới.id_nam or cá_nhân.id_cá_nhân = lễ_cưới.id_nữ) \nwhere cá_nhân.tuổi > 30",
+      "gold": "select t4.tên from lễ_cưới as t1 join cá_nhân as t2 on t1.id_nam = t2.id_cá_nhân join cá_nhân as t3 on t1.id_nữ = t3.id_cá_nhân join nhà_thờ as t4 on t4.id_nhà_thờ = t1.id_nhà_thờ where t2.tuổi > 30 or t3.tuổi > 30"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Hiển thị tất cả các quốc gia và số lượng cá nhân đến từ từng quốc gia .",
+      "predicted": "select quốc_gia, count(*) as số_lượng_cá_nhân from cá_nhân group by quốc_gia",
+      "gold": "select quốc_gia , count ( * ) from cá_nhân group by quốc_gia"
+    },
+    {
+      "db_id": "wedding",
+      "question": "Có bao nhiêu nhà thờ có một đám cưới trong năm 2016 ?",
+      "predicted": "select count(distinct lễ_cưới.id_nhà_thờ) from lễ_cưới where năm = 2016",
+      "gold": "select count ( distinct id_nhà_thờ ) from lễ_cưới where năm = 2016"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có tất cả bao nhiêu giảng viên ?",
+      "predicted": "select count ( * ) from giảng_viên",
+      "gold": "select count ( * ) from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Đếm số lượng các giảng viên .",
+      "predicted": "select count ( * ) from giảng_viên",
+      "gold": "select count ( * ) from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết danh sách các ngạch mà các giảng viên đang nắm giữ .",
+      "predicted": "select distinct ngạch from giảng_viên",
+      "gold": "select distinct ngạch from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị các ngạch mà các giảng viên đang nắm giữ .",
+      "predicted": "select distinct ngạch from giảng_viên",
+      "gold": "select distinct ngạch from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị tên của tất cả các toà nhà có chứa văn phòng khoa .",
+      "predicted": "select distinct toà_nhà from giảng_viên where số_phòng like \"%văn phòng khoa%\"",
+      "gold": "select distinct toà_nhà from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những toà nhà nào có chứa các văn phòng khoa ? Cho biết tên của những toà nhà này .",
+      "predicted": "select distinct toà_nhà from giảng_viên",
+      "gold": "select distinct toà_nhà from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên và họ của tất cả các giảng viên và ngạch mà mỗi giảng viên đang nắm giữ .",
+      "predicted": "select họ, tên, ngạch from giảng_viên",
+      "gold": "select ngạch , tên , họ from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên đầy đủ của các giảng viên và ngạch mà từng giảng viên đang nắm giữ .",
+      "predicted": "select concat(giảng_viên.họ, ' ', giảng_viên.tên) as tên_đầy_đủ, giảng_viên.ngạch from giảng_viên",
+      "gold": "select ngạch , tên , họ from giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên đầy đủ và số điện thoại của các giảng viên nữ .",
+      "predicted": "select concat(giảng_viên.họ, ' ', giảng_viên.tên) as tên_đầy_đủ, giảng_viên.số_điện_thoại from giảng_viên where giảng_viên.giới_tính = \"Nữ\"",
+      "gold": "select tên , họ , số_điện_thoại from giảng_viên where giới_tính = \"F\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên , họ và số điện thoại của tất cả các giảng viên nữ .",
+      "predicted": "select tên, họ, số_điện_thoại from giảng_viên where giới_tính = 'Nữ'",
+      "gold": "select tên , họ , số_điện_thoại from giảng_viên where giới_tính = \"F\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị id của tất cả các giảng viên nam .",
+      "predicted": "select id_giảng_viên from giảng_viên where giới_tính = \"M\"",
+      "gold": "select id_giảng_viên from giảng_viên where giới_tính = \"M\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết id của những giảng viên nam .",
+      "predicted": "select id_giảng_viên from giảng_viên where giới_tính = \"nam\"",
+      "gold": "select id_giảng_viên from giảng_viên where giới_tính = \"M\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có tất cả bao nhiêu nữ ' Giáo sư ' ?",
+      "predicted": "select count(*) from giảng_viên where giới_tính = \"nữ\" and ngạch = \"Giáo sư\"",
+      "gold": "select count ( * ) from giảng_viên where giới_tính = \"F\" and ngạch = \"Professor\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Đếm số lượng các nữ ' Giáo sư ' .",
+      "predicted": "select count(*) from giảng_viên where giới_tính = 'nữ' and ngạch = 'Giáo sư'",
+      "gold": "select count ( * ) from giảng_viên where giới_tính = \"F\" and ngạch = \"Professor\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số điện thoại , số phòng và toà nhà của giảng viên Prince Jerry .",
+      "predicted": "select số_điện_thoại, số_phòng, toà_nhà from giảng_viên where họ = \"Prince\" and tên = \"Jerry\"",
+      "gold": "select số_điện_thoại , số_phòng , toà_nhà from giảng_viên where tên = \"Jerry\" and họ = \"Prince\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Giảng viên có tên là Prince Jerry hiện đang làm việc ở phòng nào và toà nhà nào ? Đồng thời , cho biết số điện thoại của giảng viên này .",
+      "predicted": "select số_phòng, toà_nhà, số_điện_thoại from giảng_viên where tên = \"Prince Jerry\"",
+      "gold": "select số_điện_thoại , số_phòng , toà_nhà from giảng_viên where tên = \"Jerry\" and họ = \"Prince\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có bao nhiêu giáo sư có văn phòng ở toà nhà NEB ?",
+      "predicted": "select count(*) from giảng_viên where toà_nhà = \"NEB\" and ngạch = \"giáo sư\"",
+      "gold": "select count ( * ) from giảng_viên where ngạch = \"Professor\" and toà_nhà = \"NEB\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số lượng các giáo sư có văn phòng ở toà nhà NEB .",
+      "predicted": "select count(distinct giảng_viên.id_giảng_viên) \nfrom giảng_viên \nwhere giảng_viên.toà_nhà = \"NEB\"",
+      "gold": "select count ( * ) from giảng_viên where ngạch = \"Professor\" and toà_nhà = \"NEB\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị tên và họ của những người dạy học .",
+      "predicted": "select họ, tên from giảng_viên",
+      "gold": "select tên , họ from giảng_viên where ngạch = \"Instructor\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên đầy đủ của những người dạy học .",
+      "predicted": "select concat(giảng_viên.họ, ' ', giảng_viên.tên) as tên_đầy_đủ from giảng_viên",
+      "gold": "select tên , họ from giảng_viên where ngạch = \"Instructor\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên của các toà nhà và số lượng giảng viên làm việc trong từng toà nhà .",
+      "predicted": "select toà_nhà, count(*) as số_lượng_giảng_viên from giảng_viên group by toà_nhà",
+      "gold": "select toà_nhà , count ( * ) from giảng_viên group by toà_nhà"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Mỗi toà nhà có bao nhiêu giảng viên ? Liệt kê tên và số lượng giảng viên của từng toà nhà .",
+      "predicted": "select toà_nhà, count(*) as số_lượng_giảng_viên from giảng_viên group by toà_nhà",
+      "gold": "select toà_nhà , count ( * ) from giảng_viên group by toà_nhà"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Toà nhà nào có nhiều giảng viên nhất ?",
+      "predicted": "select toà_nhà from giảng_viên group by toà_nhà order by count(*) desc limit 1",
+      "gold": "select toà_nhà from giảng_viên group by toà_nhà order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết toà nhà có nhiều giảng viên nhất .",
+      "predicted": "select toà_nhà from giảng_viên group by toà_nhà order by count(*) desc limit 1",
+      "gold": "select toà_nhà from giảng_viên group by toà_nhà order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị tất cả các toà nhà có ít nhất 10 giáo sư .",
+      "predicted": "select toà_nhà from giảng_viên group by toà_nhà having count(*) >= 10",
+      "gold": "select toà_nhà from giảng_viên where ngạch = \"Professor\" group by toà_nhà having count ( * ) >= 10"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những toà nhà nào có ít nhất 10 giáo sư ?",
+      "predicted": "select toà_nhà from giảng_viên group by toà_nhà having count(*) >= 10",
+      "gold": "select toà_nhà from giảng_viên where ngạch = \"Professor\" group by toà_nhà having count ( * ) >= 10"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số lượng các giảng viên thuộc về mỗi ngạch",
+      "predicted": "select ngạch, count(*) as số_lượng from giảng_viên group by ngạch",
+      "gold": "select ngạch , count ( * ) from giảng_viên group by ngạch"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có bao nhiêu giảng viên thuộc về mỗi ngạch ?",
+      "predicted": "select ngạch, count(*) from giảng_viên group by ngạch",
+      "gold": "select ngạch , count ( * ) from giảng_viên group by ngạch"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị tất cả các ngạch cũng như là số lượng giảng viên nam và số lượng giảng viên nữ thuộc về mỗi ngạch .",
+      "predicted": "select giảng_viên.ngạch, \n       count(case when giảng_viên.giới_tính = 'nam' then 1 end) as số_lượng_giảng_viên_nam, \n       count(case when giảng_viên.giới_tính = 'nữ' then 1 end) as số_lượng_giảng_viên_nữ \nfrom giảng_viên \ngroup by giảng_viên.ngạch",
+      "gold": "select ngạch , giới_tính , count ( * ) from giảng_viên group by ngạch , giới_tính"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có bao nhiêu giảng viên nam và bao nhiêu giảng viên nữ thuộc về mỗi ngạch ?",
+      "predicted": "select giảng_viên.ngạch, \n       sum(case when giảng_viên.giới_tính = 'nam' then 1 else 0 end) as số_lượng_nam, \n       sum(case when giảng_viên.giới_tính = 'nữ' then 1 else 0 end) as số_lượng_nữ \nfrom giảng_viên \ngroup by giảng_viên.ngạch",
+      "gold": "select ngạch , giới_tính , count ( * ) from giảng_viên group by ngạch , giới_tính"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Ngạch nào có số lượng giảng viên ít nhất ?",
+      "predicted": "select ngạch \nfrom giảng_viên \ngroup by ngạch \norder by count(id_giảng_viên) asc \nlimit 1",
+      "gold": "select ngạch from giảng_viên group by ngạch order by count ( * ) asc limit 1"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết ngạch có ít giảng viên nhất .",
+      "predicted": "select ngạch from giảng_viên group by ngạch order by count(id_giảng_viên) asc limit 1",
+      "gold": "select ngạch from giảng_viên group by ngạch order by count ( * ) asc limit 1"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số lượng ' Trợ lý giáo sư ' của từng giới tính .",
+      "predicted": "select giảng_viên.giới_tính, count(*) as số_lượng from giảng_viên where giảng_viên.ngạch = \"Trợ lý giáo sư\" group by giảng_viên.giới_tính",
+      "gold": "select giới_tính , count ( * ) from giảng_viên where ngạch = \"AsstProf\" group by giới_tính"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có bao nhiêu nam ' Trợ lý giáo sư ' và bao nhiêu nữ ' Trợ lý giáo sư ' ?",
+      "predicted": "select \n  (select count(*) from giảng_viên where giới_tính = 'Nam' and ngạch = 'Trợ lý giáo sư') as số_nam_trợ_lý_giáo_sư,\n  (select count(*) from giảng_viên where giới_tính = 'Nữ' and ngạch = 'Trợ lý giáo sư') as số_nữ_trợ_lý_giáo_sư",
+      "gold": "select giới_tính , count ( * ) from giảng_viên where ngạch = \"AsstProf\" group by giới_tính"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Linda Smith được cố vấn bởi giảng viên nào ? Cho biết tên và họ của những giảng viên này .",
+      "predicted": "select giảng_viên.tên, giảng_viên.họ from giảng_viên join sinh_viên on giảng_viên.id_giảng_viên = sinh_viên.cố_vấn where sinh_viên.tên = \"Linda\" and sinh_viên.họ = \"Smith\"",
+      "gold": "select t1.tên , t1.họ from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn where t2.tên = \"Linda\" and t2.họ = \"Smith\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Ai là người cố vấn cho Linda Smith ? Cho biết tên và họ của người này .",
+      "predicted": "select họ, tên from sinh_viên where id_sinh_viên = (\n    select cố_vấn from sinh_viên where họ = \"Smith\" and tên = \"Linda\"\n)",
+      "gold": "select t1.tên , t1.họ from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn where t2.tên = \"Linda\" and t2.họ = \"Smith\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị id của những sinh viên có cố vấn là các ' Giáo sư ' .",
+      "predicted": "select id_sinh_viên from sinh_viên where cố_vấn in (select id_giảng_viên from giảng_viên where ngạch = \"Giáo sư\")",
+      "gold": "select t2.id_sinh_viên from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn where t1.ngạch = \"Professor\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những sinh viên nào có các ' Giáo sư ' làm cố vấn cho họ ? Cho biết id của những sinh viên này .",
+      "predicted": "select id_sinh_viên from sinh_viên join giảng_viên on sinh_viên.cố_vấn = giảng_viên.id_giảng_viên where giảng_viên.ngạch = \"Giáo sư\"",
+      "gold": "select t2.id_sinh_viên from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn where t1.ngạch = \"Professor\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết tên và họ của tất cả các sinh viên được tư vấn bởi ' Micheal Goodrich ' .",
+      "predicted": "select sinh_viên.tên, sinh_viên.họ \nfrom sinh_viên \njoin giảng_viên on sinh_viên.cố_vấn = giảng_viên.id_giảng_viên \nwhere giảng_viên.họ = \"Goodrich\" and giảng_viên.tên = \"Micheal\"",
+      "gold": "select t2.tên , t2.họ from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn where t1.tên = \"Michael\" and t1.họ = \"Goodrich\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Micheal Goodrich ' đã tư vấn cho những sinh viên nào ? Cho biết tên và họ của những sinh viên này .",
+      "predicted": "select họ, tên from sinh_viên where cố_vấn = 'Micheal Goodrich'",
+      "gold": "select t2.tên , t2.họ from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn where t1.tên = \"Michael\" and t1.họ = \"Goodrich\""
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số lượng sinh viên mà mỗi giảng viên đã tư vấn , cùng với đó hãy liệt kê id của tất cả các giảng viên .",
+      "predicted": "select giảng_viên.id_giảng_viên, count(sinh_viên.id_sinh_viên) as số_lượng_sinh_viên_tư_vấn\nfrom giảng_viên\nleft join sinh_viên on giảng_viên.id_giảng_viên = sinh_viên.cố_vấn\ngroup by giảng_viên.id_giảng_viên",
+      "gold": "select t1.id_giảng_viên , count ( * ) from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.id_giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết id của tất cả các giảng viên và số lượng sinh viên mà mỗi giảng viên đã tư vấn .",
+      "predicted": "select giảng_viên.id_giảng_viên, count(sinh_viên.id_sinh_viên) as số_lượng_sinh_viên\nfrom giảng_viên\nleft join sinh_viên on giảng_viên.id_giảng_viên = sinh_viên.cố_vấn\ngroup by giảng_viên.id_giảng_viên",
+      "gold": "select t1.id_giảng_viên , count ( * ) from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.id_giảng_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị tất cả các ngạch cũng như là số lượng sinh viên được tư vấn bởi các giảng viên thuộc mỗi ngạch .",
+      "predicted": "select giảng_viên.ngạch, count(sinh_viên.id_sinh_viên) \nfrom giảng_viên \njoin sinh_viên on giảng_viên.họ || ' ' || giảng_viên.tên = sinh_viên.cố_vấn \ngroup by giảng_viên.ngạch",
+      "gold": "select t1.ngạch , count ( * ) from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.ngạch"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có bao nhiêu sinh viên được tư vấn bởi các giảng viên thuộc mỗi ngạch ?",
+      "predicted": "select giảng_viên.ngạch, count(distinct sinh_viên.id_sinh_viên) \nfrom sinh_viên \njoin giảng_viên on sinh_viên.cố_vấn = giảng_viên.id_giảng_viên \ngroup by giảng_viên.ngạch",
+      "gold": "select t1.ngạch , count ( * ) from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.ngạch"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết họ và tên của giảng viên đã tư vấn cho nhiều sinh viên nhất ?",
+      "predicted": "select giảng_viên.họ, giảng_viên.tên\nfrom giảng_viên\njoin sinh_viên on giảng_viên.id_giảng_viên = sinh_viên.cố_vấn\ngroup by giảng_viên.id_giảng_viên, giảng_viên.họ, giảng_viên.tên\norder by count(sinh_viên.id_sinh_viên) desc\nlimit 1",
+      "gold": "select t1.tên , t1.họ from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.id_giảng_viên order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Giảng viên nào là cố vấn cho nhiều sinh viên nhất ? Cho biết tên và họ của giảng viên này .",
+      "predicted": "select giảng_viên.tên, giảng_viên.họ \nfrom giảng_viên \njoin sinh_viên on giảng_viên.id_giảng_viên = sinh_viên.cố_vấn \ngroup by giảng_viên.id_giảng_viên, giảng_viên.tên, giảng_viên.họ \norder by count(sinh_viên.id_sinh_viên) desc \nlimit 1",
+      "gold": "select t1.tên , t1.họ from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.id_giảng_viên order by count ( * ) desc limit 1"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết id của những giảng viên là cố vấn cho ít nhất 2 sinh viên .",
+      "predicted": "select cố_vấn from sinh_viên group by cố_vấn having count(id_sinh_viên) >= 2",
+      "gold": "select t1.id_giảng_viên from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.id_giảng_viên having count ( * ) >= 2"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những giảng viên nào đã tư vấn cho nhiều hơn hoặc bằng 2 sinh viên ? Cho biết id của những giảng viên này .",
+      "predicted": "select cố_vấn from sinh_viên group by cố_vấn having count(id_sinh_viên) >= 2",
+      "gold": "select t1.id_giảng_viên from giảng_viên as t1 join sinh_viên as t2 on t1.id_giảng_viên = t2.cố_vấn group by t1.id_giảng_viên having count ( * ) >= 2"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những giảng viên đã không tư vấn cho bất kỳ sinh viên nào có id là gì ?",
+      "predicted": "select id_giảng_viên from giảng_viên where id_giảng_viên not in (select cố_vấn from sinh_viên)",
+      "gold": "select id_giảng_viên from giảng_viên except select cố_vấn from sinh_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết id của những giảng viên đã không tư vấn cho bất kỳ sinh viên nào .",
+      "predicted": "select id_giảng_viên \nfrom giảng_viên \nwhere id_giảng_viên not in (\n    select cố_vấn \n    from sinh_viên \n    where cố_vấn is not null\n)",
+      "gold": "select id_giảng_viên from giảng_viên except select cố_vấn from sinh_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Chúng ta có những hoạt động gì ?",
+      "predicted": "select tên_hoạt_động from hoạt_động",
+      "gold": "select tên_hoạt_động from hoạt_động"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Liệt kê tất cả các hoạt động .",
+      "predicted": "select * from hoạt_động",
+      "gold": "select tên_hoạt_động from hoạt_động"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Đếm số lượng các hoạt động mà chúng ta có .",
+      "predicted": "select count(*) from hoạt_động",
+      "gold": "select count ( * ) from hoạt_động"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số lượng hoạt động chúng ta có .",
+      "predicted": "select count(*) from hoạt_động",
+      "gold": "select count ( * ) from hoạt_động"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Có bao nhiêu giảng viên đã tham gia các hoạt động ?",
+      "predicted": "select count(distinct giảng_viên_tham_gia_vào.id_giảng_viên) \nfrom giảng_viên_tham_gia_vào",
+      "gold": "select count ( distinct id_giảng_viên ) from giảng_viên_tham_gia_vào"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Cho biết số lượng giảng viên đã tham gia một số hoạt động .",
+      "predicted": "select count(distinct giảng_viên_tham_gia_vào.id_giảng_viên) from giảng_viên_tham_gia_vào",
+      "gold": "select count ( distinct id_giảng_viên ) from giảng_viên_tham_gia_vào"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị id của các giảng viên không tham gia bất kỳ hoạt động nào .",
+      "predicted": "select id_giảng_viên \nfrom giảng_viên \nwhere id_giảng_viên not in (\n    select id_giảng_viên \n    from giảng_viên_tham_gia_vào\n)",
+      "gold": "select id_giảng_viên from giảng_viên except select id_giảng_viên from giảng_viên_tham_gia_vào"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những giảng viên nào không tham gia các hoạt đông ? Cho biết id của những giảng viên này .",
+      "predicted": "select id_giảng_viên from giảng_viên except select id_giảng_viên from giảng_viên_tham_gia_vào",
+      "gold": "select id_giảng_viên from giảng_viên except select id_giảng_viên from giảng_viên_tham_gia_vào"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Hiển thị id của các giảng viên vừa tham gia vào một số hoạt động vừa tư vấn cho các sinh viên .",
+      "predicted": "select distinct gv.id_giảng_viên\nfrom giảng_viên gv\njoin giảng_viên_tham_gia_vào gvtg on gv.id_giảng_viên = gvtg.id_giảng_viên\njoin sinh_viên sv on gv.id_giảng_viên = sv.cố_vấn",
+      "gold": "select id_giảng_viên from giảng_viên_tham_gia_vào intersect select cố_vấn from sinh_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Những giảng viên nào không chỉ tham gia vào một số hoạt động mà còn tư vấn cho các sinh viên ? Cho biết id của những giảng viên này .",
+      "predicted": "select id_giảng_viên from giảng_viên_tham_gia_vào group by id_giảng_viên having count(distinct id_hoạt_động) > 1 intersect select cố_vấn from sinh_viên where cố_vấn is not null",
+      "gold": "select id_giảng_viên from giảng_viên_tham_gia_vào intersect select cố_vấn from sinh_viên"
+    },
+    {
+      "db_id": "activity_1",
+      "question": "Mark Giuliano ' đã tham gia bao nhiêu hoạt động ?",
+      "predicted": "select count(*) \nfrom giảng_viên \njoin giảng_viên_tham_gia_vào on giảng_viên.id_giảng_viên = giảng_viên_tham_gia_vào.id_giảng_viên \nwhere giảng_viên.tên = 'Mark' and giảng_viên.họ = 'Giuliano'",
+      "gold": "select count ( * ) from giảng_viên as t1 join giảng_viên_tham_gia_vào as t2 on t1.id_giảng_viên = t2.id_giảng_viên where t1.tên = \"Mark\" and t1.họ = \"Giuliano\""
+    }
+  ]
+}

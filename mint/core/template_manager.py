@@ -7,7 +7,7 @@ Manages loading and formatting of prompt templates for different strategies.
 from pathlib import Path
 from typing import Dict, Any
 from langchain.prompts import PromptTemplate
-from .config import ViPERConfig
+from ..config import ViPERConfig
 
 
 class TemplateManager:
@@ -124,4 +124,4 @@ SQL Query:"""
     def format_template(self, strategy: str, **kwargs) -> str:
         """Format template with variables."""
         template = self.get_template(strategy)
-        return template.format(**kwargs) 
+        return template.format(**kwargs)

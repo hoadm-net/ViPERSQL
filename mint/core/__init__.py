@@ -9,10 +9,10 @@ This module contains the core system components including:
 
 from .llm_interface import LLMInterface
 from .template_manager import TemplateManager
-from .evaluator import Evaluator
+from .evaluator import UnifiedEvaluator
 
 __all__ = [
     'LLMInterface',
     'TemplateManager',
-    'Evaluator'
+    'UnifiedEvaluator'
 ]

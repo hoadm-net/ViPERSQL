@@ -1,0 +1,59 @@
+================================================================================
+📊 EVALUATION REPORT
+================================================================================
+🤖 Model: gpt-4.1-mini
+🎯 Strategy: FEW-SHOT
+🔧 Example Selection: VIR2-NO-POS
+📊 Dataset: std-level, test split
+📝 Samples: 300
+📅 Timestamp: 20250724_062624
+
+⏱️  EXECUTION TIMING
+----------------------------------------
+Start Time: 2025-07-24 06:26:24
+End Time: 2025-07-24 06:34:05
+SQL Generation Time: 456.89 seconds
+Evaluation Time: 4.45 seconds
+Total Execution Time: 461.34 seconds
+================================================================================
+Total Samples: 300
+Valid Results: 300
+Exact Match Accuracy: 21.67%
+Syntax Validity: 100.00%
+Overall F1 Score: 86.68%
+
+----------------------------------------
+COMPONENT-WISE SCORES
+----------------------------------------
+Component       F1 Score   Precision    Recall      
+--------------------------------------------------
+SELECT             77.71%      77.98%      77.45%
+FROM               93.96%      94.19%      93.73%
+WHERE              68.03%      66.06%      70.13%
+GROUP BY           93.16%      91.08%      95.33%
+ORDER BY           88.40%      88.85%      87.96%
+HAVING             91.15%      90.70%      91.61%
+KEYWORDS           94.31%      92.20%      96.53%
+
+----------------------------------------
+QUERY COMPLEXITY DISTRIBUTION
+----------------------------------------
+simple      :   204 queries (68.00%)
+moderate    :    94 queries (31.33%)
+complex     :     0 queries (0.00%)
+very_complex:     2 queries (0.67%)
+
+----------------------------------------
+ERROR ANALYSIS
+----------------------------------------
+Syntax Error Rate: 0.00%
+Semantic Error Rate: 78.33%
+Total Queries with Errors: 235
+
+Component Error Distribution:
+  - column_selection_errors: 191 queries (63.67%)
+  - table_selection_errors: 133 queries (44.33%)
+  - condition_errors: 110 queries (36.67%)
+  - join_errors: 32 queries (10.67%)
+  - aggregation_errors: 121 queries (40.33%)
+  - operator_errors: 37 queries (12.33%)
