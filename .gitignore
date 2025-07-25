@@ -86,3 +86,13 @@ coverage.xml
 
 # Experiment results
 results/
+
+# BIRD Dataset - exclude large data files, keep structure
+dataset/BIRD/dev.json
+dataset/BIRD/*_vietnamese_*.json
+dataset/BIRD/*.summary.txt
+dataset/BIRD/processed_*
+
+# Spider Dataset - exclude processed data
+dataset/Spider/processed_*
+dataset/Spider/*_vietnamese_*
