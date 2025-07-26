@@ -1,0 +1,1502 @@
+[
+  {
+    "db_id": "formula_1",
+    "question": "Về số điểm đã đạt được, tay đua xếp hạng 91 đã giành được bao nhiêu chiến thắng?",
+    "SQL": "SELECT SUM(CASE WHEN points = 91 THEN wins ELSE 0 END) FROM driverStandings"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu khách hàng sinh năm 1920 đang sống ở Đông Bohemia?",
+    "SQL": "SELECT COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE STRFTIME('%Y', T1.birth_date) = '1920' AND T2.A3 = 'east Bohemia'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Loại hình giáo dục nào được cung cấp tại trường có điểm trung bình cao nhất trong môn Toán?",
+    "SQL": "SELECT T2.EdOpsName FROM satscores AS T1 INNER JOIN schools AS T2 ON T1.cds = T2.CDSCode ORDER BY T1.AvgScrMath DESC LIMIT 1"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Cung cấp danh sách bệnh nhân và chẩn đoán của họ với chỉ số triglyceride (TG) lớn hơn 100 so với mức bình thường?",
+    "SQL": "SELECT T1.ID, T1.Diagnosis FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.TG > 300"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Danh sách tất cả các loại của thẻ \"Molimo, Maro-Sorcerer\" là gì?",
+    "SQL": "SELECT DISTINCT subtypes, supertypes FROM cards WHERE name = 'Molimo, Maro-Sorcerer'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Loại in nào có trên thẻ mà Daren Bader đã tạo ra?",
+    "SQL": "SELECT DISTINCT availability FROM cards WHERE artist = 'Daren Bader'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Liệt kê uuid cho các thẻ cũ và ngôn ngữ nước ngoài của những thẻ này.",
+    "SQL": "SELECT T1.uuid, T3.language FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid INNER JOIN foreign_data AS T3 ON T1.uuid = T3.uuid WHERE T2.format = 'legacy'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Các nguyên tử nào có thể liên kết với nguyên tử có nguyên tố chì?",
+    "SQL": "SELECT T2.atom_id, T2.atom_id2 FROM atom AS T1 INNER JOIN connected AS T2 ON T1.atom_id = T2.atom_id WHERE T1.element = 'pb'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Cung cấp tất cả ID, giới tính và ngày sinh của bệnh nhân có nồng độ nitơ urê (UN) vừa nằm trong giới hạn cho phép?",
+    "SQL": "SELECT DISTINCT T1.ID, T1.SEX, T1.Birthday FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.UN = 29"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu quyền sở hữu và quyền sử dụng từ tài khoản số 1 đến tài khoản số 10?",
+    "SQL": "SELECT SUM(type = 'OWNER') , SUM(type = 'DISPONENT') FROM disp WHERE account_id BETWEEN 1 AND 10"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Cầu thủ bóng đá nào có chiều cao thấp nhất?",
+    "SQL": "SELECT player_name FROM player ORDER BY height ASC LIMIT 1"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Ai là bệnh nhân lớn tuổi nhất có chỉ số cholesterol toàn phần (T-CHO) cao nhất. Vui lòng cho biết ID bệnh nhân và chỉ số T-CHO.",
+    "SQL": "SELECT T1.ID, T2.`T-CHO` FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID ORDER BY T2.`T-CHO` DESC, T1.Birthday ASC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Cho vị trí tọa độ của Giải đua Ô tô Abu Dhabi.",
+    "SQL": "SELECT DISTINCT T1.lat, T1.lng FROM circuits AS T1 INNER JOIN races AS T2 ON T2.circuitID = T1.circuitId WHERE T2.name = 'Abu Dhabi Grand Prix'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu thẻ 'cổ điển' đủ điều kiện để cho vay?",
+    "SQL": "SELECT COUNT(T1.card_id) FROM card AS T1 INNER JOIN disp AS T2 ON T1.disp_id = T2.disp_id WHERE T1.type = 'classic' AND T2.type = 'OWNER'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Xin vui lòng cung cấp thêm thông tin về các cuộc đua Công thức 1 đã sử dụng Đường đua Silverstone.",
+    "SQL": "SELECT DISTINCT T1.url FROM circuits AS T1 INNER JOIN races AS T2 ON T2.circuitID = T1.circuitId WHERE T1.name = 'Silverstone Circuit'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Tên hiển thị của người dùng đã nhận huy hiệu Tự truyện đầu tiên là gì?",
+    "SQL": "SELECT T1.DisplayName FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T2.`Name` = 'Autobiographer' ORDER BY T2.Date LIMIT 1"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Vui lòng chỉ định tất cả các trường học và mã bưu chính liên quan của chúng dưới sự quản lý của Avetik Atoian.",
+    "SQL": "SELECT School, MailZip FROM schools WHERE AdmFName1 = 'Avetik' AND AdmLName1 = 'Atoian'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Tổng số trường có tổng điểm SAT lớn hơn hoặc bằng 1500 và có thành phố gửi thư là Lakeport là bao nhiêu?",
+    "SQL": "SELECT COUNT(T1.cds) FROM satscores AS T1 INNER JOIN schools AS T2 ON T1.cds = T2.CDSCode WHERE T2.MailCity = 'Lakeport' AND (T1.AvgScrRead + T1.AvgScrMath + T1.AvgScrWrite) >= 1500"
+  },
+  {
+    "db_id": "financial",
+    "question": "Liệt kê tất cả các giao dịch rút tiền mặt mà khách hàng có id 3356 thực hiện.",
+    "SQL": "SELECT T4.trans_id FROM client AS T1 INNER JOIN disp AS T2 ON T1.client_id = T2.client_id INNER JOIN account AS T3 ON T2.account_id = T3.account_id INNER JOIN trans AS T4 ON T3.account_id = T4.account_id WHERE T1.client_id = 3356 AND T4.operation = 'VYBER'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Các thẻ nào thuộc bộ bài đấu a? Liệt kê ID.",
+    "SQL": "SELECT id FROM cards WHERE duelDeck = 'a'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Có bao nhiêu thẻ được thiết kế bởi UDON và có loại in mtgo có kích thước tay tối đa khởi đầu là -1?",
+    "SQL": "SELECT COUNT(id) FROM cards WHERE hAND = '-1' AND artist = 'UDON' AND Availability = 'mtgo' "
+  },
+  {
+    "db_id": "superhero",
+    "question": "Trong số các siêu anh hùng có chủng tộc thần/thần bất tử, có bao nhiêu người là nam giới?",
+    "SQL": "SELECT COUNT(*) FROM superhero AS T1 INNER JOIN race AS T2 ON T1.race_id = T2.id INNER JOIN gender AS T3 ON T3.id = T1.gender_id WHERE T1.race_id = 21 AND T1.gender_id = 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Thời gian hoàn thành của tay đua xếp thứ hai trong Giải đua ô tô Grand Prix Úc-Trung Quốc năm 2008 là bao nhiêu?",
+    "SQL": "SELECT T1.time FROM results AS T1 INNER JOIN races AS T2 on T1.raceId = T2.raceId WHERE T1.rank = 2 AND T2.name = 'Chinese Grand Prix' AND T2.year = 2008"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Những trường đặc biệt của bang nào có số lượng học sinh đăng ký từ lớp 1 đến lớp 12 cao nhất?",
+    "SQL": "SELECT T2.School FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.DOC = 31 ORDER BY T1.`Enrollment (K-12)` DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Đối với cuộc đua diễn ra vào ngày 29 tháng 11 năm 2015, có bao nhiêu tay đua không hoàn thành cuộc đua?",
+    "SQL": "SELECT COUNT(T2.driverId) FROM races AS T1 INNER JOIN results AS T2 ON T2.raceId = T1.raceId WHERE T1.date = '2015-11-29' AND T2.time IS NULL"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Loại khuyến mãi nào thuộc thẻ 'Duress'?",
+    "SQL": "SELECT promoTypes FROM cards WHERE name = 'Duress' AND promoTypes IS NOT NULL"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Liệt kê ID bệnh nhân, giới tính và ngày sinh của bệnh nhân có LDH vượt quá giới hạn bình thường.",
+    "SQL": "SELECT DISTINCT T1.ID, T1.SEX, T1.Birthday FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.LDH > 500"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Thời gian trung bình tính bằng mili giây mà Lewis Hamilton dành cho một lần dừng pit trong các cuộc đua Công thức 1 là bao nhiêu?",
+    "SQL": "SELECT AVG(milliseconds) FROM pitStops AS T1 INNER JOIN drivers AS T2 on T1.driverId = T2.driverId WHERE T2.forename = 'Lewis' AND T2.surname = 'Hamilton'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Liệt kê tên dài cho đội lớp tốc độ chậm.",
+    "SQL": "SELECT DISTINCT t1.team_long_name FROM Team AS t1 INNER JOIN Team_Attributes AS t2 ON t1.team_api_id = t2.team_api_id WHERE t2.buildUpPlaySpeedClass = 'Slow'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Khách hàng đã thanh toán bằng loại tiền tệ nào vào lúc 16:25:00 ngày 24 tháng 8 năm 2012?",
+    "SQL": "SELECT DISTINCT T3.Currency FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN customers AS T3 ON T1.CustomerID = T3.CustomerID WHERE T1.Date = '2012-08-24' AND T1.Time = '16:25:00'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Tên hiển thị của người dùng nào đã nhận được số lượng huy hiệu cao nhất là gì?",
+    "SQL": "SELECT T1.DisplayName FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId GROUP BY T1.DisplayName ORDER BY COUNT(T1.Id) DESC LIMIT 1"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Liệt kê tên của các nghệ sĩ cho thẻ bằng tiếng Trung giản thể.",
+    "SQL": "SELECT T1.artist FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T1.uuid = T2.uuid WHERE T2.language = 'Chinese Simplified'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Cho biết uy tín của người dùng và số lượt bình chọn của người dùng đã bình luận \"được rồi, bạn thắng :)\".",
+    "SQL": "SELECT T2.Reputation, T2.UpVotes FROM comments AS T1 INNER JOIN users AS T2 ON T1.UserId = T2.Id WHERE T1.Text = 'fine, you win :)'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Xin vui lòng liệt kê tất cả các năm mà Đường đua Silverstone được sử dụng trong một cuộc đua Công thức 1.",
+    "SQL": "SELECT DISTINCT T2.year FROM circuits AS T1 INNER JOIN races AS T2 ON T2.circuitID = T1.circuitId WHERE T1.name = 'Silverstone Circuit'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Nghệ sĩ nào đã thiết kế thẻ có tên quảng bá là \"Battra, Dark Destroyer\"?",
+    "SQL": "SELECT artist FROM cards WHERE flavorName = 'Battra, Dark Destroyer'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Có bao nhiêu sinh viên giữ chức vụ chủ tịch?",
+    "SQL": "SELECT COUNT(member_id) FROM member WHERE position = 'President'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Số lượng thí sinh thi SAT của các trường có số lượng FRPM cao nhất cho học sinh K-12 là bao nhiêu?",
+    "SQL": "SELECT NumTstTakr FROM satscores WHERE cds = ( SELECT CDSCode FROM frpm ORDER BY `FRPM Count (K-12)` DESC LIMIT 1 )"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Vui lòng liệt kê các ID của bệnh nhân không có huyết khối và có mức creatinine phosphokinase bất thường.",
+    "SQL": "SELECT DISTINCT T1.ID FROM Laboratory AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE T2.Thrombosis = 0 AND T1.CPK < 250"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Khi nào thành viên, Casey Mason, nhận được thu nhập?",
+    "SQL": "SELECT T2.date_received FROM member AS T1 INNER JOIN income AS T2 ON T1.member_id = T2.link_to_member WHERE T1.first_name = 'Casey' AND T1.last_name = 'Mason'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Có bao nhiêu nguyên tử thuộc về phân tử được gán nhãn với các hợp chất gây ung thư?",
+    "SQL": "SELECT COUNT(T1.atom_id) FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T2.label = '+'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Hãy cho biết tên của cầu thủ mạnh nhất.",
+    "SQL": "SELECT DISTINCT t1.player_name FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t2.overall_rating = (SELECT MAX(overall_rating) FROM Player_Attributes)"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Đối với những khách hàng đã thanh toán bằng euro, giá trị trung bình tổng cộng của các giao dịch của họ là bao nhiêu?",
+    "SQL": "SELECT AVG(T1.Price) FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN customers AS T3 ON T1.CustomerID = T3.CustomerID WHERE T3.Currency = 'EUR'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Điểm uy tín của người sở hữu bài viết số 65041 là bao nhiêu?",
+    "SQL": "SELECT T1.Reputation FROM users AS T1 INNER JOIN posts AS T2 ON T1.Id = T2.OwnerUserId WHERE T2.Id = 65041"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Ai trong số khách hàng của KAM đã tiêu thụ nhiều nhất? Họ đã tiêu thụ bao nhiêu?",
+    "SQL": "SELECT T2.CustomerID, SUM(T2.Consumption) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'KAM' GROUP BY T2.CustomerID ORDER BY SUM(T2.Consumption) DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Xác định xem phân tử chứa nguyên tử TR001_1 có gây ung thư hay không.",
+    "SQL": "SELECT T2.label AS flag_carcinogenic FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T1.atom_id = 'TR001_1'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Bố cục thẻ của các thẻ có từ khóa bay là gì?",
+    "SQL": "SELECT layout FROM cards WHERE keywords = 'Flying'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Chuyên ngành của Angela Sanders là gì?",
+    "SQL": "SELECT T2.major_name FROM member AS T1 INNER JOIN major AS T2 ON T1.link_to_major = T2.major_id WHERE T1.first_name = 'Angela' AND T1.last_name = 'Sanders'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Cho biết số lượng huy hiệu \"Revival\".",
+    "SQL": "SELECT COUNT(Id) FROM badges WHERE Name = 'Revival'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Giao dịch xảy ra vào ngày 24/8/2012 lúc 12:42:00, quốc gia nào là nơi diễn ra giao dịch?",
+    "SQL": "SELECT T2.Country FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T1.Date = '2012-08-24' AND T1.Time = '12:42:00'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Mã quận của tài khoản đã đặt hàng với mã 33333 là gì?",
+    "SQL": "SELECT T3.district_id FROM `order` AS T1 INNER JOIN account AS T2 ON T1.account_id = T2.account_id INNER JOIN district AS T3 ON T2.district_id = T3.district_id WHERE T1.order_id = 33333"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Liệt kê độ tuổi của người dùng ở Vienna, Áo đã nhận được huy hiệu?",
+    "SQL": "SELECT T1.Age FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T1.Location = 'Vienna, Austria'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Ai đã đặt hàng với id 32423?",
+    "SQL": "SELECT T3.client_id FROM `order` AS T1 INNER JOIN account AS T2 ON T1.account_id = T2.account_id INNER JOIN disp AS T4 ON T4.account_id = T2.account_id  INNER JOIN client AS T3 ON T4.client_id = T3.client_id WHERE T1.order_id = 32423"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Có bao nhiêu người dùng được trao hơn 5 huy hiệu?",
+    "SQL": "SELECT COUNT(UserId) FROM ( SELECT UserId, COUNT(Name) AS num FROM badges GROUP BY UserId ) T WHERE T.num > 5"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Tỷ lệ phần trăm các sự kiện vượt ngân sách là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN remaining < 0 THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(budget_id) FROM budget"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Đối với người dùng có tên hiển thị là \"DatEpicCoderGuyWhoPrograms\", tên huy hiệu của người đó là gì?",
+    "SQL": "SELECT T2.Name FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T1.DisplayName = 'DatEpicCoderGuyWhoPrograms'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Có bao nhiêu đường đua ở Adelaide, Úc?",
+    "SQL": "SELECT COUNT(circuitId) FROM circuits WHERE location = 'Adelaide' AND country = 'Australia'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Cho mã của các tập có loại mở rộng là 'expansion'?",
+    "SQL": "SELECT T2.setCode FROM sets AS T1 INNER JOIN set_translations AS T2 ON T2.setCode = T1.code WHERE T1.type = 'expansion' GROUP BY T2.setCode"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Có bao nhiêu quê quán của các thành viên đến từ bang Maryland?",
+    "SQL": "SELECT COUNT(T2.member_id) FROM zip_code AS T1 INNER JOIN member AS T2 ON T1.zip_code = T2.zip WHERE T1.state = 'Maryland'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Có bao nhiêu Trường Ngày Cộng đồng Quận đang hoạt động và đã đóng cửa trong quận Alpine?",
+    "SQL": "SELECT COUNT(School) FROM schools WHERE (StatusType = 'Closed' OR StatusType = 'Active') AND SOC = 69 AND County = 'Alpine'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Có bao nhiêu bệnh nhân đã được xét nghiệm vào năm 1997 có mức protein nằm ngoài phạm vi bình thường?",
+    "SQL": "SELECT COUNT(ID) FROM Laboratory WHERE (ALB <= 6.0 OR ALB >= 8.5) AND STRFTIME('%Y', Date) = '1997'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Vui lòng liệt kê tên đầy đủ của tất cả các siêu anh hùng có hơn 15 siêu năng lực.",
+    "SQL": "SELECT DISTINCT T1.full_name FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id GROUP BY T1.full_name HAVING COUNT(T2.power_id) > 15"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Họ của tay đua có thời gian vòng đua tốt nhất trong cuộc đua số 19 ở giai đoạn phân hạng thứ hai là gì?",
+    "SQL": "SELECT T2.surname FROM qualifying AS T1 INNER JOIN drivers AS T2 ON T2.driverId = T1.driverId WHERE T1.raceId = 19 ORDER BY T1.q2 ASC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Loại nhãn nào không có trên các phân tử có nguyên tử thiếc?",
+    "SQL": "SELECT DISTINCT T2.label FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T1.element != 'sn'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Điểm đánh giá của bình luận trên bài viết được tạo vào lúc 7/19/2010 7:19:56 PM là gì?",
+    "SQL": "SELECT T1.Score FROM comments AS T1 INNER JOIN posts AS T2 ON T1.PostId = T2.Id WHERE T1.CreationDate = '2010-07-19 19:19:56.0'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Năm 1996, các quận nào có tỷ lệ thất nghiệp cao nhất? Liệt kê vị trí chi nhánh và tên quận của chúng.",
+    "SQL": "SELECT district_id, A2 FROM district ORDER BY A13 DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Đối với cuộc đua diễn ra vào ngày 29 tháng 11 năm 2015, có bao nhiêu tay đua đã hoàn thành cuộc đua?",
+    "SQL": "SELECT COUNT(T2.driverId) FROM races AS T1 INNER JOIN results AS T2 ON T2.raceId = T1.raceId WHERE T1.date = '2015-11-29' AND T2.time IS NOT NULL"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Tên thị trường thẻ ma thuật cho bộ được phát hành vào ngày 9 tháng 6 năm 2017 là gì?",
+    "SQL": "SELECT mcmName FROM sets WHERE releaseDate = '2017-06-09'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Nêu rõ loại chi phí mà Sacha Harrison đã phát sinh?",
+    "SQL": "SELECT T2.expense_description FROM member AS T1 INNER JOIN expense AS T2 ON T1.member_id = T2.link_to_member WHERE T1.first_name = 'Sacha' AND T1.last_name = 'Harrison'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Số đua nào có nhiều người hoàn thành nhất?",
+    "SQL": "SELECT raceId FROM results GROUP BY raceId ORDER BY COUNT(time IS NOT NULL) DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Có bao nhiêu tay đua đã tham gia vào cuộc đua có ID số 18?",
+    "SQL": "SELECT COUNT(driverId) FROM driverStandings WHERE raceId = 18"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Những người dùng nào đã đăng nhiều bình luận nhất? Liệt kê huy hiệu của người dùng.",
+    "SQL": "SELECT Name FROM badges AS T1 INNER JOIN comments AS T2 ON T1.UserId = t2.UserId GROUP BY T2.UserId ORDER BY COUNT(T2.UserId) DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Liệt kê tất cả các cuộc đua trong năm 2017 và quốc gia tổ chức theo thứ tự ngày diễn ra sự kiện.",
+    "SQL": "SELECT DISTINCT T2.name, T1.country FROM circuits AS T1 INNER JOIN races AS T2 ON T2.circuitID = T1.circuitId WHERE T2.year = 2017 ORDER BY T2.date ASC"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Mô tả thông tin về các quyết định liên quan đến thẻ có tên 'Sublime Epiphany' với số 74s.",
+    "SQL": "SELECT T2.text FROM cards AS T1 INNER JOIN rulings AS T2 ON T1.uuid = T2.uuid WHERE T1.name = 'Sublime Epiphany' AND T1.number = '74s'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Có bao nhiêu cầu thủ bóng đá sinh sau những năm 1990 có tên gọi là \"Aaron\"?",
+    "SQL": "SELECT COUNT(id) FROM Player WHERE birthday > '1990' AND player_name LIKE 'Aaron%'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Đối với khách hàng đã đăng ký khoản vay 98832 USD vào ngày 3 tháng 1 năm 1996, sinh nhật của họ là khi nào?",
+    "SQL": "SELECT T4.birth_date FROM loan AS T1 INNER JOIN account AS T2 ON T1.account_id = T2.account_id INNER JOIN disp AS T3 ON T2.account_id = T3.account_id INNER JOIN client AS T4 ON T3.client_id = T4.client_id WHERE T1.date = '1996-01-03' AND T1.amount = 98832"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Số lượng bữa ăn miễn phí hoặc giảm giá cho độ tuổi từ 5 đến 17 tại Trường Thanh Niên có địa chỉ bưu điện là PO Box 1040 là bao nhiêu?",
+    "SQL": "SELECT T1.`FRPM Count (Ages 5-17)` FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.MailStreet = 'PO Box 1040' AND T2.SOCType = 'Youth Authority Facilities'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Tỷ lệ làm việc tấn công của cầu thủ bóng đá Franco Zennaro là gì?",
+    "SQL": "SELECT DISTINCT t2.attacking_work_rate FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t1.player_name = 'Franco Zennaro'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Liệt kê tên các thẻ có loại gốc là Creature - Elf và ngày ban hành các quy định cho những thẻ này.",
+    "SQL": "SELECT T1.id, T2.date FROM cards AS T1 INNER JOIN rulings AS T2 ON T1.uuid = T2.uuid WHERE T1.originalType = 'Creature - Elf'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Sherri Ramsey lớn lên ở quận nào?",
+    "SQL": "SELECT T2.county FROM member AS T1 INNER JOIN zip_code AS T2 ON T1.zip = T2.zip_code WHERE T1.first_name = 'Sherri' AND T1.last_name = 'Ramsey'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Khi nào quyết định cho thẻ 'Reminisce' được tạo ra?",
+    "SQL": "SELECT T2.date FROM cards AS T1 INNER JOIN rulings AS T2 ON T2.uuid = T1.uuid WHERE T1.name = 'Reminisce'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Tại chi nhánh nơi xảy ra số lượng tội phạm lớn nhất vào năm 1996, có bao nhiêu tài khoản đã được mở?",
+    "SQL": "SELECT COUNT(T2.account_id) FROM district AS T1 INNER JOIN account AS T2 ON T1.district_id = T2.district_id GROUP BY T1.A16 ORDER BY T1.A16 DESC LIMIT 1"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Giá trung bình tổng cộng của các giao dịch diễn ra trong tháng 1 năm 2012 là bao nhiêu?",
+    "SQL": "SELECT AVG(Amount) FROM transactions_1k WHERE Date LIKE '2012-01%'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu giao dịch rút tiền bằng thẻ tín dụng được ghi nhận sau năm 1995?",
+    "SQL": "SELECT COUNT(account_id) FROM trans WHERE STRFTIME('%Y', date) > '1995' AND operation = 'VYBER KARTOU'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Chuyên ngành của Garrett Gerke là gì và thuộc bộ phận nào?",
+    "SQL": "SELECT T2.major_name, T2.department FROM member AS T1 INNER JOIN major AS T2 ON T2.major_id = T1.link_to_major WHERE T1.first_name = 'Garrett' AND T1.last_name = 'Gerke'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Quê hương của Garrett Gerke ở đâu?",
+    "SQL": "SELECT T2.city FROM member AS T1 INNER JOIN zip_code AS T2 ON T2.zip_code = T1.zip WHERE T1.first_name = 'Garrett' AND T1.last_name = 'Gerke'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "ID bài viết và các bình luận trong bài viết có tiêu đề \"Sự khác biệt giữa các nhóm trên một mục Likert năm điểm\" là gì?",
+    "SQL": "SELECT T2.Id, T1.Text FROM comments AS T1 INNER JOIN posts AS T2 ON T1.PostId = T2.Id WHERE T2.Title = 'Group differences on a five point Likert item'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Tên đầy đủ và ngày sinh của các tay đua người Áo sinh từ năm 1981 đến 1991 là gì?",
+    "SQL": "SELECT forename, surname, dob FROM drivers WHERE nationality = 'Austrian' AND STRFTIME('%Y', dob) BETWEEN '1981' AND '1991'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Liệt kê tất cả các bài viết liên quan đến ID bài viết 61217 và độ phổ biến của bài viết này là gì?",
+    "SQL": "SELECT T1.ViewCount FROM posts AS T1 INNER JOIN postLinks AS T2 ON T1.Id = T2.PostId WHERE T2.PostId = 61217"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Chỉ ra id phân tử thuộc liên kết TR000_1_2 có nguyên tử đầu tiên được đặt tên là TR000_1.",
+    "SQL": "SELECT T2.molecule_id, T2.bond_id, T1.atom_id FROM connected AS T1 INNER JOIN bond AS T2 ON T1.bond_id = T2.bond_id WHERE T1.atom_id = 'TR000_1' AND T2.bond_id = 'TR000_1_2'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Có bao nhiêu bình luận tích cực trong danh sách?",
+    "SQL": "SELECT COUNT(id) FROM comments WHERE score > 60"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Cho biết tổng số bình luận được đăng bởi người dùng ID 13.",
+    "SQL": "SELECT COUNT(Id) FROM comments WHERE UserId = 13"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Có bao nhiêu thẻ được minh họa bằng tiếng Đức đã được tái bản?",
+    "SQL": "SELECT COUNT(T1.id) FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T1.uuid = T2.uuid WHERE T2.language = 'German' AND T1.isReprint = 1"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Có bao nhiêu cầu thủ sinh ra sau năm 1990?",
+    "SQL": "SELECT COUNT(id) FROM Player WHERE STRFTIME('%Y', birthday) > '1990'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Cho mã của các tập hợp có loại chỉ huy mở rộng?",
+    "SQL": "SELECT T2.setCode FROM sets AS T1 INNER JOIN set_translations AS T2 ON T2.setCode = T1.code WHERE T1.type = 'commander'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Mã khách hàng nào đã tiêu thụ nhiều nhất trong tháng 9 năm 2013?",
+    "SQL": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T2.Date = '201309' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) DESC LIMIT 1"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Giải Jupiler của Bỉ đến từ quốc gia nào?",
+    "SQL": "SELECT t1.name FROM Country AS t1 INNER JOIN League AS t2 ON t1.id = t2.country_id WHERE t2.name = 'Belgium Jupiler League'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Vị trí của các đường đua trong vòng đua nhanh nhất của Lewis Hamilton trong một cuộc đua Công thức 1 là gì?",
+    "SQL": "SELECT T1.position FROM lapTimes AS T1 INNER JOIN drivers AS T2 on T1.driverId = T2.driverId WHERE T2.forename = 'Lewis' AND T2.surname = 'Hamilton' ORDER BY T1.time ASC LIMIT 1"
+  },
+  {
+    "db_id": "financial",
+    "question": "Liệt kê ID tài khoản và ngày mở tài khoản cho các tài khoản từ 'Prachatice'.",
+    "SQL": "SELECT T1.account_id, T1.date FROM account AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T2.A2 = 'Prachatice'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Vui lòng liệt kê tên các tay đua có 0 điểm tại cuộc đua 291.",
+    "SQL": "SELECT T2.name FROM constructorStandings AS T1 INNER JOIN constructors AS T2 on T1.constructorId = T2.constructorId WHERE T1.points = 0 AND T1.raceId = 291"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Chỉ ra nguồn quỹ hàng đầu nhận được trong tháng 9 năm 2019 dựa trên số tiền của chúng.",
+    "SQL": "SELECT source FROM income WHERE date_received BETWEEN '2019-09-01' and '2019-09-30' ORDER BY source DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Nhãn gây ung thư cho liên kết TR001_2_4 là gì?",
+    "SQL": "SELECT DISTINCT T2.label FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id INNER JOIN bond AS T3 ON T2.molecule_id = T3.molecule_id WHERE T3.bond_id = 'TR001_2_4'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Tính chiều cao trung bình của tất cả các siêu anh hùng trung lập.",
+    "SQL": "SELECT AVG(T1.height_cm) FROM superhero AS T1 INNER JOIN alignment AS T2 ON T1.alignment_id = T2.id WHERE T2.alignment = 'Neutral'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Có bao nhiêu bệnh nhân nữ được chẩn đoán APS?",
+    "SQL": "SELECT COUNT(ID) FROM Patient WHERE SEX = 'F' AND Diagnosis = 'APS'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Quốc tịch của khách hàng đã chi 548.4 vào ngày 24 tháng 8 năm 2012 là gì?",
+    "SQL": "SELECT T2.Country FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T1.Date = '2012-08-24' AND T1.Price = 548.4"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Trong số các nguyên tử chứa nguyên tố carbon, nguyên tử nào không chứa hợp chất gây ung thư?",
+    "SQL": "SELECT T1.atom_id FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T1.element = 'c' AND T2.label = '-'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Có bao nhiêu siêu anh hùng được xuất bản bởi Marvel Comics?",
+    "SQL": "SELECT COUNT(T1.id) FROM superhero AS T1 INNER JOIN publisher AS T2 ON T1.publisher_id = T2.id WHERE T2.publisher_name = 'Marvel Comics'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Nội dung chi tiết của bình luận của bài viết được tạo vào lúc 19/07/2010 7:37:33 PM là gì?",
+    "SQL": "SELECT T1.Text FROM comments AS T1 INNER JOIN posts AS T2 ON T1.PostId = T2.Id WHERE T1.CreationDate = '2010-07-19 19:37:33.0'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Có bao nhiêu thẻ có sẵn trên giấy có kích thước tay tối đa khởi đầu dương?",
+    "SQL": "SELECT SUM(CASE WHEN availability = 'paper' AND hAND = '3' THEN 1 ELSE 0 END) FROM cards"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Về thời gian vòng đua nhanh nhất, tên của cuộc đua nào đã ghi nhận tốc độ vòng đua nhanh nhất của một tay đua?",
+    "SQL": "SELECT T1.name FROM races AS T1 INNER JOIN results AS T2 ON T1.raceId = T2.raceId WHERE T2.fastestLapTime IS NOT NULL ORDER BY T2.fastestLapTime ASC LIMIT 1"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Có bao nhiêu trận đấu trong mùa giải 2008/2009 đã diễn ra tại Bỉ?",
+    "SQL": "SELECT COUNT(t2.id) FROM Country AS t1 INNER JOIN Match AS t2 ON t1.id = t2.country_id WHERE t1.name = 'Belgium' AND t2.season = '2008/2009'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Trong cuộc đua số 45, đối với tay đua có thời gian Q3 là 0:01:33, mã viết tắt của anh ấy là gì?",
+    "SQL": "SELECT T2.code FROM qualifying AS T1 INNER JOIN drivers AS T2 ON T2.driverId = T1.driverId WHERE T1.raceId = 45 AND T1.q3 LIKE '1:33%'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Liệt kê edhrecRank cho các thẻ có phiên bản khung 2015.",
+    "SQL": "SELECT edhrecRank FROM cards WHERE frameVersion = 2015"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Cầu thủ nào có sức mạnh tổng thể mạnh nhất?",
+    "SQL": "SELECT t1.player_name FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id ORDER BY t2.overall_rating DESC LIMIT 1"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Trong số các bài viết của người dùng lớn tuổi, có bao nhiêu bài có điểm số trên 19?",
+    "SQL": "SELECT COUNT(T1.Id) FROM posts AS T1 INNER JOIN users AS T2 ON T1.OwnerUserId = T2.Id WHERE T1.Score >= 20 AND T2.Age > 65"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Trường đại học nào là nơi phó chủ tịch của Câu lạc bộ Sinh viên đến từ?",
+    "SQL": "SELECT T2.college FROM member AS T1 INNER JOIN major AS T2 ON T1.link_to_major = T2.major_id WHERE T1.position LIKE 'vice president'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Chủ tịch của Câu lạc bộ Sinh viên lớn lên ở thành phố và tiểu bang nào?",
+    "SQL": "SELECT T2.city, T2.state FROM member AS T1 INNER JOIN zip_code AS T2 ON T1.zip = T2.zip_code WHERE T1.position = 'President'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu khách hàng chọn báo cáo phát hành hàng tuần là Chủ sở hữu?",
+    "SQL": "SELECT COUNT(T1.account_id) FROM account AS T1 INNER JOIN disp AS T2 ON T1.account_id = T2.account_id WHERE T2.type = 'OWNER' AND T1.frequency = 'POPLATEK TYDNE'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Màu sắc của các thẻ từ ID 1-20 là gì? Định dạng của những thẻ này là gì?",
+    "SQL": "SELECT T1.colors, T2.format FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid WHERE T1.id BETWEEN 1 AND 20"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Giá trung bình tổng cộng của các giao dịch diễn ra tại các trạm xăng ở Cộng hòa Séc là bao nhiêu?",
+    "SQL": "SELECT AVG(T1.Price) FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T2.Country = 'CZE'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Người dùng csgillespie sở hữu bao nhiêu bài viết?",
+    "SQL": "SELECT COUNT(T1.id) FROM posts AS T1 INNER JOIN users AS T2 ON T1.OwnerUserId = T2.Id WHERE T2.DisplayName = 'csgillespie'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Có bao nhiêu bình luận tiêu cực được đưa ra bởi người dùng ID 13?",
+    "SQL": "SELECT COUNT(Id) FROM comments WHERE UserId = 13 AND Score < 60"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Hãy cho biết tên nước ngoài của thẻ có dấu nước Abzan? Liệt kê loại của thẻ này.",
+    "SQL": "SELECT DISTINCT T1.name, T1.type FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T2.uuid = T1.uuid WHERE T1.watermark = 'abzan'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu khách hàng mở tài khoản tại chi nhánh Jesenik là phụ nữ?",
+    "SQL": "SELECT COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T1.gender = 'F' AND T2.A2 = 'Jesenik'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Có bao nhiêu thẻ có độ bền là 99?",
+    "SQL": "SELECT COUNT(id) FROM cards WHERE toughness = 99"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Liệt kê các cuộc đua trong năm 2017 mà không được tổ chức trong năm 2000.",
+    "SQL": "SELECT name FROM races WHERE year = 2017 AND name NOT IN ( SELECT name FROM races WHERE year = 2000 )"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với bệnh nhân có mức albumin thấp hơn 3.5, liệt kê ID, giới tính và chẩn đoán của họ.",
+    "SQL": "SELECT DISTINCT T1.ID, T1.SEX, T1.Diagnosis FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.ALB < 3.5"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Có bao nhiêu người dùng có hơn 10 lượt xem đã tạo tài khoản sau năm 2013?",
+    "SQL": "SELECT COUNT(id) FROM users WHERE STRFTIME('%Y', CreationDate) > '2013' AND Views > 10"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Hãy liệt kê các thẻ bài được minh họa bởi Aaron Boyd.",
+    "SQL": "SELECT DISTINCT name FROM cards WHERE artist = 'Aaron Boyd'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Chiều cao trung bình của các cầu thủ sinh từ năm 1990 đến 1995 là bao nhiêu?",
+    "SQL": "SELECT SUM(height) / COUNT(id) FROM Player WHERE SUBSTR(birthday, 1, 4) BETWEEN '1990' AND '1995'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Cung cấp tên đầy đủ của các anh hùng ma cà rồng.",
+    "SQL": "SELECT T1.full_name FROM superhero AS T1 INNER JOIN race AS T2 ON T1.race_id = T2.id WHERE T2.race = 'Vampire'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Liệt kê tất cả tên người dùng đã nhận được Huy hiệu Tổ chức.",
+    "SQL": "SELECT T1.DisplayName FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T2.`Name` = 'Organizer'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Thời gian dài nhất mà một tay đua từng ở lại tại pit stop là bao lâu?",
+    "SQL": "SELECT duration FROM pitStops ORDER BY duration DESC LIMIT 1"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Có bao nhiêu siêu anh hùng có siêu năng lực \"Sức mạnh siêu phàm\"?",
+    "SQL": "SELECT COUNT(T1.hero_id) FROM hero_power AS T1 INNER JOIN superpower AS T2 ON T1.power_id = T2.id WHERE T2.power_name = 'Super Strength'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Ghi lại mã liên kết cho các phân tử gây ung thư.",
+    "SQL": "SELECT DISTINCT T1.bond_id FROM bond AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T2.label = '+'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Hãy cho biết tên nước ngoài của thẻ có hình mờ boros? Liệt kê loại của thẻ này.",
+    "SQL": "SELECT DISTINCT T1.name, T1.type FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T2.uuid = T1.uuid WHERE T1.watermark = 'boros'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Có một khách hàng đã chi 214582.17 vào tháng 6 năm 2013, họ đã sử dụng loại tiền tệ nào?",
+    "SQL": "SELECT T2.Currency FROM yearmonth AS T1 INNER JOIN customers AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Date = '201306' AND T1.Consumption = 214582.17"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Có bao nhiêu thẻ là thẻ lớn, được in lại và được in cho các chương trình khuyến mãi?",
+    "SQL": "SELECT COUNT(id) FROM cards WHERE isOversized = 1 AND isReprint = 1 AND isPromo = 1"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Vui lòng liệt kê tên bệnh của các bệnh nhân có mức độ protein niệu cao hơn bình thường.",
+    "SQL": "SELECT T1.Diagnosis FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.`U-PRO` >= 30"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Mức tiêu thụ hàng tháng lớn nhất của các khách hàng sử dụng euro làm đơn vị tiền tệ là gì?",
+    "SQL": "SELECT SUM(T2.Consumption) / 12 AS MonthlyConsumption FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Currency = 'EUR' GROUP BY T1.CustomerID ORDER BY MonthlyConsumption DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Nơi nào có thể tìm thấy phần giới thiệu về các cuộc đua được tổ chức tại Circuit de Barcelona-Catalunya?",
+    "SQL": "SELECT DISTINCT T1.url FROM circuits AS T1 INNER JOIN races AS T2 ON T2.circuitID = T1.circuitId WHERE T1.name = 'Circuit de Barcelona-Catalunya'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Hãy đề cập đến kích thước bộ cơ sở và mã bộ của bộ đã có trong khối có tên là \"Masques\" và \"Mirage\".",
+    "SQL": "SELECT DISTINCT T1.baseSetSize, T2.setCode FROM sets AS T1 INNER JOIN set_translations AS T2 ON T2.setCode = T1.code WHERE T1.block IN ('Masques', 'Mirage')"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với bệnh nhân có Ig A cao nhất trong phạm vi bình thường, chẩn đoán của họ là gì?",
+    "SQL": "SELECT patientData.Diagnosis FROM Patient AS patientData INNER JOIN Laboratory AS labData ON patientData.ID = labData.ID WHERE labData.IGA BETWEEN 80 AND 500 ORDER BY labData.IGA DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Người lái xe lớn tuổi nhất đến từ quốc gia nào?",
+    "SQL": "SELECT nationality FROM drivers WHERE dob IS NOT NULL ORDER BY dob ASC LIMIT 1"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Bài viết nào của Harvey Motulsky có nhiều lượt xem nhất? Vui lòng cho biết id và tiêu đề của bài viết này.",
+    "SQL": "SELECT T2.Id, T2.Title FROM users AS T1 INNER JOIN posts AS T2 ON T1.Id = T2.OwnerUserId WHERE T1.DisplayName = 'Harvey Motulsky' ORDER BY T2.ViewCount DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Có bao nhiêu tài xế không có mã?",
+    "SQL": "SELECT COUNT(driverId) - COUNT(CASE WHEN code IS NOT NULL THEN code END) FROM drivers"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Tên hiển thị và độ tuổi của người dùng có số lượt xem cao nhất là gì?",
+    "SQL": "SELECT DisplayName, Age FROM users WHERE Views = ( SELECT MAX(Views) FROM users )"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Có bao nhiêu thành viên của Business có kích thước áo phông Medium?",
+    "SQL": "SELECT COUNT(T2.member_id) FROM major AS T1 INNER JOIN member AS T2 ON T1.major_id = T2.link_to_major WHERE T1.major_name = 'Business' AND T2.t_shirt_size = 'Medium'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Ai là người đầu tiên đã thanh toán các khoản phí của mình? Hãy cho biết tên đầy đủ.",
+    "SQL": "SELECT T1.first_name, T1.last_name FROM member AS T1 INNER JOIN income AS T2 ON T1.member_id = T2.link_to_member WHERE T2.source = 'Dues' ORDER BY T2.date_received LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Các nguyên tử của liên kết ba trong phân tử \"TR041\" là gì?",
+    "SQL": "SELECT T2.atom_id, T2.atom_id2 FROM atom AS T1 INNER JOIN connected AS T2 ON T1.atom_id = T2.atom_id INNER JOIN bond AS T3 ON T2.bond_id = T3.bond_id WHERE T3.bond_type = '#' AND T3.molecule_id = 'TR041'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "ID sức mạnh của cryokinesis là gì?",
+    "SQL": "SELECT id FROM superpower WHERE power_name = 'Cryokinesis'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Giới tính của nhân vật Agent 13 là gì?",
+    "SQL": "SELECT T2.gender FROM superhero AS T1 INNER JOIN gender AS T2 ON T1.gender_id = T2.id WHERE T1.superhero_name = 'Agent 13'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Số lượng tội phạm đã cam kết trong năm 1995 tại quận của tài khoản có id 532 là bao nhiêu?",
+    "SQL": "SELECT T1.A15 FROM district AS T1 INNER JOIN `account` AS T2 ON T1.district_id = T2.district_id WHERE T2.account_id = 532"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Loại khoảng lớp học nào phổ biến nhất được phục vụ tại thành phố Adelanto?",
+    "SQL": "SELECT GSserved FROM schools WHERE City = 'Adelanto' GROUP BY GSserved ORDER BY COUNT(GSserved) DESC LIMIT 1"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu khách hàng nữ sở hữu thẻ tín dụng junior?",
+    "SQL": "SELECT COUNT(T1.client_id) FROM client AS T1 INNER JOIN disp AS T2 ON T1.client_id = T2.client_id INNER JOIN card AS T3 ON T2.disp_id = T3.disp_id WHERE T1.gender = 'F' AND T3.type = 'junior'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Có bao nhiêu phân tử loại liên kết đơn là không gây ung thư?",
+    "SQL": "SELECT COUNT(DISTINCT T2.molecule_id) FROM bond AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T2.label = '-' AND T1.bond_type = '-'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Có bao nhiêu lần các cuộc đua diễn ra ở Áo? Vui lòng cho biết địa điểm và tọa độ của chúng.",
+    "SQL": "SELECT DISTINCT location, lat, lng FROM circuits WHERE country = 'Austria'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Phân khúc nào có mức tiêu thụ thấp nhất?",
+    "SQL": "SELECT T1.Segment FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID GROUP BY T1.Segment ORDER BY SUM(T2.Consumption) ASC LIMIT 1"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Tên đầy đủ của đội GEN là gì?",
+    "SQL": "SELECT team_long_name FROM Team WHERE team_short_name = 'GEN'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Tỷ lệ khách hàng thanh toán bằng EUR so với khách hàng thanh toán bằng CZK là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(IIF(Currency = 'EUR', 1, 0)) AS FLOAT) / SUM(IIF(Currency = 'CZK', 1, 0)) AS ratio FROM customers"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Ai là tay đua đã tạo ra tốc độ vòng đua nhanh nhất trong một cuộc đua Công thức 1? Xin vui lòng cho biết cả tên và họ của anh ấy.",
+    "SQL": "SELECT T1.forename, T1.surname FROM drivers AS T1 INNER JOIN results AS T2 ON T2.driverId = T1.driverId WHERE T2.fastestLapTime IS NOT NULL ORDER BY T2.fastestLapSpeed DESC LIMIT 1"
+  },
+  {
+    "db_id": "financial",
+    "question": "Giới tính của khách hàng lớn tuổi nhất đã mở tài khoản tại chi nhánh có mức lương trung bình cao nhất là gì?",
+    "SQL": "SELECT T2.gender FROM district AS T1 INNER JOIN client AS T2 ON T1.district_id = T2.district_id ORDER BY T1.A11 DESC, T2.birth_date ASC LIMIT 1"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Có bao nhiêu người cao tuổi đã nhận được huy hiệu \"Người ủng hộ\"?",
+    "SQL": "SELECT COUNT(T1.Id) FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T1.Age > 65 AND T2.Name = 'Supporter'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Có bao nhiêu người lớn đã nhận được huy hiệu Hỗ trợ?",
+    "SQL": "SELECT COUNT(T1.Id) FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T2.Name = 'Supporter' AND T1.Age BETWEEN 19 AND 65"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Vui lòng liệt kê ID của bệnh nhân có RF bình thường và trên 60 tuổi.",
+    "SQL": "SELECT T1.ID FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.RF < 20 AND STRFTIME('%Y', DATE('now')) - STRFTIME('%Y', T1.Birthday) > 60"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Chủng tộc của Copycat là gì?",
+    "SQL": "SELECT T2.race FROM superhero AS T1 INNER JOIN race AS T2 ON T1.race_id = T2.id WHERE T1.superhero_name = 'Copycat'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Cho tôi ID của nhân vật siêu anh hùng có giá trị thuộc tính thấp nhất.",
+    "SQL": "SELECT hero_id FROM hero_attribute WHERE attribute_value = ( SELECT MIN(attribute_value) FROM hero_attribute )"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Các số thẻ nào không có nhiều mặt trên một thẻ duy nhất và có các loại phụ là Thiên Thần và Pháp Sư?",
+    "SQL": "SELECT id FROM cards WHERE subtypes = 'Angel,Wizard' AND side IS NULL"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Đối với tay đua có tốc độ vòng đua nhanh nhất trong cuộc đua số 933, anh ấy đến từ đâu?",
+    "SQL": "SELECT T1.nationality FROM drivers AS T1 INNER JOIN results AS T2 ON T2.driverId = T1.driverId WHERE T2.raceId = 933 AND T2.fastestLapTime IS NOT NULL ORDER BY T2.fastestLapSpeed DESC LIMIT 1"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Liệt kê năm trường hàng đầu, theo thứ tự giảm dần, từ số lượng tuyển sinh cao nhất đến thấp nhất (Độ tuổi 5-17). Vui lòng cung cấp số nhận dạng trường NCES của họ.",
+    "SQL": "SELECT T1.NCESSchool FROM schools AS T1 INNER JOIN frpm AS T2 ON T1.CDSCode = T2.CDSCode ORDER BY T2.`Enrollment (Ages 5-17)` DESC LIMIT 5"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với những bệnh nhân có chỉ số anti-SM bất thường, vui lòng liệt kê ID của ba bệnh nhân trẻ nhất.",
+    "SQL": "SELECT T1.ID FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.SM NOT IN ('negative','0') ORDER BY T1.Birthday DESC LIMIT 3"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Có bao nhiêu bệnh nhân nam có chỉ số bilirubin toàn phần tăng cao?",
+    "SQL": "SELECT COUNT(DISTINCT T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.`T-BIL` >= 2.0 AND T1.SEX = 'M'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Trong các phân tử không gây ung thư, có bao nhiêu phân tử chứa nguyên tử clo?",
+    "SQL": "SELECT COUNT(DISTINCT T1.molecule_id) FROM molecule AS T1 INNER JOIN atom AS T2 ON T1.molecule_id = T2.molecule_id WHERE T2.element = 'cl' AND T1.label = '-'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Cầu thủ nào cao nhất?",
+    "SQL": "SELECT player_name FROM Player ORDER BY height DESC LIMIT 1"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Các quốc gia nào có mã bưu điện với hộp thư bưu chính?",
+    "SQL": "SELECT DISTINCT county FROM zip_code WHERE type = 'PO Box' AND county IS NOT NULL"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Tổng số tiền đã chi cho thực phẩm là bao nhiêu?",
+    "SQL": "SELECT SUM(spent) FROM budget WHERE category = 'Food'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Đường đua nào đã tổ chức cuộc đua gần đây nhất? Vui lòng chỉ rõ địa điểm đầy đủ.",
+    "SQL": "SELECT T1.location FROM circuits AS T1 INNER JOIN races AS T2 ON T1.circuitId = T2.circuitId ORDER BY T2.date DESC LIMIT 1"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Có bao nhiêu trạm xăng ở CZE có xăng Premium?",
+    "SQL": "SELECT COUNT(GasStationID) FROM gasstations WHERE Country = 'CZE' AND Segment = 'Premium'"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Năm sản phẩm bán chạy nhất là gì? Vui lòng nêu rõ tên đầy đủ của chúng.",
+    "SQL": "SELECT T2.Description FROM transactions_1k AS T1 INNER JOIN products AS T2 ON T1.ProductID = T2.ProductID ORDER BY T1.Amount DESC LIMIT 5"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Nêu tên chuyên ngành mà Phó Tổng thống đã tham gia.",
+    "SQL": "SELECT T1.major_name FROM major AS T1 INNER JOIN member AS T2 ON T1.major_id = T2.link_to_major WHERE T2.position = 'Vice President'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Xác định số lượng bài viết đã được xem hơn 35000 lần nhưng không nhận được bất kỳ bình luận nào từ người dùng khác.",
+    "SQL": "SELECT COUNT(Id) FROM posts WHERE ViewCount > 35000 AND CommentCount = 0"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Có bao nhiêu hợp chất hóa học trong cơ sở dữ liệu được xác định là chất gây ung thư?",
+    "SQL": "SELECT COUNT(T.molecule_id) FROM molecule AS T WHERE T.label = '+'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Cung cấp họ tên đầy đủ và địa chỉ email của Thư ký Câu lạc bộ Sinh viên.",
+    "SQL": "SELECT first_name, last_name, email FROM member WHERE position = 'Secretary'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Vui lòng liệt kê số điện thoại của các trường học được tài trợ trực tiếp bằng ngân sách mà được mở sau ngày 01/01/2000.",
+    "SQL": "SELECT T2.Phone FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T1.`Charter Funding Type` = 'Directly funded' AND T1.`Charter School (Y/N)` = 1 AND T2.OpenDate > '2000-01-01'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có mức Hematocrit không bình thường, bệnh nhân nào có nồng độ kháng thể chống Cardiolipin cao nhất? Vui lòng liệt kê ID của người đó.",
+    "SQL": "SELECT DISTINCT T1.ID FROM Patient AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID INNER JOIN Laboratory AS T3 on T1.ID = T3.ID WHERE (T3.HCT >= 52 OR T3.HCT <= 29) ORDER BY T2.`aCL IgA` DESC LIMIT 1"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Mức tiêu thụ trung bình hàng tháng của khách hàng trong SME cho năm 2013 là bao nhiêu?",
+    "SQL": "SELECT AVG(T2.Consumption) / 12 FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Có bao nhiêu bệnh nhân có mức độ bổ thể 3 bình thường có mẫu P được quan sát trong bảng kết quả xét nghiệm ANA?",
+    "SQL": "SELECT COUNT(DISTINCT T1.ID) FROM Examination AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.C3 > 35 AND T1.`ANA Pattern` = 'P'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Trong số các bộ trong khối \"Thời kỳ Băng giá\", có bao nhiêu bộ có bản dịch tiếng Ý?",
+    "SQL": "SELECT COUNT(DISTINCT T1.id) FROM sets AS T1 INNER JOIN set_translations AS T2 ON T2.setCode = T1.code WHERE T1.block = 'Ice Age' AND T2.language = 'Italian' AND T2.translation IS NOT NULL"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Ai là nhà vô địch của Giải đua Ô tô Canada năm 2008? Cho biết thời gian hoàn thành của anh ấy.",
+    "SQL": "SELECT T1.time FROM results AS T1 INNER JOIN races AS T2 ON T1.raceId = T2.raceId WHERE T2.name = 'Canadian Grand Prix' AND T2.year = 2008 AND T1.time LIKE '_:%:__.___'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Nồng độ kháng thể chống nhân của bệnh nhân có tổng bilirubin cao nhất trong phạm vi bình thường là bao nhiêu?",
+    "SQL": "SELECT T3.ANA FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T1.ID = T3.ID WHERE T2.`T-BIL` < 2.0 ORDER BY T2.`T-BIL` DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Liệt kê hai id phân tử của các phân tử không gây ung thư có liên kết ba với nguyên tố carbon.",
+    "SQL": "SELECT DISTINCT T2.molecule_id FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id INNER JOIN bond AS T3 ON T2.molecule_id = T3.molecule_id WHERE T3.bond_type = '#' AND T1.element = 'c' AND T2.label = '-'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Tính đến hiện tại, tên đầy đủ của tay đua trẻ nhất là gì? Xin cho biết quốc tịch của cô ấy và tên cuộc đua mà cô ấy tham gia lần đầu tiên.",
+    "SQL": "SELECT T1.forename, T1.surname, T1.nationality, T3.name FROM drivers AS T1 INNER JOIN driverStandings AS T2 on T1.driverId = T2.driverId INNER JOIN races AS T3 on T2.raceId = T3.raceId ORDER BY JULIANDAY(T1.dob) DESC LIMIT 1"
+  },
+  {
+    "db_id": "financial",
+    "question": "Quận nào có nhiều tài khoản nhất với hợp đồng vay đã hoàn thành mà không gặp vấn đề gì?",
+    "SQL": "SELECT T1.A2 FROM District AS T1 INNER JOIN Account AS T2 ON T1.District_id = T2.District_id INNER JOIN Loan AS T3 ON T2.Account_id = T3.Account_id WHERE T3.status = 'A' GROUP BY T1.District_id ORDER BY COUNT(T2.Account_id) DESC LIMIT 1"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Tính toán sự chênh lệch về tỷ lệ phần trăm thành viên ở New Jersey và Vermont.",
+    "SQL": "SELECT CAST((SUM(CASE WHEN T2.state = 'New Jersey' THEN 1 ELSE 0 END) - SUM(CASE WHEN T2.state = 'Vermont' THEN 1 ELSE 0 END)) AS REAL) * 100 / COUNT(T1.member_id) AS diff FROM member AS T1 INNER JOIN zip_code AS T2 ON T2.zip_code = T1.zip"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Tỷ lệ phần trăm bệnh nhân nữ có tổng protein không nằm trong khoảng bình thường là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN T1.SEX = 'F' AND (T2.TP < 6.0 OR T2.TP > 8.5) THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(*) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T1.SEX = 'F'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Định dạng vở kịch nào có số lượng trạng thái bị cấm cao nhất? Chỉ ra định dạng vở kịch và tên của tất cả các thẻ đáp ứng điều kiện.",
+    "SQL": "WITH MaxBanned AS (SELECT format, COUNT(*) AS count_banned FROM legalities WHERE status = 'Banned' GROUP BY format ORDER BY COUNT(*) DESC LIMIT 1) SELECT T2.format, T1.name FROM cards AS T1 INNER JOIN legalities AS T2 ON T2.uuid = T1.uuid INNER JOIN MaxBanned MB ON MB.format = T2.format WHERE T2.status = 'Banned'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Các danh mục ngân sách của các sự kiện diễn ra tại MU 215 và loại diễn giả khách mời với ngân sách chi tiêu là 0?",
+    "SQL": "SELECT DISTINCT T2.category, T1.type FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event WHERE T1.location = 'MU 215' AND T2.spent = 0 AND T1.type = 'Guest Speaker'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Bệnh nhân có số lượng hemoglobin cao nhất vào thời điểm kiểm tra bao nhiêu tuổi, và chẩn đoán của bác sĩ là gì?",
+    "SQL": "SELECT STRFTIME('%Y', T2.Date) - STRFTIME('%Y', T1.Birthday), T1.Diagnosis FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID ORDER BY T2.HGB DESC LIMIT 1"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Vui lòng liệt kê các quốc gia của các trạm xăng có giao dịch diễn ra vào tháng 6 năm 2013.",
+    "SQL": "SELECT DISTINCT T2.Country FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN yearmonth AS T3 ON T1.CustomerID = T3.CustomerID WHERE T3.Date = '201306'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Đội KSV Cercle Brugge có lớp tốc độ chậm, cân bằng hay nhanh?",
+    "SQL": "SELECT DISTINCT t1.buildUpPlaySpeedClass FROM Team_Attributes AS t1 INNER JOIN Team AS t2 ON t1.team_api_id = t2.team_api_id WHERE t2.team_long_name = 'KSV Cercle Brugge'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Loại liên kết nào đang thể hiện mối liên hệ giữa hai nguyên tử TR000_1 và TR000_2?",
+    "SQL": "SELECT T1.bond_type FROM bond AS T1 INNER JOIN connected AS T2 ON T1.bond_id = T2.bond_id WHERE T2.atom_id = 'TR000_1' AND T2.atom_id2 = 'TR000_2'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Trong số tất cả các nguyên tử từ 21 đến 25, hãy liệt kê tất cả các phân tử có khả năng gây ung thư.",
+    "SQL": "SELECT DISTINCT T2.molecule_id FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE SUBSTR(T1.atom_id, -2) BETWEEN '21' AND '25' AND T2.label = '+'"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Xếp hạng các siêu anh hùng từ Marvel Comics theo độ phổ biến của màu mắt, bắt đầu từ màu phổ biến nhất.",
+    "SQL": "SELECT colour.colour AS EyeColor, COUNT(superhero.id) AS Count, RANK() OVER (ORDER BY COUNT(superhero.id) DESC) AS PopularityRank FROM superhero INNER JOIN colour ON superhero.eye_colour_id = colour.id INNER JOIN publisher ON superhero.publisher_id = publisher.id WHERE publisher.publisher_name = 'Marvel Comics' GROUP BY colour.colour"
+  },
+  {
+    "db_id": "debit_card_specializing",
+    "question": "Trong số các giao dịch được thực hiện tại các trạm xăng ở Cộng hòa Séc, có bao nhiêu giao dịch diễn ra sau ngày 01/01/2012?",
+    "SQL": "SELECT COUNT(T1.TransactionID) FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T2.Country = 'CZE' AND STRFTIME('%Y', T1.Date) >= '2012'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Liệt kê loại liên kết và ID liên kết của nguyên tử 45.",
+    "SQL": "SELECT T1.bond_type, T1.bond_id FROM bond AS T1 INNER JOIN connected AS T2 ON T1.bond_id = T2.bond_id WHERE SUBSTR(T2.atom_id, 7, 2) = '45'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Tính toán số bàn thắng trung bình của đội nhà trong mùa giải 2010/2011 tại quốc gia Ba Lan.",
+    "SQL": "SELECT CAST(SUM(t2.home_team_goal) AS REAL) / COUNT(t2.id) FROM Country AS t1 INNER JOIN Match AS t2 ON t1.id = t2.country_id WHERE t1.name = 'Poland' AND t2.season = '2010/2011'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Có bao nhiêu bệnh nhân bị thrombosis nặng có thời gian prothrombin bình thường?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T1.ID = T3.ID WHERE T2.PT < 14 AND T3.Thrombosis < 3 AND T3.Thrombosis > 0"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Liệt kê tên 10 cầu thủ có chiều cao trên 180 theo thứ tự giảm dần của độ chính xác đánh đầu trung bình.",
+    "SQL": "SELECT t1.player_name FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t1.height > 180 GROUP BY t1.id ORDER BY CAST(SUM(t2.heading_accuracy) AS REAL) / COUNT(t2.`player_fifa_api_id`) DESC LIMIT 10"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Vui lòng liệt kê ba mức phí miễn phí thấp nhất đủ điều kiện cho học sinh từ 5-17 tuổi tại các trường tiếp tục.",
+    "SQL": "SELECT `Free Meal Count (Ages 5-17)` / `Enrollment (Ages 5-17)` FROM frpm WHERE `Educational Option Type` = 'Continuation School' AND `Free Meal Count (Ages 5-17)` / `Enrollment (Ages 5-17)` IS NOT NULL ORDER BY `Free Meal Count (Ages 5-17)` / `Enrollment (Ages 5-17)` ASC LIMIT 3"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Trong số các cầu thủ có tỷ lệ hoàn thành là 1, hãy chọn cầu thủ lớn tuổi nhất và cho biết tên của cầu thủ đó.",
+    "SQL": "SELECT DISTINCT t1.player_name FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t2.finishing = 1 ORDER BY t1.birthday ASC LIMIT 1"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Ai là biên tập viên của bài viết có tiêu đề 'Công cụ mã nguồn mở để trực quan hóa dữ liệu đa chiều'?",
+    "SQL": "SELECT T2.DisplayName FROM posts AS T1 INNER JOIN users AS T2 ON T1.OwnerUserId = T2.Id WHERE T1.Title = 'Open source tools for visualizing multi-dimensional data?'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Có bao nhiêu tay đua người Pháp đạt thời gian vòng đua dưới 02:00.00?",
+    "SQL": "SELECT COUNT(T1.driverId) FROM drivers AS T1 INNER JOIN lapTimes AS T2 on T1.driverId = T2.driverId WHERE T1.nationality = 'French' AND (CAST(SUBSTR(T2.time, 1, 2) AS INTEGER) * 60 + CAST(SUBSTR(T2.time, 4, 2) AS INTEGER) + CAST(SUBSTR(T2.time, 7, 2) AS REAL) / 1000) < 120"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Tỷ lệ bữa ăn miễn phí hoặc giảm giá đủ điều kiện cho 5 trường hàng đầu từ lớp 1-12 có số lượng bữa ăn miễn phí hoặc giảm giá cao nhất trong số các trường có mã sở hữu 66 là gì?",
+    "SQL": "SELECT CAST(T1.`FRPM Count (K-12)` AS REAL) / T1.`Enrollment (K-12)` FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.SOC = 66 ORDER BY T1.`FRPM Count (K-12)` DESC LIMIT 5"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu tài khoản có trạng thái chủ sở hữu và yêu cầu tạo báo cáo khi có giao dịch?",
+    "SQL": "SELECT COUNT(T1.account_id) FROM account AS T1 INNER JOIN disp AS T2 ON T1.account_id = T2.account_id WHERE T2.type = 'OWNER' AND T1.frequency = 'POPLATEK PO OBRATU'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Trong số các bài viết có lượt xem từ 100 đến 150, bình luận nào có điểm số cao nhất?",
+    "SQL": "SELECT Text FROM comments WHERE PostId IN ( SELECT Id FROM posts WHERE ViewCount BETWEEN 100 AND 150 ) ORDER BY Score DESC LIMIT 1"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Chỉ ra tên của sự kiện đã đóng mà chi phí vượt quá ngân sách nhiều nhất.",
+    "SQL": "SELECT T2.event_name FROM budget AS T1 INNER JOIN event AS T2 ON T2.event_id = T1.link_to_event WHERE T1.event_status = 'Closed' AND T1.remaining < 0 ORDER BY T1.remaining LIMIT 1"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Liệt kê tất cả các thành viên của bộ phận \"Trường Khoa học Ứng dụng, Công nghệ và Giáo dục\".",
+    "SQL": "SELECT T1.first_name, T1.last_name FROM member AS T1 INNER JOIN major AS T2 ON T1.link_to_major = T2.major_id WHERE T2.department = 'School of Applied Sciences, Technology and Education'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Liệt kê tất cả các kiểu khung và thẻ mà Allen Williams đã làm việc và tìm bất kỳ thẻ nào bị cấm nếu có.",
+    "SQL": "SELECT DISTINCT T1.frameVersion, T1.name , IIF(T2.status = 'Banned', T1.name, 'NO') FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid WHERE T1.artist = 'Allen Williams'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Những ngôn ngữ nào có sẵn trong bộ được biết đến là Archenemy trên thị trường thẻ ma thuật và có mã ARC?",
+    "SQL": "SELECT T2.language FROM sets AS T1 INNER JOIN set_translations AS T2 ON T1.code = T2.setCode WHERE T1.mcmName = 'Archenemy' AND T2.setCode = 'ARC'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Tỷ lệ phần trăm (%) Học sinh đủ điều kiện miễn phí (K-12) trong trường do một quản trị viên có tên Alusine quản lý là gì? Liệt kê mã quận của trường.",
+    "SQL": "SELECT T1.`Free Meal Count (K-12)` * 100 / T1.`Enrollment (K-12)`, T1.`District Code` FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.AdmFName1 = 'Alusine'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Bộ bài Nga nào có tổng số lá bài nhiều nhất?",
+    "SQL": "SELECT T1.id FROM sets AS T1 INNER JOIN set_translations AS T2 ON T1.code = T2.setCode WHERE T2.language = 'Russian' GROUP BY T1.baseSetSize ORDER BY T1.baseSetSize DESC LIMIT 1"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Số bàn thắng trung bình mà Parma ghi được khi thi đấu sân khách tại Italy là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(T1.away_team_goal) AS REAL) / COUNT(T1.id) FROM \"Match\" AS T1 INNER JOIN TEAM AS T2 ON T1.away_team_api_id = T2.team_api_id INNER JOIN Country AS T3 ON T1.country_id = T3.id WHERE T2.team_long_name = 'Parma' AND T3.name = 'Italy'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Liệt kê chín quận hàng đầu, theo thứ tự giảm dần, từ cao nhất đến thấp nhất, số lượng chủ tài khoản nữ.",
+    "SQL": "SELECT T2.A2, COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T1.gender = 'F' GROUP BY T2.district_id, T2.A2 ORDER BY COUNT(T1.client_id) DESC LIMIT 9"
+  },
+  {
+    "db_id": "financial",
+    "question": "Quận nào có số dư khoản vay đang hoạt động cao nhất?",
+    "SQL": "SELECT T2.A3 FROM account AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id INNER JOIN loan AS T3 ON T1.account_id = T3.account_id WHERE T3.status IN ('C', 'D') GROUP BY T2.A3 ORDER BY SUM(T3.amount) DESC LIMIT 1"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Vui lòng liệt kê các ID của bệnh nhân đã thực hiện xét nghiệm sau ngày 1 tháng 1 năm 1997 và có kết quả anti-scl70 bình thường.",
+    "SQL": "SELECT T1.ID FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.SC170 IN ('negative','0') AND T2.Date > 1997-01-01"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Ai là tay đua có thời gian vòng nhanh nhất? Xin vui lòng cho biết tên và họ của họ.",
+    "SQL": "SELECT T2.forename, T2.surname, T1.fastestLapTime FROM results AS T1 INNER JOIN drivers AS T2 on T1.driverId = T2.driverId WHERE T1.fastestLapTime IS NOT NULL ORDER BY T1.fastestLapTime ASC LIMIT 1"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Sinh viên nào đã được giao nhiệm vụ quản lý ngân sách cho sự kiện Khởi động Hàng năm?",
+    "SQL": "SELECT T4.first_name, T4.last_name FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event INNER JOIN expense AS T3 ON T2.budget_id = T3.link_to_budget INNER JOIN member AS T4 ON T3.link_to_member = T4.member_id WHERE T1.event_name = 'Yearly Kickoff'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Trong số các tài khoản đã mở, có bao nhiêu khách hàng nữ sinh trước năm 1950 và đang sống tại Sokolov?",
+    "SQL": "SELECT COUNT(T2.client_id) FROM district AS T1 INNER JOIN client AS T2 ON T1.district_id = T2.district_id WHERE T2.gender = 'F' AND STRFTIME('%Y', T2.birth_date) < '1950' AND T1.A2 = 'Sokolov'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Vui lòng liệt kê ID của bệnh nhân có mức creatinine bình thường và có nồng độ kháng thể anti Cardiolipin cao nhất.",
+    "SQL": "SELECT T2.ID FROM Laboratory AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE T1.CRE < 1.5 ORDER BY T2.`aCL IgA` DESC LIMIT 1"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Tự do di chuyển của đội ADO Den Haag trong hai phần ba đầu của sân là gì?",
+    "SQL": "SELECT DISTINCT t2.buildUpPlayPositioningClass FROM Team AS t1 INNER JOIN Team_attributes AS t2 ON t1.team_fifa_api_id = t2.team_fifa_api_id WHERE t1.team_long_name = 'ADO Den Haag'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có tổng cholesterol nằm trong khoảng bình thường, có bao nhiêu người có mẫu P được quan sát trong bảng kết quả xét nghiệm ANA?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T1.ID = T3.ID WHERE T3.`ANA Pattern` = 'P' AND T2.`T-CHO` < 250"
+  },
+  {
+    "db_id": "financial",
+    "question": "Số tiền vay trung bình còn lại trong hợp đồng đang hoạt động với việc phát hành sao kê sau mỗi giao dịch là bao nhiêu?",
+    "SQL": "SELECT AVG(T2.amount) FROM account AS T1 INNER JOIN loan AS T2 ON T1.account_id = T2.account_id WHERE T2.status IN ('C', 'D') AND T1.frequency = 'POPLATEK PO OBRATU'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Liệt kê tất cả ID và quận của khách hàng chỉ có quyền phát hành đơn hàng vĩnh viễn hoặc xin vay.",
+    "SQL": "SELECT T3.client_id, T2.district_id, T2.A2 FROM account AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id INNER JOIN disp AS T3 ON T1.account_id = T3.account_id WHERE T3.type = 'OWNER'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Tỷ lệ phần trăm bệnh nhân sinh năm 1980 và được chẩn đoán mắc bệnh viêm khớp dạng thấp (RA) là nữ giới là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN SEX = 'F' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(ID) FROM Patient WHERE Diagnosis = 'RA' AND STRFTIME('%Y', Birthday) = '1980'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Ai là nhà vô địch của Giải đua Ô tô Úc năm 2008 và tôi có thể biết thêm thông tin về anh ấy ở đâu?",
+    "SQL": "SELECT T1.forename, T1.surname, T1.url FROM drivers AS T1 INNER JOIN results AS T2 ON T1.driverId = T2.driverId INNER JOIN races AS T3 ON T3.raceId = T2.raceId WHERE T3.name = 'Australian Grand Prix' AND T2.time LIKE '_:%:__.___' AND T3.year = 2008"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Liệt kê tất cả các cầu thủ bóng đá có điểm số cân bằng cao nhất và điểm tiềm năng là 61.",
+    "SQL": "SELECT t1.player_name FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t2.potential = '61' ORDER BY t2.balance DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Yếu tố chung ít gặp nhất của tất cả các phân tử gây ung thư là gì?",
+    "SQL": "SELECT T.element FROM ( SELECT T2.element, COUNT(DISTINCT T2.molecule_id) FROM molecule AS T1 INNER JOIN atom AS T2 ON T1.molecule_id = T2.molecule_id WHERE T1.label = '+' GROUP BY T2.element ORDER BY COUNT(DISTINCT T2.molecule_id) LIMIT 1 ) t"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Bộ thẻ có Adarkar Valkyrie chỉ có sẵn bên ngoài Hoa Kỳ phải không?",
+    "SQL": "SELECT IIF(isForeignOnly = 1, 'YES', 'NO') FROM cards AS T1 INNER JOIN sets AS T2 ON T2.code = T1.setCode WHERE T1.name = 'Adarkar Valkyrie'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Liệt kê 5 giải đấu hàng đầu theo thứ tự tăng dần của số bàn thắng được ghi trong tất cả các mùa giải cộng lại.",
+    "SQL": "SELECT t1.name, SUM(t2.home_team_goal) + SUM(t2.away_team_goal) FROM League AS t1 INNER JOIN Match AS t2 ON t1.id = t2.league_id GROUP BY t1.name ORDER BY SUM(t2.home_team_goal) + SUM(t2.away_team_goal) ASC LIMIT 5"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Có bao nhiêu cầu thủ có điểm tiềm năng cao nhất cho việc vượt qua và thích sử dụng chân trái khi tấn công?",
+    "SQL": "SELECT COUNT(t1.id) FROM Player_Attributes AS t1 WHERE t1.preferred_foot = 'left' AND t1.crossing = ( SELECT MAX(crossing) FROM Player_Attributes)"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Xác định các siêu anh hùng có khả năng điều khiển gió và liệt kê tên của họ theo thứ tự bảng chữ cái.",
+    "SQL": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id INNER JOIN superpower AS T3 ON T2.power_id = T3.id WHERE T3.power_name = 'Wind Control' ORDER BY T1.superhero_name"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Tìm tất cả các thẻ được minh họa bởi Stephen Daniel và mô tả nội dung của quy định của các thẻ này. Nêu rõ xem các thẻ này có thiếu hoặc suy giảm thuộc tính và giá trị hay không.",
+    "SQL": "SELECT T1.id, T2.text, T1.hasContentWarning FROM cards AS T1 INNER JOIN rulings AS T2 ON T1.uuid = T2.uuid WHERE T1.artist = 'Stephen Daniele'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Liệt kê tên các sự kiện có chi phí đỗ xe thấp hơn mức trung bình.",
+    "SQL": "SELECT T1.event_name FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event INNER JOIN expense AS T3 ON T2.budget_id = T3.link_to_budget WHERE T2.category = 'Parking' AND T3.cost < (SELECT AVG(cost) FROM expense)"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với những bệnh nhân được chẩn đoán mắc SJS, có bao nhiêu người có mức protein tổng hợp bình thường?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T1.Diagnosis = 'SJS' AND T2.TP > 6.0 AND T2.TP < 8.5"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có anti-SM bình thường, có bao nhiêu người không bị huyết khối?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Examination AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.SM IN ('negative','0') AND T1.Thrombosis = 0"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Liệt kê ID bệnh nhân, giới tính và ngày sinh của những người có số lượng bạch cầu bất thường. Nhóm theo giới tính và sắp xếp bệnh nhân theo độ tuổi theo thứ tự tăng dần.",
+    "SQL": "SELECT DISTINCT T1.ID, T1.SEX, T1.Birthday FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.WBC <= 3.5 OR T2.WBC >= 9.0 GROUP BY T1.SEX,T1.ID ORDER BY T1.Birthday ASC"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Các phân tử không gây ung thư nào có hơn 5 nguyên tử?",
+    "SQL": "SELECT T.molecule_id FROM ( SELECT T1.molecule_id, COUNT(T2.atom_id) FROM molecule AS T1 INNER JOIN atom AS T2 ON T1.molecule_id = T2.molecule_id WHERE T1.label = '-' GROUP BY T1.molecule_id HAVING COUNT(T2.atom_id) > 5 ) t"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Có bao nhiêu bệnh nhân có protein C-reactive bất thường mà không có dữ liệu của họ được ghi lại?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE (T2.CRP = '+' ) AND T1.Description IS NULL"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Trong số các bài viết có điểm số trên 5, tỷ lệ phần trăm của những bài viết đó thuộc về người dùng lớn tuổi là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(IIF(T2.Age > 65, 1, 0)) AS REAL) * 100 / COUNT(T1.Id) FROM posts AS T1 INNER JOIN users AS T2 ON T1.OwnerUserId = T2.Id WHERE T1.Score > 5"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Tính hiệu số giữa trọng lượng của Emil Blonsky và trọng lượng của Charles Chandler.",
+    "SQL": "SELECT ( SELECT weight_kg FROM superhero WHERE full_name LIKE 'Emil Blonsky' ) - ( SELECT weight_kg FROM superhero WHERE full_name LIKE 'Charles Chandler' ) AS CALCULATE"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với những bệnh nhân có mức độ alkaliphophatase (ALP) trong phạm vi bình thường, họ được điều trị nội trú hay ngoại trú?",
+    "SQL": "SELECT T1.Admission FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.ALP < 300"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Liệt kê tất cả bệnh nhân theo ID đã được chẩn đoán mắc bệnh Behcet và có các xét nghiệm từ ngày 01/01/197 đến 31/12/1997.",
+    "SQL": "SELECT ID FROM Examination WHERE `Examination Date` BETWEEN '1997-01-01' AND '1997-12-31' AND Diagnosis = 'Behcet'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Liệt kê tên đầy đủ của năm thành viên hàng đầu chi tiêu nhiều nhất theo thứ tự giảm dần của số tiền chi tiêu.",
+    "SQL": "SELECT T3.first_name, T3.last_name FROM expense AS T1 INNER JOIN budget AS T2 ON T1.link_to_budget = T2.budget_id INNER JOIN member AS T3 ON T1.link_to_member = T3.member_id ORDER BY T2.spent DESC LIMIT 5"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Ai là cầu thủ đã có thời gian vòng đua 0:01:27 trong cuộc đua số 161? Hiển thị trang giới thiệu của anh ấy.",
+    "SQL": "SELECT DISTINCT T2.forename, T2.surname, T2.url FROM lapTimes AS T1 INNER JOIN drivers AS T2 ON T2.driverId = T1.driverId WHERE T1.raceId = 161 AND T1.time LIKE '1:27%'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Trong số các cầu thủ có xếp hạng tổng thể từ 60 đến 65, có bao nhiêu cầu thủ sẽ tham gia vào tất cả các pha tấn công của bạn thay vì phòng ngự?",
+    "SQL": "SELECT COUNT(id) FROM Player_Attributes WHERE overall_rating BETWEEN 60 AND 65 AND defensive_work_rate = 'low'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Thời gian vòng đua tốt nhất được ghi nhận là gì? Liệt kê tay đua và cuộc đua có thời gian vòng đua được ghi nhận đó.",
+    "SQL": "SELECT T2.milliseconds, T1.forename, T1.surname, T3.name FROM drivers AS T1 INNER JOIN lapTimes AS T2 ON T1.driverId = T2.driverId INNER JOIN races AS T3 ON T2.raceId = T3.raceId ORDER BY T2.milliseconds ASC LIMIT 1"
+  },
+  {
+    "db_id": "financial",
+    "question": "Tỷ lệ phần trăm khách hàng nam yêu cầu phát hành báo cáo hàng tuần là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(T1.gender = 'M') AS REAL) * 100 / COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T3 ON T1.district_id = T3.district_id INNER JOIN account AS T2 ON T2.district_id = T3.district_id INNER JOIN disp as T4 on T1.client_id = T4.client_id AND T2.account_id = T4.account_id WHERE T2.frequency = 'POPLATEK TYDNE'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Tỷ lệ phần trăm của các thẻ có Chi phí Mana Chuyển đổi là 10 trong bộ Abyssal Horror là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN T1.convertedManaCost = 10 THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(T1.id), T1.name FROM cards AS T1 INNER JOIN sets AS T2 ON T2.code = T1.setCode WHERE T1.name = 'Abyssal Horror'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Tỷ lệ phần trăm của các thẻ Story Spotlight không có hộp văn bản là bao nhiêu? Liệt kê chúng theo ID của chúng.",
+    "SQL": "SELECT CAST(SUM(CASE WHEN isTextless = 0 THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(id) FROM cards WHERE isStorySpotlight = 1"
+  },
+  {
+    "db_id": "financial",
+    "question": "Liệt kê số tài khoản của các khách hàng trẻ nhất và có mức lương trung bình cao nhất?",
+    "SQL": "SELECT T1.account_id  FROM account AS T1 INNER JOIN disp AS T2 ON T1.account_id = T2.account_id INNER JOIN client AS T3 ON T2.client_id = T3.client_id INNER JOIN district AS T4 on T4.district_id = T1.district_id WHERE T2.client_id = ( SELECT client_id FROM client ORDER BY birth_date DESC LIMIT 1) GROUP BY T4.A11, T1.account_id"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Liệt kê tất cả các thẻ được Mark Meckes sử dụng trong các bài viết của anh ấy mà không có bình luận.",
+    "SQL": "SELECT T3.Tags FROM users AS T1 INNER JOIN postHistory AS T2 ON T1.Id = T2.UserId INNER JOIN posts AS T3 ON T3.Id = T2.PostId WHERE T1.DisplayName = 'Mark Meckes' AND T3.CommentCount = 0"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Nếu có, địa chỉ trang web của các trường có số lượng bữa ăn miễn phí từ 1.900-2.000 cho học sinh từ 5-17 tuổi là gì? Bao gồm tên của trường.",
+    "SQL": "SELECT T2.Website, T1.`School Name` FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T1.`Free Meal Count (Ages 5-17)` BETWEEN 1900 AND 2000 AND T2.Website IS NOT NULL"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Xác suất tạo cơ hội ghi bàn của \"Hull City\" vào ngày 22 tháng 2 năm 2010 là gì?",
+    "SQL": "SELECT t2.chanceCreationCrossingClass FROM Team AS t1 INNER JOIN Team_Attributes AS t2 ON t1.team_api_id = t2.team_api_id WHERE t1.team_long_name = 'Hull City' AND SUBSTR(t2.`date`, 1, 10) = '2010-02-22'"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Ai trong số những cầu thủ này thực hiện tốt nhất trong các pha tạt bóng, Alexis, Ariel Borysiuk hay Arouna Kone?",
+    "SQL": "SELECT t1.player_name, t2.crossing FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t1.player_name IN ('Alexis', 'Ariel Borysiuk', 'Arouna Kone') ORDER BY t2.crossing DESC LIMIT 1"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Liệt kê tất cả các loại thẻ bằng tiếng Đức.",
+    "SQL": "SELECT T1.subtypes, T1.supertypes FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T1.uuid = T2.uuid WHERE T2.language = 'German' AND T1.subtypes IS NOT NULL AND T1.supertypes IS NOT NULL"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Dữ liệu y tế mới nhất của bệnh nhân được ghi nhận khi nào? Bệnh nhân này nên có mức độ lactate dehydrogenase bất thường.",
+    "SQL": "SELECT T1.`First Date` FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.LDH >= 500 ORDER BY T1.`First Date` DESC LIMIT 1"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Trong số các thẻ Artifact, thẻ nào có màu đen và đi kèm với bản dịch ngôn ngữ nước ngoài?",
+    "SQL": "SELECT DISTINCT T1.name FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T1.uuid = T2.uuid WHERE T1.originalType = 'Artifact' AND T1.colors = 'B'"
+  },
+  {
+    "db_id": "california_schools",
+    "question": "Liệt kê tên các trường có sự chênh lệch hơn 30 giữa số lượng học sinh K-12 và độ tuổi 5-17? Vui lòng cung cấp cả địa chỉ đầy đủ của các trường.",
+    "SQL": "SELECT T1.School, T1.Street FROM schools AS T1 INNER JOIN frpm AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.`Enrollment (K-12)` - T2.`Enrollment (Ages 5-17)` > 30"
+  },
+  {
+    "db_id": "financial",
+    "question": "Tỷ lệ phần trăm số tiền vay đã được thanh toán hoàn toàn mà không gặp vấn đề gì là bao nhiêu?",
+    "SQL": "SELECT (CAST(SUM(CASE WHEN status = 'A' THEN amount ELSE 0 END) AS REAL) * 100) / SUM(amount) FROM loan"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có mức Ig G bình thường, có bao nhiêu người có triệu chứng?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T3.ID = T2.ID WHERE T2.IGG BETWEEN 900 AND 2000 AND T3.Symptoms IS NOT NULL"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Khoảng cách tuổi giữa bệnh nhân trẻ nhất và bệnh nhân lớn tuổi nhất có mức triglyceride bình thường được ghi nhận là bao nhiêu?",
+    "SQL": "SELECT STRFTIME('%Y', MAX(T1.Birthday)) - STRFTIME('%Y', MIN(T1.Birthday)) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.TG >= 200"
+  },
+  {
+    "db_id": "financial",
+    "question": "Có bao nhiêu tài khoản chọn phát hành sau giao dịch đang ở khu vực Đông Bohemia?",
+    "SQL": "SELECT COUNT(T2.account_id) FROM district AS T1 INNER JOIN account AS T2 ON T1.district_id = T2.district_id WHERE T1.A3 = 'east Bohemia' AND T2.frequency = 'POPLATEK PO OBRATU'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có mức độ transaminase glutamic oxaloacetic bất thường, bệnh nhân trẻ nhất trong số họ sinh vào năm nào?",
+    "SQL": "SELECT T1.Birthday FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.GOT >= 60 ORDER BY T1.Birthday DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Tỷ lệ phần trăm các phân tử loại gây ung thư không chứa fluor là bao nhiêu?",
+    "SQL": "SELECT CAST(COUNT(DISTINCT CASE WHEN T1.element <> 'f' THEN T2.molecule_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT T2.molecule_id) FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE T2.label = '+'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Đối với các hợp đồng vay vẫn đang hoạt động mà khách hàng đang nợ, liệt kê quận và tiểu bang có tỷ lệ thất nghiệp tăng từ năm 1995 đến 1996.",
+    "SQL": "SELECT CAST((T3.A13 - T3.A12) AS REAL) * 100 / T3.A12 FROM loan AS T1 INNER JOIN account AS T2 ON T1.account_id = T2.account_id INNER JOIN district AS T3 ON T2.district_id = T3.district_id WHERE T1.status = 'D'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Đội đua nào ghi được nhiều điểm nhất từ Giải đua Ô tô Công thức 1 Monaco giữa năm 1980 và 2010? Liệt kê điểm số, tên và quốc tịch của đội này.",
+    "SQL": "SELECT SUM(T1.points), T2.name, T2.nationality FROM constructorResults AS T1 INNER JOIN constructors AS T2 ON T1.constructorId = T2.constructorId INNER JOIN races AS T3 ON T3.raceid = T1.raceid WHERE T3.name = 'Monaco Grand Prix' AND T3.year BETWEEN 1980 AND 2010 GROUP BY T2.name ORDER BY SUM(T1.points) DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Tỷ lệ phần trăm của các phân tử gây ung thư trong liên kết ba là bao nhiêu?",
+    "SQL": "SELECT CAST(COUNT(DISTINCT CASE WHEN T2.label = '+' THEN T2.molecule_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT T2.molecule_id) FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id INNER JOIN bond AS T3 ON T2.molecule_id = T3.molecule_id WHERE T3.bond_type = '#'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Vui lòng liệt kê ID của bệnh nhân nếu họ có mức độ hồng cầu bất thường và đang được theo dõi tại phòng khám ngoại trú.",
+    "SQL": "SELECT DISTINCT T1.ID FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE (T2.RBC <= 3.5 OR T2.RBC >= 6) AND T1.Admission = '-'"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Trong số tất cả các bài viết được đăng bởi người dùng có ảnh hưởng nhất, xác định tỷ lệ phần trăm các bài viết có điểm số trên 50.",
+    "SQL": "SELECT CAST(SUM(CASE WHEN T2.Score > 50 THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(T1.Id) FROM users T1 INNER JOIN posts T2 ON T1.Id = T2.OwnerUserId INNER JOIN ( SELECT MAX(Reputation) AS max_reputation FROM users ) T3 ON T1.Reputation = T3.max_reputation"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Trong số các siêu anh hùng xấu, tỷ lệ siêu anh hùng nữ là bao nhiêu phần trăm?",
+    "SQL": "SELECT CAST(COUNT(CASE WHEN T3.gender = 'Female' THEN T1.id ELSE NULL END) AS REAL) * 100 / COUNT(T1.id) FROM superhero AS T1 INNER JOIN alignment AS T2 ON T1.alignment_id = T2.id INNER JOIN gender AS T3 ON T1.gender_id = T3.id WHERE T2.alignment = 'Bad'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với tất cả bệnh nhân trên 55 tuổi, tỷ lệ phần trăm nữ giới có thời gian prothrombin (PT) bất thường là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN T2.PT >= 14 AND T1.SEX = 'F' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(*) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE STRFTIME('%Y', CURRENT_TIMESTAMP) - STRFTIME('%Y', T1.Birthday) > 55"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Số lượng bộ trung bình hàng năm được phát hành từ 1/1/2012 đến 31/12/2015 là bao nhiêu? Vui lòng chỉ định ngôn ngữ chung của thẻ.",
+    "SQL": "SELECT (CAST(SUM(T1.id) AS REAL) / COUNT(T1.id)) / 4, T2.language FROM sets AS T1 INNER JOIN set_translations AS T2 ON T1.id = T2.id WHERE T1.releaseDate BETWEEN '2012-01-01' AND '2015-12-31' GROUP BY T1.releaseDate ORDER BY COUNT(T2.language) DESC LIMIT 1"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Hãy liệt kê các nguyên tố cấu thành các nguyên tử của liên kết TR001_2_4.",
+    "SQL": "SELECT DISTINCT T1.element FROM atom AS T1 INNER JOIN connected AS T2 ON T1.atom_id = T2.atom_id WHERE T2.bond_id = 'TR001_2_4'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Hãy cho biết ID và tuổi của bệnh nhân có hai hoặc nhiều xét nghiệm trong phòng thí nghiệm cho thấy mức hematocrit của họ vượt quá giới hạn bình thường.",
+    "SQL": "SELECT DISTINCT T1.ID, STRFTIME('%Y', CURRENT_TIMESTAMP) - STRFTIME('%Y', T1.Birthday) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T1.ID IN ( SELECT ID FROM Laboratory WHERE HCT >= 52 GROUP BY ID HAVING COUNT(ID) >= 2 )"
+  },
+  {
+    "db_id": "superhero",
+    "question": "Liệt kê các siêu anh hùng từ Marvel Comics có siêu năng lực 'Sức mạnh siêu phàm'.",
+    "SQL": "SELECT superhero_name FROM superhero AS T1 WHERE EXISTS (SELECT 1 FROM hero_power AS T2 INNER JOIN superpower AS T3 ON T2.power_id = T3.id WHERE T3.power_name = 'Super Strength' AND T1.id = T2.hero_id)AND EXISTS (SELECT 1 FROM publisher AS T4 WHERE T4.publisher_name = 'Marvel Comics' AND T1.publisher_id = T4.id)"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Tên của sự kiện xã hội mà phó chủ tịch của Câu lạc bộ_Sinh viên tại 900 E. Washington St. đã tham dự là gì?",
+    "SQL": "SELECT T2.event_name FROM attendance AS T1 INNER JOIN event AS T2 ON T2.event_id = T1.link_to_event INNER JOIN member AS T3 ON T1.link_to_member = T3.member_id WHERE T3.position = 'Vice President' AND T2.location = '900 E. Washington St.' AND T2.type = 'Social'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với bệnh nhân nội trú từ 50 tuổi trở lên, nồng độ trung bình của kháng thể anti-cardiolipin (IgG) của họ là bao nhiêu?",
+    "SQL": "SELECT AVG(T2.`aCL IgG`) FROM Patient AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE STRFTIME('%Y', CURRENT_TIMESTAMP) - STRFTIME('%Y', T1.Birthday) >= 50 AND T1.Admission = '+'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Tỷ lệ phần trăm của những lá bài cực kỳ mạnh trong bộ Coldsnap là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN T1.cardKingdomFoilId IS NOT NULL AND T1.cardKingdomId IS NOT NULL THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(T1.id) FROM cards AS T1 INNER JOIN sets AS T2 ON T2.code = T1.setCode WHERE T2.name = 'Coldsnap'"
+  },
+  {
+    "db_id": "toxicology",
+    "question": "Các nguyên tố của nguyên tử TR144_8_19 là gì?",
+    "SQL": "SELECT T2.element FROM connected AS T1 INNER JOIN atom AS T2 ON T1.atom_id = T2.atom_id WHERE T1.bond_id = 'TR144_8_19'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có tổng bilirubin vượt quá giới hạn bình thường, có bao nhiêu người có mẫu ngoại vi được quan sát trong bảng kết quả xét nghiệm ANA?",
+    "SQL": "SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T1.ID = T3.ID WHERE T2.`T-BIL` >= 2 AND T3.`ANA Pattern` LIKE '%P%'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Đối với bệnh nhân sinh ngày 18 tháng 2 năm 1959, tỷ lệ giảm cholesterol tổng thể của họ từ tháng 11 đến tháng 12 năm 1981 là bao nhiêu?",
+    "SQL": "SELECT CAST((SUM(CASE WHEN T2.Date LIKE '1981-11-%' THEN T2.`T-CHO` ELSE 0 END) - SUM(CASE WHEN T2.Date LIKE '1981-12-%' THEN T2.`T-CHO` ELSE 0 END)) AS REAL) / SUM(CASE WHEN T2.Date LIKE '1981-12-%' THEN T2.`T-CHO` ELSE 0 END) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T1.Birthday = '1959-02-18'"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Tỷ lệ phần trăm của các thẻ không có sức mạnh là tiếng Pháp là bao nhiêu?",
+    "SQL": "SELECT CAST(SUM(CASE WHEN T2.language = 'French' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(T1.id) FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T1.uuid = T2.uuid WHERE T1.power IS NULL OR T1.power = '*'"
+  },
+  {
+    "db_id": "student_club",
+    "question": "Tìm tên và ngày của các sự kiện có chi phí cho pizza từ hơn năm mươi đô la đến dưới một trăm đô la.",
+    "SQL": "SELECT T1.event_name, T1.event_date FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event INNER JOIN expense AS T3 ON T2.budget_id = T3.link_to_budget WHERE T3.expense_description = 'Pizza' AND T3.cost > 50 AND T3.cost < 100"
+  },
+  {
+    "db_id": "card_games",
+    "question": "Trong số các bộ có loại mở rộng là Commander, bộ nào có tổng số thẻ cao nhất bao gồm các sản phẩm quảng cáo và bổ sung liên quan nhưng không bao gồm các sửa đổi Alchemy? Vui lòng chỉ định id của bộ.",
+    "SQL": "SELECT id FROM sets WHERE type = 'commander' ORDER BY totalSetSize DESC LIMIT 1"
+  },
+  {
+    "db_id": "codebase_community",
+    "question": "Dựa trên các bài viết được đăng bởi Cộng đồng, tính toán tỷ lệ phần trăm các bài viết sử dụng ngôn ngữ R.",
+    "SQL": "SELECT CAST(SUM(IIF(T3.TagName = 'r', 1, 0)) AS REAL) * 100 / COUNT(T1.Id) FROM users AS T1 INNER JOIN postHistory AS T2 ON T1.Id = T2.UserId INNER JOIN tags AS T3 ON T3.ExcerptPostId = T2.PostId WHERE T1.DisplayName = 'Community'"
+  },
+  {
+    "db_id": "thrombosis_prediction",
+    "question": "Trong số các bệnh nhân có chỉ số anti-scl70 bình thường, có bao nhiêu người là nữ và không có triệu chứng nào?",
+    "SQL": "SELECT COUNT(DISTINCT T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T3.ID = T2.ID WHERE (T2.SC170 = 'negative' OR T2.SC170 = '0') AND T1.SEX = 'F' AND T3.Symptoms IS NULL"
+  },
+  {
+    "db_id": "european_football_2",
+    "question": "Tính tỷ lệ phần trăm người chơi thích chân trái, những người sinh từ năm 1987 đến 1992.",
+    "SQL": "SELECT CAST(COUNT(CASE WHEN t2.preferred_foot = 'left' THEN t1.id ELSE NULL END) AS REAL) * 100 / COUNT(t1.id) percent FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE SUBSTR(t1.birthday, 1, 4) BETWEEN '1987' AND '1992'"
+  },
+  {
+    "db_id": "financial",
+    "question": "Đối với chi nhánh nằm ở Nam Bohemia với số lượng cư dân lớn nhất, tỷ lệ khách hàng nam là bao nhiêu phần trăm?",
+    "SQL": "SELECT CAST(SUM(T1.gender = 'M') AS REAL) * 100 / COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T2.A3 = 'south Bohemia' GROUP BY T2.A4 ORDER BY T2.A4 DESC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Trong số tất cả các kỷ lục vòng được thiết lập trên các đường đua khác nhau, thời gian cho kỷ lục nhanh nhất là bao nhiêu?",
+    "SQL": "SELECT time FROM lapTimes ORDER BY (CASE WHEN INSTR(time, ':') <> INSTR(SUBSTR(time, INSTR(time, ':') + 1), ':') + INSTR(time, ':') THEN CAST(SUBSTR(time, 1, INSTR(time, ':') - 1) AS REAL) * 3600 ELSE 0 END) + (CAST(SUBSTR(time, INSTR(time, ':') - 2 * (INSTR(time, ':') = INSTR(SUBSTR(time, INSTR(time, ':') + 1), ':') + INSTR(time, ':')), INSTR(time, ':') - 1) AS REAL) * 60) + (CAST(SUBSTR(time, INSTR(time, ':') + 1, INSTR(time, '.') - INSTR(time, ':') - 1) AS REAL)) + (CAST(SUBSTR(time, INSTR(time, '.') + 1) AS REAL) / 1000) ASC LIMIT 1"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Tên tham chiếu của bộ khởi tạo của nhà vô địch trong Giải đua xe Công thức 1 Singapore 2009 là gì? Vui lòng cung cấp trang web của nó.",
+    "SQL": "SELECT T3.constructorRef, T3.url FROM results AS T1 INNER JOIN races AS T2 on T1.raceId = T2.raceId INNER JOIN constructors AS T3 on T1.constructorId = T3.constructorId WHERE T2.name = 'Singapore Grand Prix' AND T2.year = 2009 AND T1.time LIKE '_:%:__.___'"
+  },
+  {
+    "db_id": "formula_1",
+    "question": "Liệt kê 3 tay đua người Đức có thời gian dừng pit trung bình ngắn nhất và sinh ra trong khoảng thời gian từ 1980 đến 1985.",
+    "SQL": "SELECT T2.forename, T2.surname FROM pitStops AS T1 INNER JOIN drivers AS T2 on T1.driverId = T2.driverId WHERE T2.nationality = 'German' AND STRFTIME('%Y', T2.dob) BETWEEN '1980' AND '1985' GROUP BY T2.forename, T2.surname ORDER BY AVG(T1.duration) LIMIT 3"
+  }
+]
