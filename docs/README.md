@@ -15,6 +15,10 @@ Welcome to the documentation for ViPERSQL - Vietnamese Text-to-SQL System.
 ### **📊 Dataset & Evaluation**
 - [Dataset Documentation](README_DATASET.md) - Vietnamese Text-to-SQL dataset info
 - [Evaluation Guide](EVALUATION_README.md) - Enhanced evaluation metrics and analysis
+- [BIRD Integration](BIRD_INTEGRATION_COMPLETE.md) - BIRD dataset integration guide
+
+### **🧪 Experimental**
+- [Ablation Studies](ABLATION_EXPERIMENTS.md) - ViR2 ablation experiment guide
 
 ## 🎯 **Quick Navigation**
 
