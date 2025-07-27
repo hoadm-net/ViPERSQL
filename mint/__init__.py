@@ -12,7 +12,6 @@ Core Components:
 
 # Core components
 from .metrics.enhanced_metrics import EnhancedEvaluationMetrics
-from .utils import load_dataset, normalize_sql, load_tables_info
 
 # Configuration and strategy components
 from .config import ViPERConfig
@@ -26,7 +25,4 @@ __all__ = [
     'TemplateManager',
     'EnhancedEvaluationMetrics',
     'create_strategy',
-    'load_dataset',
-    'normalize_sql',
-    'load_tables_info'
 ]
