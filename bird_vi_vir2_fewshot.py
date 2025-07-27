@@ -32,10 +32,16 @@ from mint.selectors.vir2_selector import ViR2Selector
 
 class BirdViR2Script:
     """
-    BIRD Vietnamese ViR2 Few-Shot implementation.
+    BIRD Vietnamese ViR2 Few-Shot implementation using ViR2 selector for intelligent example selection.
     """
 
     def __init__(self, config):
+        """
+        Initialize BirdViR2Script with configuration.
+
+        Args:
+            config (ViPERConfig): Configuration object with model and evaluation settings.
+        """
         self.config = config
         self.llm = LLMInterface(config)
         self.evaluator = UnifiedEvaluator(config)
@@ -55,7 +61,7 @@ class BirdViR2Script:
         self._setup_vir2_meaning_pool()
 
     def _load_test_data(self):
-        """Load BIRD Vietnamese test data."""
+        """Load BIRD Vietnamese test data from test.json file."""
         test_path = project_root / "dataset" / "BIRD" / "vi" / "test.json"
         print(f"Loading test data from: {test_path}")
 
@@ -66,7 +72,7 @@ class BirdViR2Script:
         return data
 
     def _load_candidates_data(self):
-        """Load BIRD Vietnamese candidates data for ViR2 meaning pool."""
+        """Load BIRD Vietnamese candidates data for few-shot examples."""
         candidates_path = project_root / "dataset" / "BIRD" / "vi" / "candidates.json"
         print(f"Loading candidates data from: {candidates_path}")
 
@@ -82,7 +88,7 @@ class BirdViR2Script:
             return self.test_data.copy()
 
     def _load_tables_info(self):
-        """Load BIRD tables information."""
+        """Load BIRD tables information for schema context."""
         tables_path = project_root / "dataset" / "BIRD" / "tables.json"
         print(f"Loading tables info from: {tables_path}")
 
@@ -99,7 +105,7 @@ class BirdViR2Script:
         return tables_dict
 
     def _load_template(self):
-        """Load few-shot template."""
+        """Load few-shot Vietnamese template for prompt generation."""
         template_path = project_root / "templates" / "few_shot_vietnamese_nl2sql.txt"
         print(f"Loading template from: {template_path}")
 
@@ -134,7 +140,7 @@ class BirdViR2Script:
             print("Warning: PhoBERT not loaded, ViR2 will not work properly")
 
     def _prepare_schema_context(self, db_schema):
-        """Prepare schema context for template."""
+        """Prepare schema context information for template filling."""
         if not db_schema:
             return {
                 'tables': 'No table information available',
@@ -213,7 +219,7 @@ class BirdViR2Script:
                 return random.sample(self.candidates_data, k)
 
     def _format_examples(self, examples):
-        """Format examples for template insertion."""
+        """Format selected examples for template insertion."""
         if not examples:
             return ""
 
@@ -250,7 +256,7 @@ class BirdViR2Script:
         return response.strip()
 
     def generate_sql(self, question, db_schema, db_id, k_examples=3):
-        """Generate SQL using ViR2 few-shot approach."""
+        """Generate SQL using ViR2 few-shot approach with intelligent example selection."""
         try:
             # Select examples using ViR2
             examples = self._select_vir2_examples(question, k_examples)
@@ -295,7 +301,7 @@ class BirdViR2Script:
             return "", 0
 
     def run_evaluation(self, num_samples=None):
-        """Run evaluation on BIRD Vietnamese test data using ViR2."""
+        """Run evaluation on BIRD Vietnamese test data using ViR2 selector."""
         print("=" * 50)
         print("BIRD Vietnamese ViR2 Few-Shot Evaluation")
         print("=" * 50)
@@ -420,7 +426,7 @@ class BirdViR2Script:
         return str(output_dir)
 
     def _print_summary(self, eval_results):
-        """Print evaluation summary."""
+        """Print evaluation summary with key metrics."""
         print("\n" + "=" * 50)
         print("ViR2 EVALUATION SUMMARY")
         print("=" * 50)

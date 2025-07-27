@@ -48,7 +48,7 @@ class BirdViRandomScript:
         self.template = self._load_template()
 
     def _load_test_data(self):
-        """Load BIRD Vietnamese test data."""
+        """Load BIRD Vietnamese test data from test.json file."""
         test_path = project_root / "dataset" / "BIRD" / "vi" / "test.json"
         print(f"Loading test data from: {test_path}")
 
