@@ -11,6 +11,7 @@ from .vir2_selector import ViR2Selector
 from .vir2_no_pos_selector import ViR2NoPOSSelector
 from .vir2_no_diversity_selector import ViR2NoDiversitySelector
 from .vir2_no_beam_search_selector import ViR2NoBeamSearchSelector
+from .multilang_vir2_selector import MultiLanguageViR2Selector
 
 __all__ = [
     'BaseSelector',
@@ -21,5 +22,6 @@ __all__ = [
     'ViR2Selector',
     'ViR2NoPOSSelector',
     'ViR2NoDiversitySelector',
-    'ViR2NoBeamSearchSelector'
+    'ViR2NoBeamSearchSelector',
+    'MultiLanguageViR2Selector'
 ]

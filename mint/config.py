@@ -48,6 +48,10 @@ class ViPERConfig:
     split: str = field(default="dev")
     level: str = field(default="std")  # Default is std-level
     num_samples: Optional[int] = field(default=None)  # Number of samples to process (None = all)
+    
+    # Multi-language Settings
+    language: str = field(default="auto")  # 'auto', 'vi', 'en' - auto-detect or force language
+    cross_lingual: bool = field(default=False)  # Enable cross-lingual retrieval
 
     # Strategy Settings
     strategy: str = field(default="zero-shot")
@@ -57,7 +61,7 @@ class ViPERConfig:
     # Few-shot Settings
     few_shot_examples: int = field(default=DEFAULT_FEW_SHOT_EXAMPLES)
     few_shot_template: str = field(default="few_shot_vietnamese_nl2sql.txt")
-    example_selection_strategy: str = field(default="random")  # 'random', 'skill_knn', 'dicl', 'astres', 'vir2', 'vir2-no-pos', 'vir2-no-diversity', 'vir2-no-beam-search'
+    example_selection_strategy: str = field(default="random")  # 'random', 'skill_knn', 'dicl', 'astres', 'vir2', 'vir2-no-pos', 'vir2-no-diversity', 'vir2-no-beam-search', 'multilang-vir2'
 
     # ViR2 Selector Settings
     vir2_candidate_pool_size: int = field(default=50)  # M parameter - Stage 1 retrieval size

@@ -49,3 +49,21 @@ MIN_TOKENS = 1
 # File and directory constants
 DEFAULT_LOG_LEVEL = "INFO"
 DEFAULT_LOG_FORMAT = "json"
+
+# Multi-language support constants
+SUPPORTED_LANGUAGES = ["vi", "en"]
+DEFAULT_LANGUAGE = "vi"
+
+# Language-specific model configurations
+LANGUAGE_MODELS = {
+    "vi": {
+        "embedding_model": "vinai/phobert-base-v2",
+        "pos_model": "vi_core_news_sm",
+        "tokenizer_model": "vinai/phobert-base-v2"
+    },
+    "en": {
+        "embedding_model": "google-bert/bert-base-uncased", 
+        "pos_model": "en_core_web_sm",
+        "tokenizer_model": "google-bert/bert-base-uncased"
+    }
+}

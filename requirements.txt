@@ -16,18 +16,24 @@ torch>=2.0.0
 transformers>=4.20.0
 sentence-transformers>=2.2.0
 
+# Multi-language support
+spacy>=3.4.0
+# Install language models with:
+# python -m spacy download en_core_web_sm
+# python -m spacy download vi_core_news_sm
+
 # SQL parsing and validation
 sqlparse>=0.4.2
 
 # Text processing
 Levenshtein>=0.20.0
-underthesea>=6.7.0
+underthesea>=6.7.0  # Vietnamese NLP
 
-# Vietnamese language model
+# Vietnamese language model (PhoBERT)
 transformers>=4.20.0
 torch>=2.0.0
 
-# For PhoBERT
+# For sentence embeddings
 sentence-transformers>=2.2.0
 
 # Evaluation metrics

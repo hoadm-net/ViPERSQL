@@ -19,10 +19,15 @@ from .core.llm_interface import LLMInterface
 from .core.template_manager import TemplateManager
 from .strategies import create_strategy
 
+# Data loading utilities
+from .data import load_dataset, load_tables_info
+
 __all__ = [
     'ViPERConfig',
     'LLMInterface',
     'TemplateManager',
     'EnhancedEvaluationMetrics',
     'create_strategy',
+    'load_dataset',
+    'load_tables_info',
 ]

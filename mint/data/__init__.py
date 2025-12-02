@@ -7,7 +7,11 @@ This module contains data processing and preprocessing utilities:
 - Data validation tools
 """
 
-# Placeholder for future data processing utilities
-# Will be populated as we refactor data processing logic
+from .loaders import load_dataset, load_tables_info, load_bird_data, load_vitext2sql_data
 
-__all__ = []
+__all__ = [
+    'load_dataset',
+    'load_tables_info',
+    'load_bird_data',
+    'load_vitext2sql_data'
+]

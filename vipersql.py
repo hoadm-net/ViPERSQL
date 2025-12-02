@@ -68,17 +68,28 @@ class ViPERSQLCLI:
         print(f"🚀 Starting ViPERSQL Evaluation")
         print(f"Strategy: {self.config.strategy.upper()}")
         print(f"Model: {self.config.model_name}")
-        print(f"Dataset: {self.config.level}-level, {self.config.split} split")
+        print(f"Dataset: ViText2SQL {self.config.level}-level, {self.config.split} split")
         print(f"Samples: {self.config.num_samples or 'all'}")
         print("=" * SEPARATOR_LENGTH)
 
         start_time = time.time()
 
-        # Load dataset - let load_dataset handle the num_samples logic
-        dataset = load_dataset(self.config.level, self.config.split, self.config.num_samples)
+        # Load ViText2SQL dataset with correct parameters
+        dataset = load_dataset(
+            dataset_name="vitext2sql",
+            split=self.config.split,
+            level=self.config.level
+        )
+
+        # Apply num_samples limit if specified
+        if self.config.num_samples:
+            dataset = dataset[:self.config.num_samples]
 
         # Load tables info for schema information
-        tables_info = load_tables_info(self.config.level)
+        tables_info = load_tables_info(
+            dataset_name="vitext2sql",
+            level=self.config.level
+        )
 
         # Create output directory with strategy-specific naming
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -90,7 +101,7 @@ class ViPERSQLCLI:
             example_strategy = getattr(self.config, 'example_selection_strategy', 'random')
             strategy_suffix = f"few-shot-{example_strategy}"
 
-        output_dir = f"results/{strategy_suffix}{samples_suffix}_{timestamp}"
+        output_dir = f"results/vitext2sql_{strategy_suffix}_{samples_suffix}_{timestamp}"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         # Initialize results

@@ -1,21 +1,45 @@
 """
-POS_match module for ViPERSQL
-Implements POS tag-based similarity using Jensen-Shannon divergence for Vietnamese questions
+Multi-language POS_match module for ViPERSQL
+Implements POS tag-based similarity using Jensen-Shannon divergence for Vietnamese and English questions
 """
 
 import numpy as np
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from collections import Counter
+
+# Language-specific imports
 try:
-    from underthesea import pos_tag
+    from underthesea import pos_tag as vi_pos_tag
 except ImportError:
     print("Warning: underthesea not installed. Install with: pip install underthesea")
-    pos_tag = None
+    vi_pos_tag = None
+
+try:
+    import spacy
+    # Load language models
+    try:
+        nlp_en = spacy.load("en_core_web_sm")
+    except OSError:
+        print("Warning: English spaCy model not found. Install with: python -m spacy download en_core_web_sm")
+        nlp_en = None
+    
+    try:
+        nlp_vi = spacy.load("vi_core_news_sm")
+    except OSError:
+        print("Warning: Vietnamese spaCy model not found. Install with: python -m spacy download vi_core_news_sm")
+        nlp_vi = None
+        
+except ImportError:
+    print("Warning: spaCy not installed. Install with: pip install spacy")
+    nlp_en = None
+    nlp_vi = None
+
+from ..utils.language_detector import LanguageDetector
 
 
 class POSMatcher:
     """
-    POS_match calculator for Vietnamese questions using Jensen-Shannon divergence.
+    Multi-language POS_match calculator for Vietnamese and English questions using Jensen-Shannon divergence.
 
     Formula: POS_match(q1, q2) = 1 - D_JS(P1 || P2)
 
@@ -25,8 +49,11 @@ class POSMatcher:
     """
 
     def __init__(self):
-        """Initialize POS matcher with Vietnamese POS tag set."""
-        self.standard_pos_tags = [
+        """Initialize POS matcher with language detector and POS tag sets."""
+        self.language_detector = LanguageDetector()
+        
+        # Vietnamese POS tags (underthesea format)
+        self.vietnamese_pos_tags = [
             'N',      # Noun
             'V',      # Verb
             'A',      # Adjective
@@ -44,10 +71,119 @@ class POSMatcher:
             'CH',     # Punctuation
             'FW'      # Foreign word
         ]
+        
+        # English POS tags (spaCy format)
+        self.english_pos_tags = [
+            'NOUN',   'VERB',   'ADJ',    'ADV',    'PRON',
+            'DET',    'NUM',    'ADP',    'CONJ',   'INTJ', 
+            'PART',   'PUNCT',  'SYM',    'X',      'SPACE'
+        ]
 
-    def pos_match(self, question1: str, question2: str) -> float:
+    def detect_and_pos_tag(self, text: str, language: Optional[str] = None) -> List[tuple]:
         """
-        Calculate POS_match score between two Vietnamese questions.
+        Detect language and perform POS tagging.
+        
+        Args:
+            text: Input text
+            language: Optional language override ('vi' or 'en')
+            
+        Returns:
+            List of (word, pos_tag) tuples
+        """
+        if language is None:
+            language = self.language_detector.detect_language(text)
+        
+        if language == "vi":
+            return self._pos_tag_vietnamese(text)
+        elif language == "en":
+            return self._pos_tag_english(text)
+        else:
+            # Fallback to Vietnamese
+            return self._pos_tag_vietnamese(text)
+    
+    def _pos_tag_vietnamese(self, text: str) -> List[tuple]:
+        """POS tagging for Vietnamese using underthesea or spaCy fallback."""
+        # Try underthesea first (preferred for Vietnamese)
+        if vi_pos_tag is not None:
+            try:
+                return vi_pos_tag(text)
+            except Exception as e:
+                print(f"Warning: underthesea POS tagging failed: {e}")
+        
+        # Fallback to spaCy Vietnamese model
+        if nlp_vi is not None:
+            try:
+                doc = nlp_vi(text)
+                return [(token.text, self._convert_spacy_to_underthesea_pos(token.pos_)) 
+                       for token in doc if not token.is_space]
+            except Exception as e:
+                print(f"Warning: spaCy Vietnamese POS tagging failed: {e}")
+        
+        # Last resort: simple word splitting with unknown tags
+        words = text.split()
+        return [(word, 'X') for word in words]
+    
+    def _pos_tag_english(self, text: str) -> List[tuple]:
+        """POS tagging for English using spaCy."""
+        if nlp_en is not None:
+            try:
+                doc = nlp_en(text)
+                return [(token.text, token.pos_) for token in doc if not token.is_space]
+            except Exception as e:
+                print(f"Warning: spaCy English POS tagging failed: {e}")
+        
+        # Fallback: simple word splitting with unknown tags
+        words = text.split()
+        return [(word, 'X') for word in words]
+    
+    def _convert_spacy_to_underthesea_pos(self, spacy_pos: str) -> str:
+        """Convert spaCy POS tags to underthesea-compatible format for Vietnamese."""
+        conversion_map = {
+            'NOUN': 'N', 'VERB': 'V', 'ADJ': 'A', 'ADV': 'R',
+            'PRON': 'P', 'DET': 'L', 'NUM': 'M', 'ADP': 'E',
+            'CONJ': 'C', 'CCONJ': 'C', 'SCONJ': 'C',
+            'INTJ': 'I', 'PART': 'T', 'PUNCT': 'CH',
+            'SYM': 'CH', 'X': 'X', 'SPACE': 'CH'
+        }
+        return conversion_map.get(spacy_pos, 'X')
+
+    def pos_match(self, question1: str, question2: str, language: Optional[str] = None) -> float:
+        """
+        Calculate POS_match score between two questions (auto-detects language).
+        
+        Args:
+            question1: First question
+            question2: Second question  
+            language: Optional language override ('vi', 'en', or None for auto-detect)
+            
+        Returns:
+            POS_match score between 0 and 1
+        """
+        if not question1.strip() or not question2.strip():
+            return 0.0
+        
+        # Auto-detect language if not specified
+        if language is None:
+            lang1 = self.language_detector.detect_language(question1)
+            lang2 = self.language_detector.detect_language(question2)
+            # Use the more confident detection or Vietnamese as default
+            language = lang1 if lang1 == lang2 else "vi"
+        
+        # Get POS tags for both questions
+        pos_tags1 = self.detect_and_pos_tag(question1, language)
+        pos_tags2 = self.detect_and_pos_tag(question2, language)
+        
+        # Extract POS tag distributions
+        dist1 = self._get_pos_distribution(pos_tags1, language)
+        dist2 = self._get_pos_distribution(pos_tags2, language)
+        
+        # Calculate Jensen-Shannon divergence
+        js_divergence = self._jensen_shannon_divergence(dist1, dist2)
+        
+        # Convert to similarity score
+        pos_match_score = 1.0 - js_divergence
+        
+        return max(0.0, min(1.0, pos_match_score))  # Clamp to [0, 1]
 
         Args:
             question1 (str): First Vietnamese question

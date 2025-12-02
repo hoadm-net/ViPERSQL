@@ -55,6 +55,13 @@ class FewShotStrategy(BaseStrategy):
             dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
             selector.load_training_data(dataset_path)
             return selector
+        elif self.selection_strategy == 'multilang-vir2':
+            from ..selectors import MultiLanguageViR2Selector
+            selector = MultiLanguageViR2Selector(self.config)
+            # Load training data for Multi-language ViR2
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
         elif self.selection_strategy == 'random':
             from ..selectors import RandomSelector
             return RandomSelector(self.config)
