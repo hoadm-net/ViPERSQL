@@ -23,102 +23,111 @@ We analyzed 700 randomly sampled questions from ViText2SQL training set. While t
 
 ## 🔍 Representative Translation Issues
 
-The following examples illustrate the types of translation artifacts we observed:
+The following examples illustrate the types of translation artifacts we observed in the lenient audit:
 
-### 1. Schema Drift (13.9%) - Mixed Language Column Names
+### 1. Schema Drift (13.9%) - Most Common Issue
 
-**Most Notable Pattern:** Database schemas mixing English prefixes with Vietnamese terms (e.g., `id_khách_hàng`, `id_đảng`)
-
-**Example 1:** Entity name mismatch
-```
-Question: "Tìm các mô tả liên quan đến 'Câu lạc bộ quần vợt'."
-SQL: SELECT mô_tả_về_câu_lạc_bộ FROM câu_lạc_bộ 
-     WHERE tên_câu_lạc_bộ = "Tennis Club"
-
-❌ Problem: 
-   - Question uses Vietnamese translation: "Câu lạc bộ quần vợt"
-   - SQL uses English literal: "Tennis Club"
-   - Column name "mô_tả_về_câu_lạc_bộ" not reflected in question phrasing
-```
-
-**Example 2:** Mixed English-Vietnamese column names (`tracking_orders` database)
-```
-Question: "Cho biết tên của những khách hàng đã từng huỷ mua sản phẩm 
-          'thực phẩm' (trạng thái mặt hàng là 'huỷ')."
-SQL: SELECT t1.tên_khách_hàng FROM khách_hàng AS t1 
-     JOIN đơn_đặt_hàng AS t2 JOIN mặt_hàng_được_đặt AS t3 
-     ON t1.id_khách_hàng = t2.id_khách_hàng 
-     AND t2.id_đơn_hàng = t3.id_đơn_hàng ...
-
-❌ Problem:
-   - Schema has mixed language: **id_khách_hàng**, **id_đơn_hàng** (English 
-     "id" + Vietnamese noun)
-   - Question: "thực phẩm" (Vietnamese) vs SQL: "food" (English)
-   - Question: "huỷ" (Vietnamese) vs SQL: "Cancel" (English)
-```
-
-**Example 3:** Mixed schema with political database (`e_government`)
-```
-Question: "Đảng nào đã sử dụng các dịch vụ nhiều lần nhất? Cho biết email 
-          được sử dụng bởi đảng này."
-SQL: SELECT t1.địa_chỉ_email_đảng FROM đảng AS t1 
-     JOIN dịch_vụ_của_đảng AS t2 ON t1.id_đảng = t2.id_khách_hàng ...
-
-❌ Problem:
-   - Column **id_đảng** mixes English "id" + Vietnamese "đảng" (party)
-   - Schema inconsistency: t2.id_khách_hàng (customer_id) refers to parties
-   - Question lacks GROUP BY/COUNT clarity despite asking "nhiều lần nhất"
-```
-
-**Example 4:** Product characteristics database (`products_gen_characteristics`)
-```
-Question: "Tìm tên của các sản phẩm có mô tả về màu sắc là 'màu đỏ' và 
-          có đặc tính là 'nhanh'."
-SQL: SELECT tên_sản_phẩm FROM sản_phẩm AS t1 
-     JOIN đặc_tính_của_sản_phẩm AS t2 ON t1.id_sản_phẩm = t2.id_sản_phẩm 
-     JOIN đặc_tính AS t3 ON t2.id_đặc_tính = t3.id_đặc_tính ...
-     WHERE t4.mã_màu = "red" AND t3.tên_đặc_tính = "fast"
-
-❌ Problem:
-   - Columns: **id_sản_phẩm**, **id_đặc_tính** (EN "id" + VI nouns)
-   - Question: "màu đỏ" (Vietnamese) vs SQL: "red" (English)
-   - Question: "nhanh" (Vietnamese) vs SQL: "fast" (English)
-```
-
----
-
-### 2. Structural Mismatch (5.0%) - Implicit Complexity
-
-**Example:** Friend query with hidden joins
-
+**Example 1:** Column terminology mismatch (`network_2`)
 ```
 Question: "Tìm những người bạn có giới tính nữ của Alice."
 SQL: SELECT t2.bạn_bè FROM cá_nhân AS t1 
      JOIN bạn_bè AS t2 ON t1.tên = t2.bạn_bè 
      WHERE t2.tên = "Alice" AND t1.giới_tính = "female"
 
-❌ Problem:
-   - Question structure: Simple request for "friends of Alice who are female"
-   - SQL structure: Complex self-join on person table with friend table
-   - Question doesn't hint at the join complexity or dual filtering
-   - "người bạn" (friend - singular/general) vs "bạn_bè" (friends - schema term)
+Issue: Question: "những người bạn" (natural phrasing - friends)
+       SQL column: "bạn_bè" (schema term)
+       Mismatch between colloquial and schema terminology
+```
+
+**Example 2:** Table name ambiguity (`car_1`)
+```
+Question: "Mẫu xe hơi có mpg cao nhất là mẫu xe nào?"
+SQL: SELECT t1.mẫu FROM tên_xe AS t1 JOIN dữ_liệu_xe AS t2 
+     ON t1.id_thương_hiệu = t2.id ORDER BY t2.mpg DESC LIMIT 1
+
+Issue: Question: "mẫu xe hơi" (car model)
+       SQL tables: "tên_xe", "dữ_liệu_xe"
+       Different terminology between question and schema
+```
+
+**Example 3:** Entity value language mixing (`tracking_orders`)
+```
+Question: "Khách hàng đã huỷ mua sản phẩm 'thực phẩm' (trạng thái 'huỷ')"
+SQL: WHERE tên_sản_phẩm = "food" AND trạng_thái = "Cancel"
+
+Issue: Question: "thực phẩm", "huỷ" (Vietnamese)
+       SQL: "food", "Cancel" (English)
+       Database uses English literals while questions are Vietnamese
+```
+
+---
+
+### 2. Structural Mismatch (5.0%) - Implicit Complexity
+
+**Example 1:** Missing aggregation (`csu_1`)
+```
+Question: "Cho biết số lượng giảng viên tại 'Đại học bang Long Beach' năm 2002"
+SQL: SELECT cán_bộ_giảng_dạy FROM cán_bộ_giảng_dạy AS t1 
+     JOIN trường_học AS t2 WHERE t1.năm = 2002...
+
+Issue: Question: "số lượng" (implies COUNT)
+       SQL: Returns column without aggregation
+       Missing COUNT() function inconsistent with question
+```
+
+**Example 2:** Complex query with simple phrasing (`tracking_grants_for_research`)
+```
+Question: "Những dự án có chi tiết 'omnis' có id là gì? Cho biết id nhiệm vụ"
+SQL: SELECT t1.chi_tiết_về_nhiệm_vụ, t1.id_nhiệm_vụ, t2.id_dự_án 
+     FROM nhiệm_vụ AS t1 JOIN dự_án AS t2...
+
+Issue: Question: "id là gì?" (simple, singular)
+       SQL: Returns multiple columns and rows with joins
+       Structure more complex than question suggests
 ```
 
 ---
 
 ### 3. Entity Mismatch (5.3%) - Language Mixing
 
-**Example:** Terminology inconsistency
-
+**Example 1:** Room name translation (`inn_1`)
 ```
-Question: "Có bao nhiêu nhân viên là 'nhân viên CNTT' đến từ mỗi thành phố?"
-SQL: SELECT COUNT(*), thành_phố FROM nhân_viên 
-     WHERE chức_danh = "IT Staff" GROUP BY thành_phố
+Question: "Cho biết trang trí trong phòng 'Ẩn dật và thách thức'"
+SQL: WHERE tên_phòng = "Recluse and defiance"
 
-❌ Problem:
-   - Question: "nhân viên CNTT" (Vietnamese abbreviation for IT staff)
-   - SQL: "IT Staff" (English term)
-   - Inconsistent terminology makes pattern matching difficult
+Issue: Question: "Ẩn dật và thách thức" (Vietnamese)
+       SQL: "Recluse and defiance" (English)
+       Complete language mismatch in entity name
+```
+
+**Example 2:** Document title (`cre_Doc_Tracking_DB`)
+```
+Question: "Tài liệu 'Cách đọc một cuốn sách' thuộc loại nào?"
+SQL: WHERE tên_tài_liệu = "How to read a book"
+
+Issue: Question: "Cách đọc một cuốn sách" (Vietnamese)
+       SQL: "How to read a book" (English)
+       Entity names not translated consistently
+```
+
+---
+
+### 4. Lexical Issues (0.4%) - Rare Typos/Errors
+
+**Example 1:** Punctuation error (`club_1`)
+```
+Question: "Câu lạc bộ quần vợt ' nằm ở địa điểm nào?"
+
+Issue: Misplaced quote and space: "quần vợt ' "
+       Makes question awkward to parse
+```
+
+**Example 2:** Typo (`scholar`)
+```
+Question: "Liệt kê tất cả các bài báo học thuật vể mạng máy cho học một lần"
+
+Issue: Typo: "vể" should be "về"
+       Unclear phrase: "mạng máy cho học một lần"
 ```
 
 ---
