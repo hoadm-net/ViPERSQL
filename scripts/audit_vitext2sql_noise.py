@@ -61,7 +61,7 @@ class ViText2SQLAuditor:
         # Columns: extract from SELECT, WHERE clauses
         schema_hint = self._extract_schema_from_sql(sql_query)
         
-        prompt = f"""You are auditing the translation quality of a Vietnamese Text-to-SQL dataset.
+        prompt = f"""You are auditing the translation quality of a published Vietnamese Text-to-SQL dataset.
 
 **Given:**
 - Database: `{db_id}`
@@ -69,26 +69,39 @@ class ViText2SQLAuditor:
 - SQL query: `{sql_query}`
 - Schema elements used: {schema_hint}
 
-**Task:** Classify whether the Vietnamese question has each of the following issues:
+**Task:** Identify ONLY **severe and obvious** translation issues. Be LENIENT - this is a published dataset.
 
-1. **LEX** (Lexical/Fluency): Unnatural wording, literal translation from English, grammatical errors, awkward phrasing that native speakers wouldn't use.
+Mark TRUE only if the issue is **clear and significant**:
 
-2. **SCH** (Schema Drift): Words/concepts in the question don't match the actual schema terminology used in SQL. For example:
-   - Question mentions "tác giả" but SQL uses "writer_name"
-   - Question uses colloquial terms while SQL uses technical database terms
-   - Mismatch between question vocabulary and actual column/table names
+1. **LEX** (Lexical/Fluency): Mark TRUE only if:
+   - Completely broken grammar or nonsensical phrasing
+   - Words that absolutely don't exist in Vietnamese
+   - Severe awkwardness that makes the question confusing
+   - DO NOT mark minor stylistic variations or acceptable synonyms
 
-3. **STR** (Structural Mismatch): The reasoning structure in the question doesn't align with SQL logic:
-   - Simple question → complex SQL (or vice versa)
-   - Missing aggregation context (COUNT, AVG, etc.)
-   - Wrong scope (single vs. multiple entities)
-   - Implicit joins not reflected in question
+2. **SCH** (Schema Drift): Mark TRUE only if:
+   - Vietnamese term is COMPLETELY different from SQL schema element (e.g., "tác_giả" vs "writer")
+   - Mixed language in SQL schema itself (e.g., "id_khách_hàng" mixing English + Vietnamese)
+   - DO NOT mark if just different phrasing of the same concept
 
-4. **ENT** (Entity/Number Inconsistency): Proper names, numbers, dates in question don't match SQL literals exactly.
+3. **STR** (Structural Mismatch): Mark TRUE only if:
+   - Question asks for single value but SQL returns multiple (or vice versa)
+   - Question implies simple query but SQL has complex multi-table joins that are not hinted
+   - Completely missing aggregation that changes meaning (e.g., "how many" → SELECT without COUNT)
+   - DO NOT mark if structure is just implicit but still correct
 
-5. **OK** (No Major Issues): Question is natural, accurate, and well-aligned with SQL.
+4. **ENT** (Entity/Number Inconsistency): Mark TRUE only if:
+   - Proper names are COMPLETELY different languages (e.g., "Việt Nam" vs "Vietnam")
+   - Numbers don't match at all
+   - DO NOT mark minor transliterations or acceptable translations
 
-**IMPORTANT:** Focus on finding **problematic translations** - cases where the Vietnamese question is unnatural, confusing, or misaligned with the SQL semantics. This is to identify translation artifacts, not to be overly strict.
+5. **OK** (No Major Issues): Mark TRUE if the translation is acceptable and usable, even if not perfect.
+
+**CRITICAL INSTRUCTIONS:**
+- BE VERY LENIENT - only mark severe problems
+- When in doubt, mark OK=true
+- This is a published dataset, we're just documenting that "some issues exist", not finding all problems
+- Minor imperfections are ACCEPTABLE
 
 **Output ONLY valid JSON:**
 {{

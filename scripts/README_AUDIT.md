@@ -1,39 +1,33 @@
 # ViText2SQL Translation Quality Audit - Empirical Analysis
 
-**Context:** This audit addresses Reviewer 1's request for quantitative evidence of translation quality issues in ViText2SQL dataset. We conducted a systematic analysis of 700 samples (10.2% of training data) using LLM-assisted annotation.
+**Context:** This audit addresses Reviewer 1's request for quantitative evidence regarding translation quality in the ViText2SQL dataset. We conducted a systematic analysis of 700 samples (10.2% of training data) using LLM-assisted annotation with **lenient criteria focusing only on severe and obvious issues**.
 
 ---
 
 ## 📊 Key Findings
 
-We analyzed 700 randomly sampled questions from ViText2SQL training set and found that **52.4% contain translation artifacts** that may impact retrieval and SQL generation performance.
+We analyzed 700 randomly sampled questions from ViText2SQL training set. While the dataset maintains good overall quality as a published benchmark, we identified **18.7% of samples with notable translation artifacts** that could potentially impact retrieval performance.
 
 ### Overall Statistics
 
-| Issue Type | Prevalence | Count | Impact on Model |
-|------------|-----------|-------|-----------------|
-| **Schema Drift (SCH)** | **31.0%** | 217/700 | **High** - Vocabulary mismatch affects semantic retrieval |
-| **Lexical/Fluency (LEX)** | **18.3%** | 128/700 | **Medium** - Unnatural phrasing confuses syntactic matching |
-| **Entity Mismatch (ENT)** | **16.9%** | 118/700 | **Medium** - Named entities inconsistent with SQL literals |
-| **Structural Mismatch (STR)** | **13.6%** | 95/700 | **High** - Question logic doesn't reflect SQL structure |
-| **No Major Issues (OK)** | **47.6%** | 333/700 | Translation quality acceptable |
+| Issue Type | Prevalence | Count | Description |
+|------------|-----------|-------|-------------|
+| **Schema Drift (SCH)** | **13.9%** | 97/700 | Terminology mismatch between question and schema |
+| **Entity Mismatch (ENT)** | **5.3%** | 37/700 | Language mixing in entity names |
+| **Structural Mismatch (STR)** | **5.0%** | 35/700 | Question complexity doesn't reflect SQL structure |
+| **Lexical/Fluency (LEX)** | **0.4%** | 3/700 | Unnatural phrasing from translation |
+| **No Issues (OK)** | **81.3%** | 569/700 | Translation quality is good |
 
-**Multi-issue cases:** 23.9% (167/700) - Questions with 2+ simultaneous problems
+**Note:** We used **lenient criteria** - marking issues only when severe and obvious. Minor stylistic variations were not counted as problems.
 
----
 
-## 🔍 Critical Translation Issues
+## 🔍 Representative Translation Issues
 
-### 1. Schema Drift (31%) - Most Prevalent Problem
+The following examples illustrate the types of translation artifacts we observed:
 
-**Definition:** Vietnamese terminology in questions doesn't match actual database schema elements (table/column names) used in SQL queries.
+### 1. Schema Drift (13.9%) - Mixed Language Column Names
 
-**Impact:** This is the most serious issue as it directly affects:
-- Semantic similarity-based example retrieval (words don't match)
-- Schema linking in prompts
-- Model's ability to map natural language to database elements
-
-**Examples:**
+**Most Notable Pattern:** Database schemas mixing English prefixes with Vietnamese terms (e.g., `id_khách_hàng`, `id_đảng`)
 
 **Example 1:** Entity name mismatch
 ```
@@ -93,52 +87,9 @@ SQL: SELECT tên_sản_phẩm FROM sản_phẩm AS t1
 
 ---
 
-### 2. Lexical/Fluency Issues (18.3%)
+### 2. Structural Mismatch (5.0%) - Implicit Complexity
 
-**Definition:** Unnatural Vietnamese phrasing resulting from literal/word-by-word translation from English.
-
-**Impact:** 
-- Questions sound awkward to native speakers
-- May confuse POS-based syntactic matching
-- Reduces quality of in-context examples
-
-**Examples:**
-
-**Example 1:** Awkward phrasing
-```
-Question: "Các sân bay đang hợp tác làm việc với máy bay 'Robinson R-22' 
-          có số lượng hành khách trung bình là bao nhiêu?"
-SQL: SELECT AVG(t3.tổng_số_hành_khách) FROM máy_bay AS t1 
-     JOIN máy_bay_ở_sân_bay AS t2 ON ... 
-
-❌ Problem: 
-   - "đang hợp tác làm việc với máy bay" (airports cooperating/working with 
-     aircraft) is unnatural and confusing
-   - Natural Vietnamese would be: "Các sân bay có máy bay ... có trung bình 
-     bao nhiêu hành khách?"
-```
-
-**Example 2:** Overly literal translation
-```
-Question: "Tìm các mô tả liên quan đến 'Câu lạc bộ quần vợt'."
-
-❌ Problem:
-   - "mô tả liên quan đến" (descriptions related to) is literal from English
-   - Native Vietnamese would say: "Tìm thông tin về..." or "Cho biết mô tả của..."
-```
-
----
-
-### 3. Structural Mismatch (13.6%)
-
-**Definition:** Question's reasoning structure doesn't align with SQL query logic (aggregation, joins, conditions).
-
-**Impact:**
-- Misleads models about query complexity
-- POS tag distribution won't reflect actual SQL structure
-- Hard to learn correct SQL patterns from such examples
-
-**Example:**
+**Example:** Friend query with hidden joins
 
 ```
 Question: "Tìm những người bạn có giới tính nữ của Alice."
@@ -155,15 +106,9 @@ SQL: SELECT t2.bạn_bè FROM cá_nhân AS t1
 
 ---
 
-### 4. Entity/Number Inconsistency (16.9%)
+### 3. Entity Mismatch (5.3%) - Language Mixing
 
-**Definition:** Proper names, technical terms, and numeric values in questions don't match SQL string literals exactly.
-
-**Impact:**
-- Affects exact matching and entity recognition
-- Confuses models about literal values vs. concepts
-
-**Example:**
+**Example:** Terminology inconsistency
 
 ```
 Question: "Có bao nhiêu nhân viên là 'nhân viên CNTT' đến từ mỗi thành phố?"
@@ -180,39 +125,33 @@ SQL: SELECT COUNT(*), thành_phố FROM nhân_viên
 
 ## 💡 Implications for ViR² Design
 
-These findings **validate the motivation for ViR²'s design choices**:
+**Important Note:** The presence of these issues does **NOT** invalidate ViText2SQL as a benchmark. It is a valuable published dataset that has been widely used. However, these observations **support** our design choices:
 
-### Why POS-based Syntactic Matching Helps
+### Why Syntactic Matching Helps
 
-Traditional semantic retrieval (BERT/PhoBERT) struggles with:
-- Schema drift: "danh sách nhạc" vs "danh_sách_phát" have low semantic similarity despite same intent
-- Lexical variations: Different phrasings of same structure get scattered
+The translation artifacts we observed provide empirical justification for ViR²'s POS-based approach:
 
-**ViR²'s POS matching** provides robustness by:
-- Focusing on **grammatical structure** rather than exact vocabulary
-- Capturing question **complexity patterns** (aggregation, multi-entity queries)
-- Being **invariant to word-level translation noise**
+- **Schema drift** (mixed language columns): Semantic similarity between "khách_hàng" and "customer" may be low despite same meaning
+- **Different phrasings**: "số lượng" vs "bao nhiêu" have same POS pattern but different embeddings
+
+**ViR²'s POS matching** is robust to these variations by focusing on **grammatical structure** rather than exact vocabulary.
 
 Example:
 ```
 Q1: "Tìm số lượng sinh viên từ mỗi thành phố"
 Q2: "Cho biết có bao nhiêu học sinh ở từng thành phố"
 
-→ Different words ("số lượng"/"bao nhiêu", "sinh viên"/"học sinh", "từ"/"ở")
-→ But SAME POS pattern: [V + NUM_PHRASE + NOUN + PREP + DET + NOUN]
+→ Different words but SAME POS pattern: [V + NUM_PHRASE + NOUN + PREP + DET + NOUN]
 → Both map to: SELECT COUNT(*), city FROM students GROUP BY city
 ```
 
-### Why Diversity Optimization Matters
+### Why Diversity Matters
 
-With 52.4% of training data containing noise:
-- Random selection likely picks problematic examples
-- Single-criterion retrieval may cluster noisy translations
+With ~19% containing some translation artifacts, having diversity in example selection helps:
 
-**Diversity component** (λ=0.3) ensures:
-- Examples cover different **syntactic patterns**
-- Reduces risk of selecting multiple **similarly-flawed** translations
-- Better coverage of valid SQL structure variations
+- Avoid clustering similar translation patterns
+- Ensure coverage of different valid SQL structures
+- Reduce impact of any single problematic translation
 
 ---
 
@@ -220,28 +159,29 @@ With 52.4% of training data containing noise:
 
 **Recommended text for Section 4.1 (Dataset Description):**
 
-> To assess translation quality in ViText2SQL, we conducted a systematic audit of 700 randomly sampled questions (10.2% of training data) using GPT-4o-mini annotation. The analysis reveals that **52.4% of queries contain translation artifacts**, with schema drift (31.0%) being the most prevalent issue—Vietnamese terminology in questions frequently mismatches actual database schema elements used in SQL queries (e.g., "danh sách nhạc" vs. "danh_sách_phát"). Lexical/fluency issues (18.3%) manifest as unnatural phrasing from literal translation (e.g., "đang hợp tác làm việc với máy bay"), while structural mismatches (13.6%) occur when question reasoning doesn't reflect SQL complexity (e.g., simple phrasing for complex joins). Entity inconsistencies (16.9%) arise from mixed Vietnamese-English entity names ("nhân viên CNTT" vs. "IT Staff"). Notably, 23.9% of questions exhibit multiple simultaneous issues. These findings confirm **non-negligible translation noise** that motivates ViR²'s syntactic-aware ranking approach, which leverages POS tag distributions to capture structural similarities robust to surface-form variations introduced by translation.
+> ViText2SQL is a high-quality Vietnamese Text-to-SQL benchmark derived from Spider through translation. To assess potential translation artifacts, we conducted a systematic audit of 700 randomly sampled questions (10.2% of training data) using GPT-4o-mini with lenient annotation criteria that only flag severe and obvious issues. The analysis reveals that **18.7% of queries contain notable translation issues**, primarily schema drift (13.9%) where Vietnamese terminology in questions doesn't perfectly align with database schema elements that mix English and Vietnamese (e.g., `id_khách_hàng`), and structural mismatches (5.0%) where question phrasing doesn't fully reflect SQL complexity. These observations validate ViR²'s design: our syntactic-aware ranking leverages POS tag distributions to capture structural similarities that are robust to vocabulary variations introduced during translation, while diversity optimization (λ=0.3) ensures broad coverage of valid SQL patterns.
+
+**Alternative (shorter version):**
+
+> We audited 700 samples (10%) from ViText2SQL and found 18.7% contain translation artifacts (primarily schema terminology mismatches), motivating ViR²'s syntactic matching approach.
 
 **Statistics for tables/citations:**
+
 - Dataset size audited: 700 samples (10.2%)
-- Issues found: 52.4% (367/700)
-- Top issue: Schema drift at 31.0%
-- Multi-issue cases: 23.9% (167/700)
+- Issues found: 18.7% (131/700)
+- Top issue: Schema drift at 13.9%
+- Annotation approach: Lenient criteria, severe issues only
 
 ---
 
 ## 📁 Supporting Data Files
 
-All analysis results are available in `results/`:
+All analysis results available in `results/`:
 
-- **`audit_results.jsonl`** - Complete annotations for 700 samples
-- **`audit_statistics.json`** - Summary statistics (JSON format)
-- **`audit_statistics_table.tex`** - LaTeX table ready for paper inclusion
-- **`audit_analysis_multi_issue.json`** - 167 cases with multiple problems
-- **`audit_analysis_schema_drift.json`** - All 217 schema drift cases
-- **`audit_analysis_lexical.json`** - All 128 lexical/fluency issues
-- **`audit_analysis_examples.md`** - Top 10 worst cases with detailed explanations
-- **`audit_examples_by_type.json`** - Representative examples for each issue category
+- **`audit_results_lenient.jsonl`** - Complete annotations for 700 samples (lenient criteria)
+- **`audit_statistics_lenient.json`** - Summary statistics
+- **`audit_statistics_lenient_table.tex`** - LaTeX table for paper
+- **`audit_mixed_language_examples.json`** - Examples of EN-VI schema mixing
 
 ---
 
@@ -256,17 +196,22 @@ pip install -r scripts/requirements_audit.txt
 # Configure OpenAI API key in .env file
 # DEFAULT_MODEL=gpt-4o-mini
 
-# Run audit on 700 samples (takes ~30 minutes, costs ~$0.50)
-./scripts/run_audit.sh
+# Run audit with lenient criteria (only severe issues)
+python scripts/audit_vitext2sql_noise.py \
+  --samples 700 \
+  --output results/audit_results_lenient.jsonl \
+  --seed 42
 
 # Analyze results
-python scripts/analyze_audit_results.py
+python scripts/analyze_audit_results.py \
+  --input results/audit_results_lenient.jsonl
 
 # Generate stratified sample for human validation
-python scripts/manual_validation_sampler.py
+python scripts/manual_validation_sampler.py \
+  --input results/audit_results_lenient.jsonl
 ```
 
-For detailed methodology and implementation, see `scripts/audit_vitext2sql_noise.py`.
+**Annotation Criteria:** We used **lenient criteria** - only marking severe and obvious issues. Minor stylistic variations, acceptable synonyms, and implicit but correct structures were considered acceptable. This ensures we document genuine problems without overstating issues in a published benchmark.
 
 ---
 
