@@ -127,7 +127,7 @@ $$\text{beams} = [\emptyset]$$
 
 ### Scoring Function
 
-$$f(E, q) = \text{POS_Score}(E, q) + \lambda \cdot \text{Diversity}(E)$$
+$$f(E, q) = \text{POS}_{\text{Score}}(E, q) + \lambda \cdot \text{Diversity}(E)$$
 
 where:
 - $E = \{e_1, e_2, \ldots, e_k\}$ is the set of selected examples
@@ -169,7 +169,7 @@ where $M = \frac{P_1 + P_2}{2}$
 
 **Step 4: POS Match Score**
 
-$$\text{POS_match}(q_1, q_2) = 1 - \text{JSD}(P_1, P_2)$$
+$$\text{POS}_{\text{match}}(q_1, q_2) = 1 - \text{JSD}(P_1, P_2)$$
 
 Range: $[0, 1]$ (1 = identical POS distribution)
 
@@ -177,7 +177,7 @@ Range: $[0, 1]$ (1 = identical POS distribution)
 
 For a set of examples $E = \{e_1, \ldots, e_k\}$ and question $q$:
 
-$$\text{POS_Score}(E, q) = \frac{1}{k} \sum_{i=1}^{k} \text{POS_match}(q, q_{e_i})$$
+$$\text{POS}_{\text{Score}}(E, q) = \frac{1}{k} \sum_{i=1}^{k} \text{POS}_{\text{match}}(q, q_{e_i})$$
 
 ### Why POS Matching is Important for Vietnamese?
 
@@ -298,7 +298,7 @@ To test contribution of each component:
 
 **Modification:** Remove POS matching component
 
-$$f(E, q) = \text{Semantic_Score}(E, q) + \lambda \cdot \text{Diversity}(E)$$
+$$f(E, q) = \text{Semantic}_{\text{Score}}(E, q) + \lambda \cdot \text{Diversity}(E)$$
 
 **Usage:**
 ```bash
@@ -309,7 +309,7 @@ python vipersql.py --strategy few-shot --example-selection-strategy vir2-no-pos
 
 **Modification:** Remove diversity optimization
 
-$$f(E, q) = \text{POS_Score}(E, q)$$
+$$f(E, q) = \text{POS}_{\text{Score}}(E, q)$$
 
 Set $\lambda = 0$
 

@@ -17,7 +17,7 @@ ViPERSQL addresses the challenge of selecting optimal few-shot examples for Text
 
 **Key Innovation:**
 
-$$\text{Score}(E, q) = \text{POS_Score}(E, q) + \lambda \cdot \text{Diversity}(E)$$
+$$\text{Score}(E, q) = \text{POS}_{\text{Score}}(E, q) + \lambda \cdot \text{Diversity}(E)$$
 
 where $\lambda = 0.3$ balances syntactic similarity and example diversity.
 

@@ -454,13 +454,13 @@ def __init__(
 **Scoring Formula:**
 
 $$
-\text{Score}(E, q) = \text{POS_Score}(E, q) + \lambda \cdot \text{Diversity}(E)
+\text{Score}(E, q) = \text{POS}_{\text{Score}}(E, q) + \lambda \cdot \text{Diversity}(E)
 $$
 
 where:
 
 $$
-\text{POS_Score}(E, q) = \frac{1}{|E|} \sum_{e \in E} \frac{|\text{POS}(e) \cap \text{POS}(q)|}{|\text{POS}(q)|}
+\text{POS}_{\text{Score}}(E, q) = \frac{1}{|E|} \sum_{e \in E} \frac{|\text{POS}(e) \cap \text{POS}(q)|}{|\text{POS}(q)|}
 $$
 
 $$

@@ -343,11 +343,11 @@ Stage 2: Beam Search Re-ranking
 
 ### Scoring Function
 
-$$\text{Score}(E, q) = \text{POS_Score}(E, q) + \lambda \cdot \text{Diversity}(E)$$
+$$\text{Score}(E, q) = \text{POS}_{\text{Score}}(E, q) + \lambda \cdot \text{Diversity}(E)$$
 
 where:
 
-$$\text{POS_Score}(E, q) = \frac{1}{k} \sum_{i=1}^{k} \text{POS_match}(q, q_{e_i})$$
+$$\text{POS}_{\text{Score}}(E, q) = \frac{1}{k} \sum_{i=1}^{k} \text{POS}_{\text{match}}(q, q_{e_i})$$
 
 $$\text{Diversity}(E) = 1 - \frac{2}{k(k-1)} \sum_{i<j} \text{sim}(e_i, e_j)$$
 
