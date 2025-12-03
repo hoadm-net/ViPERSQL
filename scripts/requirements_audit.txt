@@ -1,0 +1,9 @@
+# Additional requirements for audit scripts
+# Install with: pip install -r scripts/requirements_audit.txt
+
+# Already in main requirements.txt:
+# - openai>=1.0.0
+# - python-dotenv>=0.19.0
+
+# Additional for audit:
+tqdm>=4.64.0  # Progress bars
