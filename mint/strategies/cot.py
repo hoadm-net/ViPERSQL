@@ -23,60 +23,87 @@ class CoTStrategy(BaseStrategy):
         self.reasoning_steps = getattr(config, 'cot_reasoning_steps', True)
         self.include_examples = getattr(config, 'cot_include_examples', False)
         self.k_examples = getattr(config, 'cot_examples', 2) if self.include_examples else 0
-        self._training_examples = None
+        self.selection_strategy = getattr(config, 'cot_selection_strategy', 'random')
+        
+        # Initialize the appropriate selector based on strategy
+        self._selector = self._create_selector() if self.include_examples else None
+
+    def _create_selector(self):
+        """Create and return the appropriate example selector (same as FewShotStrategy)."""
+        if self.selection_strategy == 'skill_knn':
+            from ..selectors import SkillKNNSelector
+            return SkillKNNSelector(self.config)
+        elif self.selection_strategy == 'dicl':
+            from ..selectors import DICLSelector
+            return DICLSelector(self.config)
+        elif self.selection_strategy == 'astres':
+            from ..selectors import ASTRESSelector
+            return ASTRESSelector(self.config)
+        elif self.selection_strategy == 'vir2':
+            from ..selectors import ViR2Selector
+            selector = ViR2Selector(self.config)
+            # Load training data for ViR2
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
+        elif self.selection_strategy == 'vir2-no-pos':
+            from ..selectors import ViR2NoPOSSelector
+            selector = ViR2NoPOSSelector(self.config)
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
+        elif self.selection_strategy == 'vir2-no-diversity':
+            from ..selectors import ViR2NoDiversitySelector
+            selector = ViR2NoDiversitySelector(self.config)
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
+        elif self.selection_strategy == 'vir2-no-beam-search':
+            from ..selectors import ViR2NoBeamSearchSelector
+            selector = ViR2NoBeamSearchSelector(self.config)
+            dataset_path = f"{self.config.dataset_path}/{self.config.level}-level/dicl_candidates.json"
+            selector.load_training_data(dataset_path)
+            return selector
+        elif self.selection_strategy == 'random':
+            from ..selectors import RandomSelector
+            return RandomSelector(self.config)
+        else:
+            print(f"[CoT] Unknown selection strategy '{self.selection_strategy}', falling back to random")
+            from ..selectors import RandomSelector
+            return RandomSelector(self.config)
 
     def _get_strategy_name(self) -> str:
         """Return the strategy name."""
         return "cot"
     
-    def load_training_examples(self, dataset_path: str, db_id: str = None) -> List[Dict]:
-        """Load training examples for CoT reasoning (if enabled)."""
-        if not self.include_examples:
+    def select_examples(self, question: str, db_id: str = None, k: int = None, schema_info: Dict[str, Any] = None) -> List[Dict]:
+        """Select k examples using the configured strategy (same as FewShotStrategy)."""
+        if not self.include_examples or self._selector is None:
             return []
         
-        try:
-            import json
-            from pathlib import Path
-            train_file = Path(dataset_path) / "train.json"
-            if not train_file.exists():
-                print(f"[CoT] Training file not found: {train_file}")
-                return []
-            
-            with open(train_file, 'r', encoding='utf-8') as f:
-                train_data = json.load(f)
-            
-            if db_id:
-                filtered_data = [ex for ex in train_data if ex.get('db_id') == db_id]
-                if not filtered_data:
-                    print(f"[CoT] No examples found for database {db_id}, using all examples")
-                    filtered_data = train_data
-            else:
-                filtered_data = train_data
-            
-            self._training_examples = filtered_data
-            print(f"[CoT] Loaded {len(filtered_data)} training examples for CoT")
-            return filtered_data
-        except Exception as e:
-            print(f"[CoT] Failed to load training examples for CoT: {e}")
-            return []
+        if k is None:
+            k = self.k_examples
 
-    def select_cot_examples(self, question: str, db_id: str = None) -> List[Dict]:
-        """Select examples for CoT reasoning."""
-        if not self.include_examples or self.k_examples == 0:
-            return []
-        
-        if self._training_examples is None:
-            dataset_path = self.config.dataset_full_path
-            self.load_training_examples(dataset_path, db_id)
-        
-        if not self._training_examples:
-            return []
-        
-        # Select examples that demonstrate step-by-step reasoning
-        import random
-        if len(self._training_examples) <= self.k_examples:
-            return self._training_examples.copy()
-        return random.sample(self._training_examples, self.k_examples)
+        try:
+            print(f"[CoT] Using {self.selection_strategy} selection strategy")
+
+            # For ASTRES, pass schema_info if available
+            if self.selection_strategy == 'astres' and schema_info is not None:
+                return self._selector.select_examples(question, k, db_id, schema_info)
+            else:
+                return self._selector.select_examples(question, k, db_id)
+
+        except Exception as e:
+            print(f"[CoT] Error in {self.selection_strategy} selection: {e}")
+            # Fallback to random if current strategy fails
+            if self.selection_strategy != 'random':
+                print(f"[CoT] Falling back to random selection")
+                from ..selectors import RandomSelector
+                fallback_selector = RandomSelector(self.config)
+                return fallback_selector.select_examples(question, k, db_id)
+            else:
+                print(f"[CoT] Random selection also failed")
+                return []
 
     def format_cot_examples(self, examples: List[Dict]) -> str:
         """Format examples with step-by-step reasoning for CoT template."""
@@ -144,7 +171,7 @@ SQL: {query}"""
             cot_examples = ""
             if self.include_examples:
                 if examples is None:
-                    examples = self.select_cot_examples(question, db_id)
+                    examples = self.select_examples(question, db_id, schema_info=schema_info)
                 cot_examples = self.format_cot_examples(examples)
             
             # Prepare template variables
@@ -204,6 +231,7 @@ SQL: {query}"""
                     'response_length': len(raw_response),
                     'reasoning_steps': self.reasoning_steps,
                     'include_examples': self.include_examples,
+                    'selection_strategy': self.selection_strategy if self.include_examples else 'N/A',
                     'examples_used': len(examples) if examples else 0
                 }
             )

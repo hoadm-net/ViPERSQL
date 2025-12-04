@@ -71,6 +71,9 @@ class ViPERConfig:
     # Chain-of-Thought Settings
     cot_reasoning_steps: bool = field(default=True)
     cot_template: str = field(default="cot_vietnamese_nl2sql.txt")
+    cot_include_examples: bool = field(default=False)  # Include examples in CoT
+    cot_examples: int = field(default=2)  # Number of examples for CoT
+    cot_selection_strategy: str = field(default="random")  # 'random', 'skill_knn', 'dicl', 'astres', 'vir2'
     
     # Program-Aided Language Settings
 
@@ -150,8 +153,9 @@ class ViPERConfig:
             # CoT Settings
             'cot_reasoning_steps': 'COT_REASONING_STEPS',
             'cot_template': 'COT_TEMPLATE',
-            
-            
+            'cot_include_examples': 'COT_INCLUDE_EXAMPLES',
+            'cot_examples': 'COT_EXAMPLES',
+            'cot_selection_strategy': 'COT_SELECTION_STRATEGY',
             
             # Output Settings
             'results_dir': 'RESULTS_DIR',

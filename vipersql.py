@@ -95,11 +95,19 @@ class ViPERSQLCLI:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         samples_suffix = f"{len(dataset)}" if self.config.num_samples is None else str(self.config.num_samples)
 
-        # Add example selection strategy to folder name for few-shot
+        # Add example selection strategy to folder name for few-shot and CoT
         strategy_suffix = self.config.strategy
         if self.config.strategy == 'few-shot':
             example_strategy = getattr(self.config, 'example_selection_strategy', 'random')
             strategy_suffix = f"few-shot-{example_strategy}"
+        elif self.config.strategy == 'cot':
+            # Include CoT examples info if enabled
+            if getattr(self.config, 'cot_include_examples', False):
+                cot_selection = getattr(self.config, 'cot_selection_strategy', 'random')
+                cot_k = getattr(self.config, 'cot_examples', 2)
+                strategy_suffix = f"cot-{cot_selection}-{cot_k}ex"
+            else:
+                strategy_suffix = "cot"
 
         output_dir = f"results/vitext2sql_{strategy_suffix}_{samples_suffix}_{timestamp}"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -196,6 +204,9 @@ class ViPERSQLCLI:
                 'split': self.config.split,
                 'num_samples': len(dataset),
                 'example_selection_strategy': getattr(self.config, 'example_selection_strategy', 'N/A'),
+                'cot_include_examples': getattr(self.config, 'cot_include_examples', False),
+                'cot_examples': getattr(self.config, 'cot_examples', 0) if getattr(self.config, 'cot_include_examples', False) else 'N/A',
+                'cot_selection_strategy': getattr(self.config, 'cot_selection_strategy', 'N/A') if getattr(self.config, 'cot_include_examples', False) else 'N/A',
                 'timestamp': timestamp
             }
 
@@ -281,6 +292,17 @@ def parse_args():
                         choices=['random', 'skill_knn', 'dicl', 'astres', 'vir2', 'vir2-no-pos', 'vir2-no-diversity', 'vir2-no-beam-search'],
                         help='Example selection strategy for few-shot (random, skill_knn, dicl, astres, vir2, vir2-no-pos, vir2-no-diversity, or vir2-no-beam-search)')
 
+    # CoT-specific arguments
+    parser.add_argument('--cot-include-examples', action='store_true',
+                        help='Include examples in CoT reasoning')
+    
+    parser.add_argument('--cot-examples', type=int, default=2,
+                        help='Number of examples for CoT (default: 2)')
+    
+    parser.add_argument('--cot-selection-strategy', type=str, default='random',
+                        choices=['random', 'skill_knn', 'dicl', 'astres', 'vir2', 'vir2-no-pos', 'vir2-no-diversity', 'vir2-no-beam-search'],
+                        help='Example selection strategy for CoT (random, skill_knn, dicl, astres, vir2, etc.)')
+
     parser.add_argument('--config', type=str, default='.env',
                         help='Path to configuration file')
 
@@ -300,8 +322,13 @@ def main():
     if args.model is not None:
         config_params['model_name'] = args.model
 
-    # Pass example selection strategy
+    # Pass example selection strategy for few-shot
     config_params['example_selection_strategy'] = args.example_selection_strategy
+    
+    # Pass CoT-specific parameters
+    config_params['cot_include_examples'] = args.cot_include_examples
+    config_params['cot_examples'] = args.cot_examples
+    config_params['cot_selection_strategy'] = args.cot_selection_strategy
 
     config = ViPERConfig(
         strategy=args.strategy,

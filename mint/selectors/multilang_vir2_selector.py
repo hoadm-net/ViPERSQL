@@ -190,7 +190,9 @@ class MultiLanguageViR2Selector(BaseSelector):
             candidate['stage1_rank'] = len(candidates) + 1
             candidates.append(candidate)
 
-        print(f"[MultiLanguageViR2] Stage 1: Retrieved {len(candidates)} candidates (similarity range: {similarities[top_indices[-1]:.3f} - {similarities[top_indices[0]:.3f})")
+        min_sim = similarities[top_indices[-1]]
+        max_sim = similarities[top_indices[0]]
+        print(f"[MultiLanguageViR2] Stage 1: Retrieved {len(candidates)} candidates (similarity range: {min_sim:.3f} - {max_sim:.3f})")
         return candidates
 
     def _stage2_beam_search(self, question: str, candidates: List[Dict], k: int, question_language: str) -> List[Dict]:

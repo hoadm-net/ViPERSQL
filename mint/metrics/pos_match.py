@@ -185,64 +185,41 @@ class POSMatcher:
         
         return max(0.0, min(1.0, pos_match_score))  # Clamp to [0, 1]
 
-        Args:
-            question1 (str): First Vietnamese question
-            question2 (str): Second Vietnamese question
-
-        Returns:
-            float: POS match score between 0 and 1 (1 = identical POS distributions)
+    def _get_pos_distribution(self, pos_tags: List[tuple], language: str = "vi") -> np.ndarray:
         """
-        if pos_tag is None:
-            raise ImportError("underthesea library is required for POS tagging. Install with: pip install underthesea")
-
-        try:
-            # Get POS tag distributions for both questions
-            pos_dist1 = self._get_pos_distribution(question1)
-            pos_dist2 = self._get_pos_distribution(question2)
-
-            # Calculate Jensen-Shannon divergence
-            js_divergence = self._jensen_shannon_divergence(pos_dist1, pos_dist2)
-
-            # Convert to similarity score
-            pos_match_score = 1.0 - js_divergence
-
-            return max(0.0, min(1.0, pos_match_score))  # Ensure score is in [0, 1]
-
-        except Exception as e:
-            print(f"Error calculating POS match: {e}")
-            return 0.0
-
-    def _get_pos_distribution(self, text: str) -> np.ndarray:
-        """
-        Extract POS tag distribution from Vietnamese text.
+        Extract POS tag distribution from POS tags.
 
         Args:
-            text (str): Vietnamese text
+            pos_tags: List of (word, tag) tuples
+            language: Language code ('vi' or 'en')
 
         Returns:
             np.ndarray: Normalized POS tag distribution
         """
-        if not text or not text.strip():
-            return np.zeros(len(self.standard_pos_tags))
+        # Get the appropriate tag set
+        if language == "vi":
+            standard_tags = self.vietnamese_pos_tags
+        else:
+            standard_tags = self.english_pos_tags
+        
+        if not pos_tags:
+            return np.zeros(len(standard_tags))
 
         try:
-            # Perform POS tagging using underthesea
-            pos_tags = pos_tag(text)
-
             # Extract just the POS tags
             tags = [tag[1] for tag in pos_tags if len(tag) >= 2]
 
             if not tags:
-                return np.zeros(len(self.standard_pos_tags))
+                return np.zeros(len(standard_tags))
 
             # Count tag frequencies
             tag_counts = Counter(tags)
 
             # Create distribution vector
             total_tags = sum(tag_counts.values())
-            distribution = np.zeros(len(self.standard_pos_tags))
+            distribution = np.zeros(len(standard_tags))
 
-            for i, pos_tag_name in enumerate(self.standard_pos_tags):
+            for i, pos_tag_name in enumerate(standard_tags):
                 count = tag_counts.get(pos_tag_name, 0)
                 distribution[i] = count / total_tags if total_tags > 0 else 0.0
 
@@ -250,7 +227,7 @@ class POSMatcher:
 
         except Exception as e:
             print(f"Error getting POS distribution: {e}")
-            return np.zeros(len(self.standard_pos_tags))
+            return np.zeros(len(standard_tags))
 
     def _jensen_shannon_divergence(self, p: np.ndarray, q: np.ndarray) -> float:
         """
@@ -388,8 +365,17 @@ class POSMatcher:
 
             for idx in sample_indices:
                 q1, q2 = questions1[idx], questions2[idx]
-                pos_dist1 = self._get_pos_distribution(q1)
-                pos_dist2 = self._get_pos_distribution(q2)
+                
+                # Detect language and get POS tags
+                lang = self.language_detector.detect_language(q1)
+                pos_tags1 = self.detect_and_pos_tag(q1, lang)
+                pos_tags2 = self.detect_and_pos_tag(q2, lang)
+                
+                pos_dist1 = self._get_pos_distribution(pos_tags1, lang)
+                pos_dist2 = self._get_pos_distribution(pos_tags2, lang)
+
+                # Get appropriate tag set
+                tag_set = self.vietnamese_pos_tags if lang == "vi" else self.english_pos_tags
 
                 analysis['pos_analysis'].append({
                     'index': int(idx),
@@ -398,27 +384,30 @@ class POSMatcher:
                     'pos_match_score': scores[idx],
                     'pos_distribution1': pos_dist1.tolist(),
                     'pos_distribution2': pos_dist2.tolist(),
-                    'pos_tags': self.standard_pos_tags
+                    'pos_tags': tag_set,
+                    'language': lang
                 })
 
         return analysis
 
-    def get_detailed_pos_info(self, text: str) -> Dict[str, Any]:
+    def get_detailed_pos_info(self, text: str, language: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get detailed POS information for a Vietnamese text.
+        Get detailed POS information for a text.
 
         Args:
-            text (str): Vietnamese text
+            text (str): Input text
+            language (Optional[str]): Language override ('vi' or 'en')
 
         Returns:
             Dict[str, Any]: Detailed POS information
         """
-        if pos_tag is None:
-            raise ImportError("underthesea library is required for POS tagging.")
-
         try:
+            # Detect language if not specified
+            if language is None:
+                language = self.language_detector.detect_language(text)
+            
             # Perform POS tagging
-            pos_tags = pos_tag(text)
+            pos_tags = self.detect_and_pos_tag(text, language)
 
             # Extract tags
             tags = [tag[1] for tag in pos_tags if len(tag) >= 2]
@@ -428,14 +417,18 @@ class POSMatcher:
             tag_counts = Counter(tags)
 
             # Get distribution
-            pos_distribution = self._get_pos_distribution(text)
+            pos_distribution = self._get_pos_distribution(pos_tags, language)
+            
+            # Get appropriate tag set
+            tag_set = self.vietnamese_pos_tags if language == "vi" else self.english_pos_tags
 
             return {
                 'text': text,
+                'language': language,
                 'word_pos_pairs': list(zip(words, tags)),
                 'tag_counts': dict(tag_counts),
                 'pos_distribution': pos_distribution.tolist(),
-                'standard_pos_tags': self.standard_pos_tags,
+                'standard_pos_tags': tag_set,
                 'total_words': len(words)
             }
 
