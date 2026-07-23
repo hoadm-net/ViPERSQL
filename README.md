@@ -6,7 +6,7 @@ A research system for converting natural language questions to SQL queries, feat
 
 ---
 
-## 🎯 Overview
+## Overview
 
 ViPERSQL addresses the challenge of selecting optimal few-shot examples for Text-to-SQL tasks through:
 
@@ -23,7 +23,7 @@ where $\lambda = 0.3$ balances syntactic similarity and example diversity.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### Core Concepts
 
@@ -84,7 +84,7 @@ See **[Usage Examples](docs/USAGE_EXAMPLES.md)** for more scenarios.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
 Input Question
@@ -112,7 +112,7 @@ See **[Architecture](docs/ARCHITECTURE.md)** for details.
 
 ---
 
-## 🎓 Research Contributions
+## Research Contributions
 
 1. **ViR2 Method**: Novel two-stage example selection combining semantic + syntactic + diversity
 2. **Multi-Language Framework**: Unified architecture for Vietnamese and English
@@ -121,7 +121,7 @@ See **[Architecture](docs/ARCHITECTURE.md)** for details.
 
 ---
 
-## 📊 Supported Methods
+## Supported Methods
 
 | Method | Type | Speed | Complexity | Notes |
 |--------|------|-------|------------|-------|
@@ -135,7 +135,7 @@ See **[Architecture](docs/ARCHITECTURE.md)** for details.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ViPERSQL/
@@ -161,7 +161,7 @@ ViPERSQL/
 
 ---
 
-## 🛠️ Configuration
+## Configuration
 
 All settings configurable via `.env` or command-line:
 
@@ -190,7 +190,7 @@ See **[Configuration Guide](docs/CONFIGURATION.md)** for all options.
 
 ---
 
-## 🔬 Example: Running ViR2
+## Example: Running ViR2
 
 ```bash
 # Basic ViR2 with default parameters (M=50, B=5, λ=0.3)
@@ -217,6 +217,24 @@ python vipersql.py \
 
 ---
 
-## 📄 License
+## Citation
+
+If you use this probe or refer to this work, please cite:
+
+```bibtex
+@article{DinhMinhHoa_TranThienKhai_2026,
+  title   = {ViR{\textsuperscript{2}}: Beam-guided semantic and syntactic example selection for prompting Vietnamese Text-to-SQL},
+  author  = {Dinh Minh Hoa and Tran Thien Khai},
+  journal = {Vietnam Journal of Science, Technology and Engineering},
+  year    = {2026},
+  month   = {Jul},
+  doi     = {10.31276/VJSTE.2025.0089},
+  url     = {https://vietnamscience.vjst.vn/index.php/vjste/article/view/1364}
+}
+```
+
+---
+
+## License
 
 MIT License - See [LICENSE](LICENSE) file for details.
